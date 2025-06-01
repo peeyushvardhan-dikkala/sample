@@ -1,0 +1,1255 @@
+Managing multiple servers can be challenging, especially when ensuring identical configurations across all of them. Manually configuring each server one by one increases the risk of missing steps or introducing inconsistencies on some servers.
+This is where automation tools like Ansible, Chef, Puppet, and SaltStack come into play. These tools operate on the same fundamental principle: automating server configuration to ensure consistency, efficiency, and reliability across your infrastructure.
+
+Why Ansible ?
+Agentless Architecture
+Unlike Puppet or Chef, Ansible does not require agents to be installed on target servers.
+It uses SSH (Linux) or WinRM (Windows) for communication, reducing overhead and security risks.
+
+Ansible uses YAML for playbooks (automation scripts), making them easy to write and understand.
+
+No Need for a Central Server
+
+Idempotency means that running the same operation multiple times will always produce the same result, without changing the system further after the first successful run.
+
+Ansible is a powerful automation tool that can be used to manage and configure systems. 
+Uses YAML scripting language which works on KEY-VALUE pair
+Used Python for back end
+
+Why Python 3 is Required for Ansible
+🧠 Ansible’s modules are written in Python
+Ansible doesn’t use just SSH and run shell commands (like scp or bash). 
+Instead, it:
+Copies a small Python script to the remote machine,
+Runs that Python script via SSH,
+Parses the result (JSON) back on your control node.
+So if the target machine doesn’t have Python (usually Python 3), most Ansible modules (like yum, user, copy, etc.) will fail.
+
+What happens When You Run an Ansible Playbook or Command ?
+
+Copies a Python Script/Module to the Remote Machine :
+Ansible picks the right module (e.g., yum, apt, copy, file).
+It generates a temporary Python script with the required instructions.
+The script is sent over SSH to the remote machine.
+
+Executes Locally on the Remote Machine :
+The script runs on the target system, not the control node.
+It performs tasks like package installs, file edits, service management, etc.
+
+Captures and Returns Output :
+Execution results (success, failure, logs) are sent back over SSH.
+You see this as ok, changed, failed in your terminal.
+
+Cleans Up Temporary Files :
+Ansible removes the temporary script after execution.
+Keeps the target system clean and secure (stateless behavior).
+
+We can do it in 
+1) Ad-hoc Commands --> ansible <node-group> -m <module> -a "<arguments>" Eg :
+   ansible webservers -m apt -a "name=nginx state=present"
+2) Modules 
+   - name: Ensure Nginx is installed
+     apt:
+        name: nginx
+        state: present 
+3) Playbooks 
+
+The dafault location for the inventory file is /etc/ansible/hosts
+
+Valid Variable Names:
+Start with a letter: Variable names should always begin with a letter (a-z, A-Z).
+Contain letters, numbers, and underscores: After the first letter, you can use numbers (0-9) and underscores (_).
+
+Examples of valid variable names:
+valid_variable_1: value
+server_name: example.com
+user_name: admin
+
+Cannot start with a number.
+Cannot contain special characters, such as dots (.), hyphens (-), or spaces.
+Cannot contain multiple words unless you use an underscore or camel case.
+
+Examples of invalid variable names:
+1st_variable: value     # Invalid: starts with a number
+variable.name: value    # Invalid: contains a dot
+variable-name: value    # Invalid: contains a hyphen
+user name: value        # Invalid: contains a space
+
+ansible-playbook  playbook.yml --check --> Dry run
+
+To see the list of hosts in inventory : ansible all --list-hosts
+To see the list of particular group hosts in inventory : ansible group_name --list-hosts
+To see the 1st hosts in inventory : ansible all[0] --list-hosts
+To check the network connection between master & slave : ansible all -m ping
+
+Playbooks are mainly divided into sections like
+ TARGET SECTION: Defines host against which playbooks task has to be executed.
+ VARIABLE SECTION: Defines variables.
+ TASK SECTION: action you are perfoming.
+
+Below is an example of an Ansible playbook that installs Git and Java 17 on Amazon Linux or RHEL systems
+sample.yml :
+---
+- name: Install Git and Java 17
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Git and Java 17 on Amazon Linux / RHEL
+      yum:
+        name:
+          - git
+          - java-17-amazon-corretto
+        state: present
+      when: ansible_os_family == "RedHat"
+
+
+--- #Used to indicate the start of a YAML document.
+... # Used to indicate the end of a YAML document.
+
+Core Components
+hosts: Specifies target machines (all, group name, or specific host)
+become: Elevate privileges (yes for sudo)
+tasks: List of actions to perform
+
+state : present means that the package will be installed if it is not already present.
+state : absent means that the package will be removed if it is present.
+state : latest means that the package will be updated to the latest version if it is not already at the latest version.
+state : installed means that the package will be installed if it is not already present.
+state : started means that the service will be started if it is not already running.
+state : stopped means that the service will be stopped if it is running.
+state : restarted means that the service will be restarted if it is running.
+state : reloaded means that the service will be reloaded if it is running.
+state : enabled means that the service will be enabled to start at boot time.
+
+hosts : all means that the task will be executed on all hosts in the inventory.
+
+action is a more generic way to call any module within a task, specifying the module name and its parameters explicitly.
+- name: Create a directory using action
+  action: file path=/tmp/mydir state=directory mode=0755
+- name: Install a package using action
+  action: yum name=git state=present
+
+Equivalent to:
+- name: Create a directory
+  file:
+    path: /tmp/mydir
+    state: directory
+    mode: '0755'
+- name: Install a package
+  yum:
+    name: git
+    state: present
+
+Parameters:
+name : Specifies the name of the package to be installed or removed.
+state : Specifies the desired state of the package (present, absent, latest, installed).
+when : Specifies a condition that must be met for the task to be executed.
+debug : Used to print messages or variables to the console.`
+msg : Specifies the message to be printed.
+git : version : feature 
+repo : Specifies the name of the repository to be used for installing the package.
+version : Specifies the version of the package to be installed.
+For private repo, https://authentication_token@repo_url
+
+roles : Used to specify a role to be executed. Need to create a directory with the same name as the role in the roles directory. 
+A tasks directory is created inside the role directory. The tasks directory contains the main.yml file, which contains the tasks to be executed.
+
+ansible_os_family --> Check the OS family while install or delete.
+ansible_memory_mb.real --> Check the memory of the system. (real.total/real.used/real.free)
+ansible_processor_cores --> Check the number of processor cores.
+ansible_architecture --> Check the architecture of the system.
+ansible_distribution_version --> Check the version of the distribution.
+
+ansible-vault encrypt file.yml
+ansible-vault decrypt file.yml
+ansible-vault view file.yml  
+
+ansible-vault edit file.yml
+ansible-vault encrypt_string 'password' --name 'my_password' --> Command is used to encrypt inline variables directly into your playbooks or variable files
+
+my_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          <vault encrypted content...>
+
+# group_vars/webservers.yml (or) group_vars/all.yml
+# This file contains variables for the webservers group 
+
+my_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          <vault encrypted content...>
+
+# site.yml
+- name: Webservers play
+  hosts: webservers
+  tasks:
+    - name: Show password
+      debug:
+        msg: "Password for this group: {{ my_password }}"
+
+//Additional features
+ansible-playbook two.yml --ask-become-pass # When you are not in root
+
+ansible-playbook file.yml --list-tasks
+ansible-playbook file.yml --check --> Dry run   
+ansible-playbook file.yml --limit "host_name"
+ansible-playbook file.yml --extra-vars "var1=val1 var2=val2"
+ansible-playbook file.yml --extra-vars 'my_packages=["git", "maven"]'
+ansible-playbook file.yml --extra-vars "@vars.yml" # This command is used to pass variables from a file.
+ansible-playbook file.yml -e "var1=val1 var2=val2"
+ansible-playbook site.yml --ask-vault-pass 
+ansible-vault create file.yml is used to create a new encrypted file.
+ansible-vault rekey file.yml is used to change the password of an encrypted file.
+
+ansible group_name -m module_name -a "module_parameters" # This command is used to run a module on a specific group of hosts.
+
+ansible dev -a "free -m" # This command is used to check the memory of the system.
+ansible dev -a "free -m" --limit dev # This command is used to check the memory of the system for a specific host.
+-a means adhoc command. It is used to run a command on the remote host.
+--limit is used to limit the execution of the playbook to a specific host or group of hosts.
+
+ansible-galaxy install <role_name> # This command is used to install a role from Ansible Galaxy.
+ansible-galaxy search packagename
+gather_facts: yes # This is correct at play level 
+It is automatic collection of system facts — including ansible_distribution, ansible_os_family, and ansible_distribution_version
+
+
+PRECAP :
+ok means that the task was executed successfully and there were no changes made to the system.
+changed means that the task was executed successfully and changes were made to the system.
+failed means that the task was not executed successfully and changes were not made to the system.
+unreachable means that the task was not executed successfully and the host is unreachable.
+ 
+connection: ssh means that the task will be executed using SSH.
+
+command: git --version 
+    - It is used when you want to run a command on the remote host and get the output.
+
+command: vs shell: 
+command is used to run a command on the remote host and get the output.
+shell is used to run a command on the remote host and get the output, but it allows you to use shell features like pipes, redirection, and environment variables.
+
+action: shell cmd=git --version
+action: service name=git state=started
+
+1) Create a user
+
+- name: Create user raj
+  user:
+    name: raj
+    state: present         # Ensure user exists
+    uid: 1050              # Specific user ID
+    group: users           # Primary group
+    groups: wheel,sudo     # Supplementary groups
+    shell: /bin/bash       # Login shell
+    home: /home/raj        # Home directory path
+    create_home: yes       # Create home if it doesn't exist
+    comment: "Raj Admin"   # GECOS/Full name field
+    password: "{{ 'Password123' | password_hash('sha512') }}"  # Hashed password
+    # Use 'no_log: true' to hide sensitive information like passwords
+
+2) Add to group
+- name: Add raj to sudo group
+  user:
+    name: raj
+    groups: sudo
+    append: yes
+
+3) Insert a Line After a Specific Line
+- name: Insert a line
+  lineinfile:
+    path: /etc/myconfig.conf
+    line: "new_setting=new_value"
+    insertafter: "existing_setting=old_value"
+
+4) Insert a Block After a Specific Line
+- name: Insert a block
+  blockinfile:
+    path: /etc/myconfig.conf
+    block: |
+      [new_section]
+      new_setting=new_value
+    insertafter: "existing_section"
+
+- name: Insert a block before a specific line
+  blockinfile:
+    path: /etc/myconfig.conf
+    block: |
+      [new_section]
+      new_setting=new_value
+    insertbefore: "existing_section"
+
+5) Create Multiple Directories
+- name: Create multiple dirs
+  file:
+    path: "/tmp/dir{{ item }}"
+    state: directory
+  with_sequence: start=1 end=5
+
+6) 
+gather_facts: no # This is correct at play level
+
+- name: Gather OS info
+  setup:
+    gather_subset:
+      - hardware
+      - network
+      - virtual
+      - distribution
+
+7) Process All .txt Files in a Directory
+- name: Process .txt files
+  command: cat "{{ item }}"
+  with_fileglob:
+    - /path/to/files/*.txt
+
+8) File 
+file is a module in Ansible that allows you to manage files and directories on a target host.
+It can be used to create, delete, or modify files and directories, as well as set permissions and ownership.
+The file module is commonly used in Ansible playbooks to ensure that files and directories are in the desired state.
+
+---
+- name: User and Group Management on Slave Server
+  hosts: slave_servers  # Target your slave server(s)
+  become: yes           # Run with sudo privileges
+  
+  tasks:
+    - name: Create a directory and file with specific path ans specific permissions
+      ansible.builtin.file:
+        path: "ansible_directory"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+        recurse: yes
+      ansible.builtin.file:
+        path: "ansible_directory/ansible_file.txt"
+        state: touch
+        mode: '0644'
+        owner: root
+        group: root
+        recurse: yes
+...
+
+9) To make it Idempotent use creates
+- name: Run a script only if the file doesn't exist
+  command: /usr/local/bin/setup.sh
+  args:
+    creates: /var/log/setup.done
+
+- name: Move a file if the file not exists.
+  command: mv /etc/myapp/config.conf /etc/myapp/config.conf.bak
+  args:
+    removes: /etc/myapp/config.conf.bak
+
+- name: Build project with Maven (skip tests)
+  ansible.builtin.shell: mvn clean install -DskipTests
+  args:
+    chdir: "{{ app_dir }}" chdir: Changes the working directory before executing the command.
+
+removes: Prevents the command from running if the specified file exists.
+creates: Allows the command to run only if the specified file does not exist.
+
+10) Conditional task execution (Idempotent)
+- name: Restart service only on Debian-based systems
+  service:
+    name: apache2
+    state: restarted
+  when: ansible_facts['os_family'] == "Debian"
+
+11) File module
+| State       | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| `directory` | Ensures the path is a directory. Creates it if it doesn’t exist.            |
+| `file`      | Ensures the path is a regular file. Creates it if it doesn’t exist (empty). |
+| `absent`    | Ensures the path (file, directory, symlink, etc.) is **removed**.           |
+| `touch`     | Updates file's timestamp or creates an empty file if it doesn’t exist.      |
+| `link`      | Ensures the path is a **symlink**. Requires `src` to be defined.            |
+| `hard`      | Ensures the path is a **hard link** to another file.                        |
+
+- name: Create a hard link
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Create a hard link to /etc/hosts
+      file:
+        src: /etc/hosts
+        dest: /tmp/hosts_hardlink
+        state: hard
+12) Copy Module
+
+| Option     | Description                                            | Example                                |
+| ---------- | ------------------------------------------------------ | -------------------------------------- |
+| `src`      | Path to the source file on the control node (required) | `src: files/config.cfg`                |
+| `dest`     | Destination path on the remote machine (required)      | `dest: /etc/myapp/config.cfg`          |
+| `owner`    | Set owner of the file on remote                        | `owner: root`                          |
+| `group`    | Set group of the file on remote                        | `group: root`                          |
+| `mode`     | Set file permissions (e.g., `'0644'`)                  | `mode: '0644'`                         |
+| `backup`   | Make a backup of the file before overwriting (boolean) | `backup: yes`                          | (Automatic backup with timestamp suffix)
+| `force`    | Overwrite the file even if it exists (default: yes)    | `force: no`                            |
+| `content`  | Provide file content inline (instead of src file)      | `content: "Hello World\n"`             |
+| `validate` | Validate the file after copying (run a command)        | `validate: '/usr/sbin/nginx -t -c %s'` |
+
+
+- name: Create a small config file with inline content
+  copy:
+    dest: /tmp/hello.txt
+    content: |
+      Hello World!
+      This file was created by Ansible.
+    mode: '0644'
+
+- name: Move config from /tmp to /etc
+  copy:
+    src: /tmp/example.conf
+    dest: /etc/example.conf
+    remote_src: yes 
+# The src path is already on the remote host. Just copy it locally on that machine
+  Avoid overwriting unchanged files.
+
+- name: Copy file with automatic backup
+  copy:
+    src: /path/to/source.conf
+    dest: /etc/myapp/config.conf
+    backup: yes
+/etc/myapp/config.conf.2025-05-28@21:58:23~ 
+
+13) Fetch module
+- name: Fetch file from remote to local
+  hosts: remote_hosts
+  tasks:
+    - name: Copy remote file to local machine
+      fetch:
+        src: /path/on/remote/file.txt
+        dest: /path/on/local/dir/
+        flat: yes 
+flat: yes --> /dest/file
+flat: no  (default) --> /dest/<hostname>/full/remote/path/file (Multiple hosts, keep files organized)
+
+14) delegate_to
+ In Ansible, the delegate_to directive is used to specify that a task should be executed on a different host than the one currently being targeted by the playbook.
+
+- name: Gather logs and upload via control node
+  hosts: webservers
+  gather_facts: false
+
+  tasks:
+    - name: Fetch logs from webserver
+      fetch:
+        src: /var/log/nginx/access.log
+        dest: /tmp/logs/{{ inventory_hostname }}.log
+        flat: yes
+
+    - name: Upload logs to monitoring system (only on control node)
+      shell: curl -F "file=@/tmp/logs/{{ inventory_hostname }}.log" http://monitor.example.com/upload
+      delegate_to: localhost
+
+15) run_once 
+Executes the task only one time, even if the play targets multiple hosts.
+
+- name: Run DB migration only once
+  hosts: app_servers
+  tasks:
+    - name: Migrate database
+      shell: ./migrate_db.sh
+      run_once: true
+
+16) Used for retrying a task until a condition is met.
+- name: Wait until web service is up
+  hosts: web
+  tasks:
+    - name: Check if port 80 is open
+      shell: nc -z localhost 80
+      register: result
+      until: result.rc == 0
+      retries: 5
+      delay: 10
+- name: Wait 2 minutes before continuing
+  pause:
+    minutes: 2   #seconds: 40
+  
+- name: Pause and wait for user input
+pause:
+  prompt: "Press Enter to continue..."
+
+17) To enable ports 
+
+In RHEL/CentOS with firewalld
+
+- name: Open ports 8080 and 9000 on firewalld
+  hosts: all
+  become: true
+  tasks:
+    - name: Allow TCP port 8080
+      firewalld:
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
+
+    - name: Allow TCP port 9000
+      firewalld:
+        port: 9000/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
+
+In Ubuntu/Debian with ufw
+- name: Allow ports 8080 and 9000 using UFW
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure UFW is enabled
+      ufw:
+        state: enabled
+
+    - name: Allow port 8080
+      ufw:
+        rule: allow
+        port: 8080
+        proto: tcp
+
+    - name: Allow port 9000
+      ufw:
+        rule: allow
+        port: 9000
+        proto: tcp
+
+18) Generate SSH key
+
+- name: Generate SSH key pair
+  openssh_keypair:
+    path: "/tmp/{{ ssh_user }}_id_rsa"
+    mode: '0600'
+  register: keypair
+
+19) Generate SSH key pair
+- name: Generate SSH key pair
+  openssh_keypair:
+    path: "/tmp/{{ ssh_user }}_id_rsa"
+    mode: '0600'
+
+20) Add SSH public key to authorized_keys
+- name: Manage authorized SSH keys
+  hosts: all
+  tasks:
+    - name: Add SSH public key to authorized_keys
+      authorized_key:
+        user: "{{ ssh_user }}"  # The user for whom the key is being added
+        state: present           # Ensure the key is present
+        key: "{{ lookup('file', '/path/to/public_key.pub') }}"  # Path to the public key file
+
+21) Add public key to custom authorized_keys path
+- name: Add public key to custom authorized_keys path
+  authorized_key:
+    user: "{{ ssh_user }}"
+
+    key: "{{ keypair.public_key }}"
+    path: /custom/path/to/authorized_keys
+    manage_dir: false
+
+Using ignore_errors: yes allows the playbook to continue running even if this SSH test fails.
+
+21) User Creation and Passwordless SSH Setup with Validation
+---
+- name: Create SSH user with password and key-based auth
+  hosts: all
+  become: true
+
+  vars_prompt:
+    - name: ssh_user
+      prompt: "Enter the SSH username to create"
+      private: no
+
+    - name: ssh_password
+      prompt: "Enter the SSH password"
+      private: yes
+      confirm: yes
+
+  vars:
+    ssh_key_path: "/tmp/{{ ssh_user }}_id_rsa"
+
+  tasks:
+
+    - name: Validate username format
+      assert:
+        that:
+          - ssh_user is match("^[a-zA-Z_][a-zA-Z0-9_-]{2,}$")
+        fail_msg: "Username must start with a letter/underscore and be at least 3 characters, using only letters, numbers, hyphens, and underscores."
+
+    - name: Validate password strength
+      assert:
+        that:
+          - ssh_password is match("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\w\\s]).{8,}$")
+        fail_msg: "Password must be at least 8 characters and include upper, lower, number, and special character."
+
+    - name: Ensure user exists with password
+      user:
+        name: "{{ ssh_user }}"
+        password: "{{ ssh_password | password_hash('sha512') }}"
+        shell: /bin/bash
+        create_home: true
+        home: "/home/{{ ssh_user }}"
+        groups: sudo
+      no_log: true
+
+    - name: Generate SSH key pair (only once, on control node)
+      delegate_to: localhost
+      run_once: true
+      openssh_keypair:
+        path: "{{ ssh_key_path }}"
+        type: ed25519
+        mode: '0600'
+      register: keypair
+      no_log: true
+
+    - name: Install public key for user
+      authorized_key:
+        user: "{{ ssh_user }}"
+        key: "{{ keypair.public_key }}"
+        manage_dir: true
+      no_log: true
+
+    - name: Test SSH login to target host using key
+      delegate_to: localhost
+      shell: |
+        ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i {{ ssh_key_path }} {{ ssh_user }}@{{ inventory_hostname }} echo "SSH connection successful"
+      register: ssh_test
+      ignore_errors: yes
+      no_log: true
+
+    - name: Check if SSH login test succeeded
+      assert:
+        that:
+          - ssh_test.rc == 0
+        success_msg: ""
+        fail_msg: |
+          SSH login test failed!  
+          Make sure the public key is properly installed on the target host  
+          and SSH key-based authentication is enabled.
+
+22) set_fact
+set_fact is an Ansible module used to set variables dynamically during playbook execution.
+- name: Set a fact variable
+  set_fact:
+    my_variable: "Hello, Ansible!"
+
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Include additional tasks
+      import_tasks: one.yml
+    - name: Print the fact variable
+      debug:
+        msg: "The value of my_variable is {{ my_variable }}"
+
+===============================================================================================================================
+
+- name: Set shared variable
+  ansible.builtin.set_fact:
+    app_version: "2.3.1"
+
+- name: Use in later task
+  debug:
+    msg: "Installing version {{ app_version }}"
+
+===============================================================================================================================
+
+- name: Determine deployment type
+  ansible.builtin.set_fact:
+    deployment_env: "{% if 'staging' in inventory_hostname %}staging{% else %}production{% endif %}"
+
+- name: Use in configuration
+  template:
+    src: "config-{{ deployment_env }}.j2"
+    dest: "/etc/app.conf"
+
+23) block and rescue
+block is a way to group tasks together in Ansible, allowing you to handle errors and exceptions more gracefully.
+rescue is used to define tasks that should run if the block fails, allowing you to recover from errors or perform cleanup actions.
+
+tasks:
+  - name: Controlled execution block
+    block:
+      - name: First task
+        command: risky_operation.sh
+
+      - name: Second task
+        debug:
+          msg: "Runs only if first task succeeds"
+    
+    rescue:
+      - debug:
+          msg: "Runs only if the block fails"
+    
+    always:
+      - debug:
+          msg: "Runs in all cases"
+
+24) lookup  
+plugin is used to fetch data from outside sources — such as files, environment variables, passwords, lists or databases — and make it available as variables in your playbook.
+
+{{ lookup('plugin_name', 'data', optional_flags) }}
+
+a) - debug:
+    msg: "{{ lookup('file', 'example.txt') }}"
+    - name: Display items
+      
+    - debug:
+        msg: "{{ item }}"
+      with_items: "{{ lookup('file', 'dummy.txt').splitlines() }}"
+
+b) - debug:
+    msg: "{{ lookup('env', 'HOME') }}"
+c) - debug:
+    msg: "{{ lookup('password', 'my_secret_password') }}"
+d) - debug:
+    msg: "{{ lookup('pipe', 'echo Hello World') }}" --> pipe is used for executing shell commands and capturing their output.
+e) - debug:
+    msg: "{{ lookup('csvfile', 'user key=admin file=users.csv') }}"
+    user -->  
+    key is used to specify the key to look up in the CSV file.
+    file= is used to specify the path to the CSV file.
+
+25) tags 
+Tags in Ansible are used to categorize tasks, roles, or plays within a playbook. 
+
+Why Use Tags?
+Run only part of a playbook
+Skip unnecessary tasks to save time
+Focus on debugging or development of a specific role/task
+---
+- name: Install and configure web server
+  hosts: localhost
+  tasks:
+    - name: Install Apache
+      debug:
+        msg: "Installing Apache"
+      tags: install
+
+    - name: Restart Apache
+      debug:
+        msg: "Restarting Apache"
+      tags: restart
+    - name: Configure Apache
+      debug:
+        msg: "Configuring Apache"
+      tags: configure
+
+# To run the playbook with specific tags or skip certain tags, you can use the following commands:
+ansible-playbook file.yml --tags "tag_name"
+ansible-playbook file.yml --skip-tags "tag_name1, tag_name2"
+ansible-playbook file.yml --list-tags
+
+26) roles
+Roles in Ansible are a way to organize playbooks and tasks into reusable components. They allow you to group related tasks, variables, files, templates, and handlers together in a structured manner.
+# To create a role, you can use the ansible-galaxy command:
+ansible-galaxy init my_role_name
+# This command will create a directory structure for the role, including directories for tasks, handlers, files, templates, and more.
+# Example of a role structure:
+
+.
+├── inventory.ini         # Host definitions
+├── site.yml             # Main playbook
+└── roles/
+    ├── webserver/       # Your role
+    └── postgresql/     # Another role
+
+my_role_name/ 
+  ├── tasks/
+  │   └── main.yml
+  ├── handlers/
+  │   └── main.yml
+  ├── files/
+  ├── templates/
+  ├── vars/
+  │   └── main.yml
+  ├── defaults/
+  │   └── main.yml
+  └── meta/
+      └── main.yml
+tasks/main.yml: 
+---
+- name: Install Git
+  ansible.builtin.yum:
+    name: git
+    state: present
+- name: Install Java 17
+  ansible.builtin.yum:
+    name: java-17-amazon-corretto
+    state: present
+
+handlers/main.yml:
+---
+- name: restart apache
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+
+vars/main.yml:
+--- 
+- name: my_variable
+  value: "Hello, Ansible!"
+
+defaults/main.yml:
+--- 
+- name: default_variable
+  value: "Default Value"
+# meta/main.yml:
+---
+dependencies:
+  - role: another_role_name
+  - src: git+//github.com/username/repo_name.git
+  - src: another_role_name
+
+# Example of using a role in a playbook
+- name: Use my_role_name
+  hosts: all
+  roles:
+    - my_role_name
+
+27) Imported_tasks, included_tasks, and imported_playbooks
+
+| File Content       | Recommended Include Method  | Where to Use                    |
+| ------------------ | --------------------------- | ------------------------------- |
+| *Tasks only*       | include_tasks: one.yaml     | Inside tasks: block (dynamic)   |
+|                    | import_tasks: one.yaml      | Inside tasks: block (static)    |
+| *Playbook*         | import_playbook: one.yaml   | Top-level only                  |
+| *Variables only*   | include_vars: one.yaml      | Inside tasks: block (dynamic)   |
+| *Variables only*   | vars_files: one.yaml        | Top-level only                  |
+# Example of using include_tasks and import_tasks
+# tasks/one.yml
+- name: Install httpd
+  apt:
+    name: httpd
+    state: present
+# tasks/two.yml
+- name: Install git
+  apt:
+    name: git
+    state: present
+# playbook.yml
+- hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Include one.yml tasks
+      include_tasks: tasks/one.yml
+
+    - name: Import two.yml tasks
+      import_tasks: tasks/two.yml
+
+# Example of using include_tasks with a condition 
+# tasks/install_package.yml
+- name: Install httpd
+  apt:
+    name: httpd
+    state: present
+
+# playbook.yml
+- hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Check if httpd is installed
+      command: dpkg -l httpd
+      register: httpd_check
+      ignore_errors: true
+
+    - name: Conditionally include install tasks
+      include_tasks: tasks/install_package.yml
+      when: httpd_check.rc != 0
+
+httpd_check.rc is evaluated at runtime, and tasks are included only if the condition matches.
+
+# Example of using loop with include_tasks
+Example : 
+# playbook.yml
+- hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Include the task file for each package
+      include_tasks: tasks/install_package.yml
+      loop:
+        - httpd
+        - git
+        - curl
+      loop_control:
+        loop_var: pkg_name 
+      vars:
+        package_name: "{{ pkg_name }}"
+
+# Example of using include_vars
+# vars/my_vars.yml
+- my_user: "dynamic_user"
+# playbook.yml
+- hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Include variables from my_vars.yml
+      include_vars: vars/my_vars.yml
+      when : ansible_os_family == "RedHat"
+
+    - name: Print the user variable
+      debug:
+        msg: "The user is {{ my_user }}"
+
+# Example of using vars_files
+# playbook.yml
+- hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - vars/my_vars.yml
+
+  tasks:
+    - name: Print the user variable
+      debug:
+        msg: "The user is {{ my_user }}"  
+
+
+28) Automated Java App Deployment Pipeline with Ansible
+
+- name: Deploy Java App with Git, Maven, and Tomcat
+  hosts: all
+  become: yes
+  vars:
+    repo_url: "https://github.com/example/app.git"
+    app_dir: "/opt/app"
+    war_file: "target/app.war"
+    tomcat_webapps: "/opt/tomcat/webapps"
+    tomcat_user: "tomcat"
+
+  tasks:
+    - name: Ensure Git is installed
+      ansible.builtin.package:  #package module is used to manage packages on the target system for cross platform compatibility
+        name: git
+        state: present
+
+    - name: Clone or update Git repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: master
+        force: yes
+        update: yes
+
+    - name: Ensure Maven is installed
+      ansible.builtin.package:
+        name: maven
+        state: present
+
+    - name: Build project with Maven (skip tests)
+      ansible.builtin.shell: mvn clean install -DskipTests
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Copy WAR file to Tomcat webapps
+      ansible.builtin.copy:
+        src: "{{ app_dir }}/{{ war_file }}"
+        dest: "{{ tomcat_webapps }}/app.war"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        mode: '0644'
+
+    - name: Restart Tomcat service
+      ansible.builtin.service:
+        name: tomcat
+        state: restarted
+
+29) Ansible Playbook to Create Multiple Users and a Single Group on Slave Server
+
+---
+- name: User and Group Management on Slave Server
+  hosts: slave_servers  # Target your slave server(s)
+  become: yes           # Run with sudo privileges
+
+  vars:
+    # Task-1: Multiple users configuration
+    users_to_create:
+      - name: alice
+        comment: "Alice Admin"
+        groups: "wheel"
+        append: yes
+        password: "{{ 'password123' | password_hash('sha512') }}"
+        
+      - name: bob
+        comment: "Bob Developer"
+        groups: "developers"
+        append: yes
+        password: "{{ 'password123' | password_hash('sha512') }}"
+        
+      - name: charlie
+        comment: "Charlie Tester"
+        groups: "testers"
+        append: yes
+        password: "{{ 'password123' | password_hash('sha512') }}"
+
+    # Task-2: Single group configuration
+    group_to_create:
+      name: "shared_resources"
+      gid: 10500  # Optional: specify GID
+
+  tasks:
+    # Task-2: Create the single group first
+    - name: Create the shared_resources group
+      ansible.builtin.group:
+        name: "{{ group_to_create.name }}"
+        gid: "{{ group_to_create.gid | default(omit) }}"
+        state: present
+
+    # Task-1: Create multiple users
+    - name: Create multiple users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        append: "{{ item.append }}"
+        password: "{{ item.password }}"
+        shell: /bin/bash
+        create_home: yes
+      loop: "{{ users_to_create }}"
+
+30) Handlers  
+Handlers is a section in an Ansible playbook that defines actions to be executed when notified by tasks.
+Handlers are typically used for tasks that need to be executed only when there is a change in the state of the system, 
+such as restarting a service after a configuration file has been modified.
+
+notify: is used to trigger a handler when a task changes the state of the system.
+listen: is used to specify the name of the handler that should be triggered when a task notifies it.
+---
+- name: Install and configure Nginx with handlers
+  hosts: localhost
+  become: true
+  tasks:
+
+    - name: Install Nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+      notify: restart nginx service
+  handlers:
+    - name: Restart Nginx fully
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+      listen: restart nginx service
+
+    - name: Reload Nginx gracefully
+      ansible.builtin.debug:
+        msg: "Nginx configuration changed, reloading..."
+      listen: restart nginx service
+---
+- hosts: localhost
+  become: true
+  tasks:
+    - name: installing
+      debug:
+        msg: "dummy"
+      notify:
+        - debug
+      changed_when: true   # <--- force change to trigger handler
+
+  handlers:
+    - name: debug
+      debug:
+        msg: "dummy2"
+
+
+31) get_url
+get_url is a module in Ansible that allows you to download files from a URL to a specified destination on the target host.
+
+---
+- name: Download a file from a URL
+  ansible.builtin.get_url:
+    url: "https://example.com/file.txt"
+    dest: "/tmp/file.txt"
+    mode: '0644'
+    force: yes  # Overwrite if the file already exists
+    validate_certs: no  # Skip SSL certificate validation (not recommended for production)
+    timeout: 30  # Timeout in seconds for the download
+
+connection: local # This is used to run the tasks on the local machine where Ansible is executed.
+
+gather_facts: no # This is correct at play level
+# This is used to skip the fact-gathering step, which can speed up playbook execution.
+
+
+32) Registering Variables
+Register : 
+Registering a variable allows you to store the result of a task and use it later in the playbook.
+The registered variable can be used in subsequent tasks to make decisions based on the result of the previous task.
+| Key        | Meaning                                |
+| ---------- | -------------------------------------- |
+| `.changed` | `true` if task changed something       |
+| `.failed`  | `true` if task failed                  |
+| `.rc`      | Return code of the command             |
+| `.stdout`  | Standard output (for shell/command)    |
+| `.stderr`  | Standard error (for shell/command)     |
+| `.stat`    | File metadata (if using `stat` module) |
+
+Examples : 
+- name: Install Git
+  yum:
+    name: git
+    state: present
+  register: git_result
+
+- name: Check if Git was newly installed
+  debug:
+    msg: "Git was installed"
+  when: git_result.changed # If the task changed something, it means Git was installed
+==============================================================================================
+- name: Check if Git was already installed  
+  debug:
+    msg: "Git was already installed"
+  when: not git_result.changed # If the task didn't change anything, it means Git was already installed
+==============================================================================================
+- name: Check return code of ls
+  command: ls /tmp
+  register: ls_result
+
+- name: Was the ls successful?
+  debug:
+    msg: "It worked!"
+  when: ls_result.rc == 0 #Return code of 0 means success
+==============================================================================================
+- name: Get hostname
+  command: hostname
+  register: host_result
+
+- name: Print hostname
+  debug:
+    msg: "The hostname is {{ host_result.stdout }}"
+==============================================================================================
+- name: Bad directory listing
+  command: ls /wrong/path
+  register: ls_error
+  ignore_errors: yes
+
+- name: Show the error in case ls_error is failed without ignoring errors
+  debug:
+    msg: "Error: {{ ls_error.stderr }}"
+  when: ls_error is failed
+================================================================================================
+- name: Check if /tmp/test.txt exists
+  stat:
+    path: /tmp/test.txt
+  register: file_info
+
+- name: Show results
+  debug:
+    msg: |
+      File exists: {{ file_info.stat.exists }}
+      Size: {{ file_info.stat.size }} bytes
+      Permissions: {{ file_info.stat.mode }}
+      Modification time: {{ file_info.stat.mtime | to_datetime('%Y-%m-%d %H:%M:%S') }} # to_datetime is used to format the timestamp
+      Is directory: {{ file_info.stat.isdir }}
+      Is file: {{ file_info.stat.isreg }}
+      Is symlink: {{ file_info.stat.issym }}
+      Is executable: {{ file_info.stat.mode | string | regex_search('x') }} # Check if executable bit is set
+      Links: {{ file_info.stat.nlink }} nlink means number of hard links to the file
+      Owner: {{ file_info.stat.pw_name }}
+      Group: {{ file_info.stat.gr_name }}
+
+================================================================================================
+  - name: Check backup directory
+  stat:
+    path: /backups
+  register: backup_dir
+
+- name: Create directory if needed
+  file:
+    path: /backups
+    state: directory
+    mode: "0755"
+  when: not backup_dir.stat.exists
+
+33) Template Module
+template: 
+A template is a text file (often .j2) that contains variables and logic, which Ansible fills in at runtime.
+Ansible will automatically substitute variables in {{ }} and copy the final result to the remote server.
+Combine with notify: to restart services after config changes.
+
+#Example 
+nginx.conf.j2
+server {
+    listen 80;
+    server_name {{ domain_name }};
+    
+    location / {
+        proxy_pass http://{{ backend_ip }}:{{ backend_port }};
+    }
+}
+
+Place this file in the templates directory of your role or playbook. 
+roles directory structure:
+.
+# playbook.yml
+---
+- name: Use nginx template
+  hosts: webservers
+  vars:
+    domain_name: example.com
+    backend_ip: 10.0.0.100
+    backend_port: 8080
+
+  tasks:
+    - name: Generate Nginx config
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/conf.d/example.conf
+
+ansible-playbook playbook.yml 
+
+What Happens at Runtime:
+During playbook execution, Ansible renders the template file.
+It replaces {{ port }} with 8080, and {{ server_name }} with myapp.local.
+
+34) Raw Module
+The raw module in Ansible is a low-level module that allows you to execute commands directly on the target host without using any Ansible modules. It is particularly useful in situations where other modules (like yum or apt) cannot be used due to missing dependencies or when you need to run a command that is not covered by existing modules.
+The raw module is often used as a last resort when:
+- You need to perform a task that cannot be accomplished with existing Ansible modules.
+- You are working with a system that does not have Python installed, which is required for most Ansible modules to function.
+The raw module executes commands directly over SSH, bypassing the need for Python or any other Ansible modules. It is similar to running a command in a remote shell.
+
+When to Use the Raw Module?
+If you encounter issues with other Ansible modules, such as:
+- Python not installed on the target host.
+- Ansible cannot find or use the yum module.
+- You're managing a brand-new or bootstrapped system where Python is not yet installed.
+The raw module can be a useful fallback option.
+
+---
+- name: Install Python on a fresh RedHat/CentOS box
+  raw: yum install -y python3
+
+- name: Install Maven the right way # Once python3 is ready use proper modules
+  yum:
+    name: maven
+    state: present
+
+35) default and fallback
+In Ansible, the `default` filter is used to provide a fallback value for a variable if it is not defined or is empty. This is useful for ensuring that your playbook can run smoothly even if certain variables are not set.
+The `default` filter can be applied to any variable, and it allows you to specify a default value that will be used if the variable is not defined or is empty.
+
+---
+- name: Set a variable with a default value
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Set variable with default value
+      set_fact:
+        my_variable: "{{ my_variable | default('default_value') }}"
+
+    - name: Print the variable
+      debug:
+        msg: "The value of my_variable is {{ my_variable }}"
+
+
+{{ variable | default(42) }}
+{{ variable | default(false) }}
+{{ variable | default('default_value') }}

@@ -1,0 +1,996 @@
+Linux System Information & Monitoring Commands
+
+df -T or lsblk -f or blkid → Show file system types which are mounted
+
+1 Byte = 8 bits
+1 KB = 1024 Bytes
+1 MB = 1024 KB
+1 GB = 1024 MB
+1 TB = 1024 GB
+1 PB = 1024 TB PB means PetaByte
+1 EB = 1024 PB EB means ExaByte
+1 ZB = 1024 EB ZB means ZettaByte
+1 YB = 1024 ZB YB means YottaByte
+
+Mnemonic to remember the order of units:
+Big Kangaroos Make Great Tiny Puppies Eat Zebras Yearly.
+
+
+| Shortcut  | Action                                       |
+| --------- | -------------------------------------------- |
+| Ctrl + A  | Move cursor to beginning of line             |
+| Ctrl + E  | Move cursor to end of line                   |
+| Ctrl + B  | Move cursor back one character               |
+| Ctrl + F  | Move cursor forward one character            |
+| Alt + B   | Move cursor back one word                    |
+| Alt + F   | Move cursor forward one word                 |
+| Ctrl + K  | Delete from cursor to end of line            |
+| Ctrl + U  | Delete from cursor to beginning of line      |
+| Ctrl + W  | Delete word before cursor                    |
+| Alt + D   | Delete word after cursor                     |
+| Ctrl + Y  | Paste last deleted text                      |
+| Ctrl + L  | Clear screen (same as `clear`)               |
+| Ctrl + T  | Swap characters before and under cursor      |
+| Ctrl + _  | Undo last editing action                     |
+
+uname - Display System Information
+    uname -s → Show kernel name
+	uname -a → Shows all system information
+	uname -r → Displays the kernel release version
+	uname -s → Prints the operating system name or kernel name
+	uname -m → Displays the machine hardware name/architecture
+	uname -n → Shows the hostname
+	uname -o → Displays the operating system name
+	uname -v → Shows the kernel version
+	uname -p → Displays the processor type
+	uname -i → Displays the hardware platform
+
+uptime - Check System Uptime
+	uptime -p → Pretty format – Shows uptime in a human-readable format (e.g., "up 3 hours, 15 minutes")
+	uptime -s → Since format – Displays the system start time (e.g., "2024-04-01 08:30:00")
+	uptime -V → Version – Shows the version of the uptime command
+
+Display CPU Information
+	nproc → Show the number of processing units available
+	nproc --all → Show all processing units, including offline ones
+
+hostname - Display and Set Hostname
+hostnamectl → Show system hostname and related information
+
+Modify Hostname:
+sudo hostnamectl set-hostname --static new-hostname  
+--static -> Set the static hostname for permanent use
+--transient -> Set the transient hostname for temporary use
+--pretty -> Set the pretty hostname for display purposes
+Make it permanent by editing /etc/hostname and /etc/hosts.
+
+Useful Options:
+	hostname -s → Short hostname (without domain)
+	hostname -f → Fully qualified domain name (FQDN)
+	hostname -I → IP address(es)
+	hostname -d → DNS Domain name
+	hostname -A → All known hostnames
+
+System Reboot History
+    last reboot → History of system reboots 
+    last -x | grep reboot → Show all reboots 
+    last -x | grep shutdown → Show all shutdowns
+    last -x | grep runlevel → Show all runlevel changes 
+	Runlevel means the state of the system
+	0 → Halt, 1 → Single-user mode, 2 → Multi-user mode, 3 → Full multi-user mode, 4 → Unused, 5 → Graphical mode, 6 → Reboot
+	last -x | grep runlevel | awk '{print $5,$6,$7,$8}' | date -f - +"%Y-%m-%d %I:%M:%S %p" 
+    last -x | grep shutdown | awk '{print $5,$6,$7,$8}' | date -f - +"%Y-%m-%d %I:%M:%S %p" 
+    → Show shutdown times in a readable format
+
+Check Primary System IP Address:
+hostname -I | awk '{print $1}'
+
+Network Commands
+	ip addr → Show IP addresses and network interfaces
+	ifconfig → (Deprecated) Display network configuration
+    ip addr show dev eth0 → Show IP address for a specific interface`
+    ip link show → Show all network interfaces & MAC on the local system
+    ip neigh show → Show ARP cache which show MAC address on the network
+	ARP means Address Resolution Protocol it is used to find the MAC address of a host
+    ip link set eth0 up → Bring up a specific interface
+    ip link set eth0 down → Bring down a specific interface
+
+date - Display and Format Date/Time
+Show Time with Milliseconds:
+date +"%H:%M:%S:%3N"
+date +"%I:%M:%S:%3N"
+date -f - means "read date strings from the input piped to me"
+date -f input.txt -> Read from text file
+date -d "2024-04-03 10:15:00" +"%Y-%m-%d %I:%M:%S %p"
+Eg : last reboot | awk '{print $5,$6,$7,$8}' | date -f - +"%Y-%m-%d %I:%M:%S %p"
+
+date +%s -> Show current epoch time
+Epoch time is the number of seconds that have elapsed since the Unix epoch, which is defined as 00:00:00 UTC on 1 January 1970.
+It is commonly used in computing and programming to represent time in a standardized format.
+
+date -d "2024-04-03 10:15:00" +%s
+Convert Epoch Time to Normal time:
+date -d @1745209628 --> Mon Apr 21 09:57:08 AM IST 2025
+
+Common Formatting Flags:
+Flag	Description	Example
+%Y	Year (4-digit)	2025
+%y	Year (2-digit)	25
+%m	Month (01-12)	04
+%B	Full month name	April
+%b	Abbreviated month name	Apr
+%d	Day of month (01-31)	03
+%A	Full weekday name	Thursday
+%a	Abbreviated weekday name	Thu
+%H	Hour (00-23)	14
+%I	Hour (01-12)	02
+%M	Minutes (00-59)	30
+%S	Seconds (00-59)	45
+%p	AM/PM	PM
+%Z	Time zone	UTC
+
+sudo timedatectl set-timezone Asia/Kolkata -> Set timezone
+timedatectl list-timezones → List all time zones
+timedatectl set-ntp true → Enable NTP synchronization
+timedatectl set-ntp false → Disable NTP synchronization
+timedatectl show-timesync → Show NTP synchronization status
+timedatectl set-time "2024-04-03 10:15:00" → Set system time
+
+User Commands 
+Command	        Purpose                 	Output Example
+  who    Shows logged-in users	     user1 tty1 2025-04-03 10:15 (:0)
+whoami	 Displays current username	 user1
+top - Monitor System Performance
+top -b -n 10 > top_log.txt
+	-b → Batch mode means run in the background
+	-n 10 → Run 10 iterations and exit
+CPU Info
+	lscpu
+	uname -m
+	cat /proc/cpuinfo
+RAM Info
+	free -h → Human-readable format
+    cat /proc/cpuinfo | grep -i "model name" | sort -u → CPU model
+    cat /proc/meminfo → Memory info
+	top → Real-time system monitor
+    htop → Interactive process viewer
+ROM Info
+	lsblk → Displays information about block devices (disks, partitions, LVM, etc.) in a tree-like format.
+	blkid → Show block device attributes
+	df -h → Disk space usage
+	df --block-size=1G → Show sizes in GB
+	fdisk -l → List disk partitions
+File Operations
+	ls -lh --block-size=1G → Show sizes in GB(Giga Bytes)
+	ls -Sl → Sort files by size
+	ls -lt → List files by modification time
+	ls -lt --block-size=1G → List files by modification time in GB
+	ls -lt --block-size=1G | grep -E "pattern1|pattern2" | sort -u → Unique matches
+	ls -lt --time-style=long-iso → Show time in long ISO format
+	ls -lt --time-style="+%Y-%m-%d %H:%M:%S:%3N" → Custom time format
+	
+	cp -u source.txt destination.txt → Copy only if source is newer
+	mv -u source.txt destination.txt → Move only if source is newer
+	mv -i source.txt destination.txt → Prompt before overwriting
+	mv -n source.txt destination.txt → No overwrite if destination exists source.txt
+	cp -n source.txt destination.txt → No overwrite if destination exists source.txt
+	cp -u source.txt destination.txt → Copy only if source is newer
+
+
+View File Contents
+	cat -n filename → Show with line numbers
+	cat -b filename → Ignore blank lines in numbering
+	more f1 f2 f3 → View multiple files sequentially
+	cat file1 >> file2 → Append file1 to file2
+	cat file1 | tee file2 file3 → Copy content to multiple files
+	cat file1 | tee -a file2 file3 → Append content to multiple files
+	mkdir -p folder{2..7} && for i in folder{2..7}; do cp -r folder1/ "$i"/; done
+	cmp file1 file2 → Byte-by-byte file comparison
+	vimdiff -O f1 f2 f3 → Open in vertical splits
+	diff file1 file2 → Show file differences
+	diff -y file1 file2 → Show differences side by side
+	
+SEARCH COMMANDS
+    Syntax : find [path] [options] [expression]
+
+	find . -maxdepth 2 -type d -name "folder*" → Find directories named "folder*" up to 2 levels deep
+	find . -type f -iname "test*" -exec cp -t ../folder2/ {} + → Copy all files matching "test*" to folder2
+	find . -type f -perm 777 → Files with full permissions
+	find . -perm /u=w → Files where the user has write permission
+	find . -perm /g=x → Files where the group has execute permission
+	find . -perm /o=r → Files where others have read permission
+	find . -perm /a=rw → Files where all users have read and write permissions
+	find . -type f -empty → Empty files
+	find / -user username → Files owned by a specific user
+	find / -group groupname → Files belonging to a specific group
+	find . -mtime 10 → Modified exactly 10 days ago
+	find . -mtime +10 → Modified more than 10 days ago
+	find . -mtime -10 → Modified within the last 10 days
+		+10 -> More than 10 days ago
+		-10 -> Less than 10 days ago 
+		 10 -> Exactly 10 days ago
+	find . -newer file1 → Files modified after file1
+	find . -newer file1 -not -newer file2 → Files modified between file1 and file2
+	find . -newermt "2024-01-01 12:00" → Modified after the given date/time
+	find . -atime 10 → Accessed exactly 10 days ago
+	find . -ctime 10 → Changed status exactly 10 days ago
+	find . -cmin -60 → Status changed within the last 60 minutes
+	find . -mmin -60 → Modified within the last 60 minutes
+	find . -amin -60 → Accessed within the last 60 minutes
+	find / -size +50M -size -100M → Files between 50MB and 100MB
+	find . -type f -name "*.txt" -exec grep -l "pattern" {} + → Find files containing "pattern"
+	find . -type f -name "*.txt" -exec grep -L "pattern" {} + → Find files not containing "pattern"
+	find . -type f -newermt "10 days ago" ! -newermt "5 days ago" → Modified between 10 and 5 days ago
+	find . -type f -newerct "$(date -d '60 seconds ago')" → Status changed in the last 60 seconds
+	find . -name "*.log" | xargs -I {} mv {} archive/ -I {} -> Inserting {} in the command
+	xargs -n 1 -> Process one argument at a time
+	find . -name "*.txt" | xargs grep "search_string"
+	find . -type f -newerct "$(date -d '1 hour ago')" ! -newerct "$(date -d '30 minutes ago')" → Status changed between 1 hour and 30 minutes ago
+	stat -c FORMAT file → Custom file info output
+    test -d "target" && echo "yes" || echo "no" --> To test directory is there in the path
+	test -f "file1.txt" && echo "yes" || echo "no"
+
+stat Format Options
+Option	Description
+%n	    File name
+%s	    File size in bytes
+%x	    Access time (atime)
+%y	    Modification time (mtime)
+%z	    Change time (ctime)
+%A	    File permissions(-rw-r--r--)
+%U	    Owner name
+%G	    Group name
+%F	    File type
+%a      File permissions(644, 755)
+%h	    Number of hard links
+%l	    Symbolic link target
+
+grep Commands
+	grep "word" file1 file2 file3
+	grep -c "word" file
+	grep -e "pattern1" -e "pattern2" filename
+	grep -L "pattern" filename -> Find files not containing "pattern"
+	grep -l "pattern" filename -> Find files containing "pattern"
+	grep -v "pattern" filename -> Exclude lines with "pattern"
+	grep -i "pattern" filename -> Case-insensitive search
+	grep -r "pattern" /path/to/dir -> Recursive search in directory
+	grep -w "word" filename -> Match whole word
+	grep -n "pattern" filename -> Show line numbers
+	grep -A 3 "pattern" filename -> Show 3 lines after the match
+	grep -B 3 "pattern" filename -> Show 3 lines before the match
+	grep -C 3 "pattern" filename -> Show 3 lines before and after the match
+	grep -q "pattern" filename -> Quiet mode (no output, just exit status). Used in scripts
+	grep -m 5 "pattern" filename -> Stop after 5 matches
+	grep -E "regex" filename -> Extended regex
+	grep -F "fixed string" filename -> Fixed string search (faster) 
+	Eg grep -F "a.*b" file.txt 
+	Finds lines containing the *literal string "a.b" (not regex) — no special meaning to * or .
+	grep -o "pattern" filename -> Show only matching parts
+	grep -r "pattern" /path/to/dir --include="*.txt" -> Search only in .txt files
+	grep -r "pattern" /path/to/dir --exclude="*.log" -> Exclude .log files
+	grep -r "pattern" /path/to/dir --exclude-dir="dir_name" -> Exclude specific directory
+	sudo cut -d: -f1,7 /etc/passwd --> It will show the first and seventh fields of the /etc/passwd file, separated by a colon (:).
+	awk NF filename (or) grep -v '^$' filename (or) sed '/^$/d' filename --> It will show the non-blank lines
+	sed -i '/^$/d' filename --> To remove blank lines from a file 
+	grep -m3 "pattern" filename --> Outputs those first 3 matching lines
+	grep -c -a "search_term" possibly_binary.file --> -a is used to treat binary files as text
+    
+	eval means executes the string as a command
+	command ls means executes the command without using shell features like aliases
+	type command_name → Show command type (alias, function, built-in, executable)
+	which command_name → Show command path
+
+	Default path for user commands is /usr/bin:/bin:/usr/sbin:/sbin used by the shell to search for executable files.
+	User path is set in /etc/profile or ~/.bashrc or ~/.bash_profile
+	Default path is best to use in scripts to ensure commands are found correctly.
+
+	
+	Escape means make special/invisible characters visible
+	Literal means treat special characters as normal characters
+	\ is the escape character in most shells
+	printf "%q\n" * --> %q in printf escapes special characters in a shell-compatible way
+	                  (so the output can be reused as input in shell commands).
+					--> Guarantees the output is safe for eval or shell reuse.
+					--> %q means quote the argument in a way that it can be reused as a shell command.
+	Example : 
+	121.002.20000#2025+10obj.cfg
+	121.002.20000#2025+services\[print\].cfg
+	hardlink_file
+ 
+    pom.xml :
+	<dependency>
+		<groupId>org.example</groupId>
+  		<artifactId>my-library</artifactId>
+  		<version>8.6.2</version>
+	</dependency>
+
+	grep -Po '<artifactId>\K[^<]+' pom.xml # Output : my-library
+	  --> -o: Output only the matched part of the line
+	  --> \K: A PCRE-specific feature that resets the start of the reported match. So everything matched before \K is excluded from the output.
+      --> [^<]+: Matches one or more characters that are not <. This effectively extracts the content inside the <artifactId> tags.
+	
+	grep -Po '(?<=<artifactId>)[^<]+' pom.xml # Output: 8.6.2
+	(?<=pattern)	Positive lookbehind (must be preceded by pattern)
+      --> Extract text preceded by <artifactId> tag
+
+	grep -Po '[^<]+(?=</version>)' pom.xml  # Output: version>8.6.2
+	(?=pattern)	Positive lookahead (must be followed by pattern)
+	   --> Extract text before <version> tag
+
+    tee -a file.txt << 'EOF'
+	This is a multi-line input
+	EOF
+
+	cat > file.txt << 'EOF'
+	This is a multi-line input
+	EOF
+
+	sudo only applies to the command you run, not the shell's redirection 
+	So, sudo cat > file.txt will not work as expected.
+
+	sudo tee file.txt << 'EOF'
+	This is a multi-line input
+	EOF 
+
+User Management Commands
+	useradd <username> → Just add user without any options
+	useradd -m -d /custom/path/yaswanth -s /bin/bash -u 1501 -g users -G sudo,developers -e 2025-12-31 username
+	useradd -m username → Create home directory
+	useradd -u 1501 username → Assign specific UID
+	useradd -g users username → Assign primary group
+	useradd -G sudo,developers username → Assign secondary groups
+	useradd -s /bin/bash username → Dont Assign shell
+	useradd -e YYYY-MM-DD username → Set account expiration date
+	useradd -d /custom/path/yaswanth username → Assign custom home directory
+	useradd -c "New User" ->Set the default comment (usually full name).
+	useradd -s /bin/false username → Disabling the ability to log in for that user.
+	for service accounts or users that should not log in interactively but may still be needed for other system tasks 
+	(like running background processes or owning files).
+
+	useradd -r username → Add system user (no home directory)
+	useradd -N username → No user group
+
+	adduser <username> → Interactive user add
+	useradd -U username → User group with same name
+	useradd -M username → No home directory (e.g., for system users)
+
+	useradd -D → View default useradd options
+	useradd -D -b /opt/users -s /bin/bash  -f 30 -g users username
+	# Set default options for new users
+	-b → base home directory
+	-e → expire date (YYYY-MM-DD)
+	-s → default shell (Eg: /etc/skel)	
+	-k → skeleton directory
+	-f → inactivity period (Eg : 30 days after password expiry it will be disabled)
+	-g → default group (Eg : users) 
+
+	userdel username --> Delete user
+	userdel -r username --> Delete user and home directory
+	userdel -f username --> Delete user even if logged in
+	userdel -r -f username --> Force delete user and home directory
+	cat /etc/passwd -> Show user details
+	cat /etc/shadow -> Show password details
+
+	sudo vipw #Safer way to edit /etc/passwd using the vipw command (locks the file during edit)
+
+	sudo vipw -s username # Edit /etc/shadow safely
+	sudo vigr -s group   # Edit /etc/gshadow safely
+	cat /etc/environment -> Show environment variables (EDITOR=vim, then source /etc/environment)
+	sudo chsh -s /bin/bash jenkins 
+	#Interactive and user-friendly, it will also check if the shell exists in /etc/shells and refuse invalid shells.
+	chsh = Change SHell 
+
+User mod Command :
+sudo usermod -l johnny -u 1600 -d /home/johnny -m -g staff -G docker -s /bin/zsh -e "2023-02-09"  john
+What it does:
+    -l johnny: Renames user john to johnny
+    -u 1600: Changes UID
+    -d /home/johnny: Sets new home directory
+    -m: Moves home directory contents
+    -g staff: Changes primary group
+    -G docker: Sets new secondary group
+    -s /bin/zsh: Changes login shell
+
+Group Management
+	groupadd groupname -> Add group(default GID)
+	groupadd -f developers → Don't error if already exists
+    groupadd -g 2025 groupname → Add group with specific GID
+	addgroup groupname → Add group (Debian/Ubuntu)
+	groupadd -r groupname → Add system group
+	groupadd -f -r groupname → Add system group if not exists
+	usermod -aG groupname username → Add user to group
+	deluser username groupname -> Remove user from group (Debian/Ubuntu)
+    gpasswd -d username groupname → Remove user from group (Red Hat/CentOS)
+	groupmod -n newgroup oldgroup → Rename group
+	groupdel groupname → Delete group 
+	delgroup groupname -> To remove a group (Debian/Ubuntu only)
+	newgrp qa_team  # if your user was recently added to a group and you want to activate the new group membership
+	                 ignored without logging out and back in.
+
+Check Group Membership
+	id username → Show user ID and groups
+	id -g username → Show primary group ID
+	id -gn username → Show primary group name
+	id -u username → Show user ID
+	groups username → Show groups for a user
+	getent group groupname → Show group details
+	getent passwd username → Show user details
+
+Add all users from groupA to groupB
+for i in $(getent group groupA |awk -F: '{print $4}' | tr ',' ' '); do usermod -a -G  groupB "$i";done
+Remove all users who are in groupA from groupB     
+for i in $(getent group groupA |awk -F: '{print $4}' | tr ',' ' '); do gpasswd -d "$i" groupB;done
+
+
+🔐 chage – User Account Aging & Expiry
+Command	                             		 Description
+chage -l username	            	List password aging info
+chage -E YYYY-MM-DD username		Set account expiration date
+usermod -e YYYY-MM-DD username		Set account expiry (alternate method)
+chage -W 7 username	            	Warning days before password expires
+chage -I 3 username					Inactivate after 3 days of password expiry
+chage -d YYYY-MM-DD username		Set last password change date
+chage -m MIN_DAYS username			Set minimum days before password change
+chage -M MAX_DAYS username			Set maximum days before password expiry
+chage -E -1 usname or usermod -e "" username → Remove expiry date
+
+Options:
+	-d, --lastday LAST_DAY → Last password change date
+	-E, --expiredate EXPIRE_DATE → Expiration date (YYYY-MM-DD)
+	-I, --inactive INACTIVE → Set inactive days post expiry
+	-m, --mindays MIN_DAYS → Minimum password age (days before change)
+	-M, --maxdays MAX_DAYS → Maximum password age (password expiry)
+	-W, --warndays WARN_DAYS → Expiry warning days
+	-i, --iso8601 → Use ISO 8601 date output
+	-h, --help → Display help message
+
+Switching Users
+	su username → Switch user without loading environment
+	su - username → Full login shell for user
+	sudo -i	-> Full login shell for root
+	sudo -s	-> Shell for root without loading environment
+
+Permission Commands
+	chown username file/foldername → Change file owner
+	chown -R username foldername → Recursively change ownership
+	chgrp groupname file/foldername → Change group
+	chgrp -R groupname foldername → Recursively change group
+	chown username:groupname file/foldername → Change user & group
+	chmod 777 file/foldername → Change permissions
+
+	chmod 2775 shared_dir : New files inside the directory inherit the directory's group
+
+    Very important command :    
+	sudo chattr +i filename -> a file is marked as immutable, it cannot be modified, deleted, or renamed, even by the root user
+    lsattr filename -> To check the attributes of a file
+    chattr +a filename -> Append-only attribute, only allows appending data
+	sudo chattr -i filename -> To remove the immutable attribute
+	lsattr filename ->  To check the attributes of a file
+
+	The umask (user file creation mask) command controls the default file permissions assigned when a file or directory is created. 
+	The value of umask acts as a subtractive mask, which subtracts permissions from the default 666 (for files) or 777 (for directories).
+	umask 022 → Default permissions for files: 644, directories: 755
+	umask 027 → Default permissions for files: 640, directories: 750
+	set umask 027 → Set umask for the current session
+	
+	ufw means Uncomplicated Firewall
+
+	ufw status verbose → Show firewall status
+	ufw allow 22/tcp → Allow SSH traffic
+	ufw allow 80/tcp → Allow HTTP traffic
+	ufw allow 443/tcp → Allow HTTPS traffic
+	ufw deny 22/tcp → Deny Telnet traffic
+
+	sudo ufw status numbered → Show numbered rules
+	sudo ufw delete 6   # delete the rule with higher number first
+	sudo ufw delete 5   # then delete the one that was above it
+
+	namei -l /path/to/file.txt  # Shows permissions at each level
+	namei -m /path/to/file.txt  # Shows permissions and ownership at each level
+
+ps -aux | grep processname 
+--> It shows all processes running on the system, including those owned by other users.
+a --> Show processes for all users
+u --> Show user-oriented format
+x --> Show processes that don't have controlling terminal (Eg: daemon processes, background processes)	
+
+ps -ef --sort=%cpu   # Sort processes by CPU usage (ascending)
+ps -ef --sort=-%cpu   # Sort processes by CPU usage (descending)
+ps -ef --sort=-%mem   # Sort processes by memory usage (descending)
+
+ps -ef | grep processname  <--> ps -fp PID
+--> It shows all processes running on the system, including those owned by other users.
+-e --> Show all processes
+-f --> Show full format listing (including command line arguments, PPID)
+	
+pkill [options] pattern
+Common Flags:
+Flag	Description
+-f	Match the full command line instead of just the process name
+-e	Echo the names of the processes killed
+-n	Target the newest matching process
+-o	Target the oldest matching process
+-u  USER	Kill processes owned by the specified user
+-x	Match the exact process name (not substring)
+-l	List the process names instead of killing them
+-signal	Send a specific signal (e.g., -9 for SIGKILL, -HUP, -SIGTERM)
+Examples:
+	pkill firefox → Kills all processes named "firefox"
+	pkill -l firefox → Lists all processes named "firefox" without killing them
+	pkill -f python → Kills any process with "python" in its full command line
+	pkill -9 nginx → Forcefully kills nginx processes
+	pkill -u bob → Kills all processes owned by user "bob" 
+	pkill -o python → Kills the oldest python process
+	pkill -n vim → Kills the most recent vim process
+	pkill -x sshd → Kills only if the process name is exactly "sshd"
+	pkill -e python → Echo the names of processes being killed
+
+pgrep [options] pattern --> It prints the process IDs (PIDs) of running processes that match the given name or pattern.
+Common Flags:	
+Option | Description | Example
+-l | Show PID and process name | pgrep -l python
+-u <user> | Show processes for a specific user | pgrep -u peeyush
+-f | Match full command line, not just name | pgrep -f myscript.py
+-n | Return only the newest matching process | pgrep -n python
+-o | Return only the oldest matching process | pgrep -o python
+-v | Invert match (exclude matches) | pgrep -v bash
+-d <char> | Set delimiter for PIDs (default newline) | pgrep -d, python → 1234,1240
+
+Signal	Number	Name	Description
+  0	    0	    N/A	    Check if a process exists (no signal sent). 0 → Process exists, and you can signal it
+SIGHUP	1	  Hangup	Reload config or indicate terminal disconnect
+SIGINT	2	 Interrupt	Sent by Ctrl+C to interrupt a process
+SIGQUIT	3	   Quit   	Sent by Ctrl+\, creates a core dump
+SIGILL	4	 Illegal	Illegal instruction (invalid machine code)
+SIGABRT	6	  Abort	    Sent by process to abort (e.g., via abort() call)
+SIGFPE	7	   FPE	    Floating-point exception (e.g., division by zero)
+SIGKILL	9	   Kill	    Forces immediate process termination; cannot be caught or ignored
+SIGSEGV	11	 Segfault	Invalid memory access (segmentation fault)
+SIGPIPE	13	  Broken	Pipe broken (e.g., writing to closed pipe)
+SIGALRM	14	  Alarm		Timer signal from alarm()
+SIGTERM	15	 Terminate	Graceful termination (can be caught or ignored by process)
+SIGCONT	18	 Continue	Resume a stopped process
+SIGSTOP	19	  Stop	    Pause process (can’t be caught or ignored)
+SIGTSTP	20	  TSTP	   	Terminal Stop process (sent by Ctrl+Z)
+
+kill -l → List all signals
+kill -l 1 → List signal number 1 (SIGHUP)
+kill -l SIGINT → List signal name (SIGINT)
+kill -15 <PID>        # Graceful stop using SIGTERM
+kill -9 <PID>         # Force kill using SIGKILL
+kill -1 <PID>         # Reload config (SIGHUP)
+kill -18 <PID>        # Continue a stopped process (SIGCONT)
+kill -19 <PID>        # Stop (pause) a process (SIGSTOP)
+
+pkill -SIGTERM firefox   # Gracefully stop firefox
+pkill -9 apache2         # Force kill apache2 processes
+
+Ignores hangup signal
+Keeps processes running after terminal logout
+
+You're an IT admin connecting to a remote Linux server over SSH. You're about to leave for the airport, but you need to start a long-running
+backup of important files to another server. You won’t be connected to the terminal after your laptop goes to sleep or disconnects from Wi-Fi.
+
+screen -S mysession
+rsync -avz -e "ssh -i ~/.ssh/id_ed25519" file.txt user@remote:/path/
+# Press Ctrl+A, then D to detach from the screen session
+# Press Ctrl+A, then K to kill the screen session
+# To reattach later, use:
+screen -r mysession --> Reattach to the screen session
+screen -XS backupjob quit --> Terminate the screen session
+screen -ls --> List all screen sessions
+
+screen -dmS mysession bash -c 'rsync -avz /var/www/ user@backupserver:/backups/; exec bash' 
+-d → Start detached (don’t attach to it)
+-m → Force screen to create a new session
+-S → Name the screen session
+
+We can add this in crontab :
+0 1 * * * /usr/bin/screen -dmS nightlybackup bash -c 'rsync -avz /var/www/ user@backupserver:/backups/ > /var/log/nightlybackup.log 2>&1; exec bash'
+
+
+nohup rsync -avz /var/www/ user@backupserver:/backups/ > backup.log 2>&1 &
+nohup → ignores hangup signal (keeps running after logout)
+> backup.log 2>&1 → saves both stdout and stderr to a log file
+& → runs in background so you can close the terminal
+
+cd /home/user/projects
+nohup python script.py &  # Creates /home/user/projects/nohup.out 
+
+Network Commands
+1)ping -c 5 -i 0.2 -W 1 app-server.internal --> 5 packets, interval of 0.2 seconds, timeout of 1 second
+2)mtr -rwzbc 50 google.com
+This command runs mtr (My Traceroute) in report mode to analyze the network path from your machine to google.com, sending 50 packets, skipping DNS resolution, and printing a clean, wide-formatted, easy-to-read report.
+Flag	Meaning
+-r	Report mode – useful for logging or automation
+-w	Wide output – full IPs and hostnames, no truncation
+-z	Show latency jitter (useful for spotting network instability)
+-b	Show both IP address and hostname
+-c 50	Send 50 pings per hop to get a reliable average
+	
+3)traceroute -n -p 443 api.example.com	--> Traces the route to api.example.com using port 443
+Flag	                   Description 
+-n	                       No DNS lookup – shows IPs only (faster, avoids DNS delays)
+-p 443	                   Target port 443 – used to mimic actual HTTPS traffic (can help bypass firewalls)
+api.example.com	           Destination – resolved to an IP and probed hop by hop
+
+4)
+• wget: Primarily used for downloading files over HTTP, HTTPS, and FTP. It's designed to fetch content from the web, often used for bulk downloads or mirroring websites.
+• curl: A tool for transferring data to or from a server, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP, SCP, and more). 
+        It's more flexible and can handle various data transfer tasks beyond just downloading files.
+
+wget -r -l2 -nc --limit-rate=500k --user-agent="Mozilla/5.0" --no-check-certificate -P -N 
+/path/to/save https://example.com
+
+Explanation:-
+	• -r: Recursively download the website.`
+	• -l2: Limit the recursion depth to 2 levels (you can increase or decrease as needed).
+	• -nc: Skip downloading files that already exist (no clobber).
+	• --limit-rate=500k: Limit download speed to 500 KB/s.
+	• --user-agent or -U ="Mozilla/5.0": Set a custom user-agent (useful for websites blocking default agents).
+	• --no-check-certificate: Ignore SSL certificate verification (use with caution).
+	• -P /path/to/save: Save the files to a specific directory (replace with your desired path).
+	• https://example.com: The URL of the website you want to download.
+	• -N To download only files that have been modified since your last download
+	• -b --> download in the background, so you can continue using the terminal.
+	• -c --> download was interrupted, you can resume it with the -c flag.
+	• wget -i urls.txt --> You can download a list of files by providing a text file with the URLs.
+	• wget -O myfile.zip https://example.com/file.zip  --> rename the file after downloading
+	• wget -q --show-progress https://example.com/file.zip --> quiet mode with progress bar
+	• wget -m https://example.com/file.zip -->Mirror, Downloads all of the website's content recursively, including directories, 
+											subdirectories, and linked pages, while preserving the original directory structure.
+	  wget --tries=inf http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo
+
+For practice go through this website : https://phoenixnap.com/kb/wget-command-with-examples	
+
+Problem :
+peeyush@peeyush:/opt/peeyush/maven/peeyush$ wget https://get.jenkins.io/war-stable/latest/jenkins.war
+--2025-05-02 14:36:52--  https://get.jenkins.io/war-stable/latest/jenkins.war
+Resolving get.jenkins.io (get.jenkins.io)... failed: Temporary failure in name resolution.
+wget: unable to resolve host address ‘get.jenkins.io’
+
+Solution :
+sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+
+curl -O --limit-rate 500k -A -z "Mozilla/5.0" -k https://example.com/file.zip:
+• -O: Save the file with the same name as on the server.
+  -o newname.zip: Save the file with a custom name.
+• --limit-rate 500k: Limits the download speed to 500 KB/s.
+• -# : Show progress bar.
+• -A "Mozilla/5.0": Sets the custom user-agent (mimicking a browser).
+• -k: Ignores SSL certificate verification.
+• -z: If you want to download the file only if it’s newer, you can use the -z 
+• curl -C - -O https://example.com/largefile.zip --> Supports resuming downloads with the -C - flag
+• curl -o newname.zip https://example.com/file.zip
+• --retry 3: Retry the download 3 times in case of failure.
+• --timeout 30: Set the connection timeout to 30 seconds.
+• -L: Follow redirects (in case the URL redirects to another location).
+• -w "%{http_code}\n": Print the HTTP response code (e.g., 200 for success, 404 for not found).
+• -s: Silent mode (no progress bar or error messages).
+• -z: Download the file only if it has been modified since the last download.
+• -K urls.txt: Download multiple files from a list in urls.txt. Eg: url = "https://example.com/file1.zip" in urls.txt
+• --form "file=@/path/to/file" https://example.com/upload: Upload a file using a form submission.
+• -u username:password URL : Use basic authentication with the provided username and password.
+• -T 30: Set the connection timeout to 30 seconds.
+• --data "username=user&password=pass": Send data with the request (e.g., for form submissions).	
+
+Feature                      | wget Flag              | curl Flag      	     | Description
+Download file with same name | Default         		  | -O             	     | Saves with original name in wget; curl needs -O.
+Download with custom name 	 | -O newname.zip  		  | -o newname.zip 	     | Rename file after download.
+Recursive download           | -r                     | ❌             	   | Only wget supports recursion.
+Recursion depth 			 | -l2 			          | ❌ 			  	   | Only in wget; sets max recursion level.
+Skip existing files 		 | -nc 			          | ❌ 			       | wget's --no-clobber skips existing files.
+Limit download speed 		 |--limit-rate=500k       | --limit-rate 500k    | Both support speed limiting.
+Set user-agent 				 | --user-agent="..." or -U | -A "..."           | Mimics browser user-agent.
+Ignore SSL cert check        | --no-check-certificate | -k                   | Disables SSL verification.
+Save to specific directory   | -P /path/              | -o /path/filename    | wget saves to dir; curl needs full output path.
+Download if updated			 | -N 					  | -z filename 	     | Downloads only if newer than local file.
+Background download 		 | -b 					  | ❌ 				   | Only wget supports background mode.
+Resume broken download 		 | -c 					  | -C - 				 | Both support resuming partial downloads.
+Download from list 			 | -i urls.txt 			  | -K urls.txt 		 | wget supports URL lists from file.
+Quiet with progress bar 	 | -q --show-progress 	  | -s 					 | Both support silent mode with some output.
+Mirror entire site           | -m 					  | ❌ 				   | Only wget can mirror sites recursively.
+Infinite retry 			     | --tries=inf 			  | --retry 3            | wget can retry forever; curl needs manual retry count.
+Set timeout 				 | --timeout=30 		  | --max-time 30 		 | Both support setting timeouts.
+Follow redirects 			 | Default 				  | -L 					 | wget follows redirects by default; curl needs -L.
+Print HTTP status code 		 | ❌ 				     | -w "%{http_code}\n" | Only curl can print HTTP status directly.
+
+curl -s https://example.com/folder/ | grep -o 'href="[^"]*"' | cut -d'"' -f2 --> 
+simulate recursion in curl by scraping links from a webpage that lists files.
+
+Ubuntu/Debian Package Management
+dpkg --get-selections --> List all installed packages
+dpkg --get-selections | grep -v deinstall --> List installed packages
+dpkg --set-selections < package_list.txt --> Import packages from a file
+dpkg --get-selections | grep -v deinstall > package_list.txt --> Export installed packages to a file
+apt-get dselect-upgrade --> Install packages from the list
+apt-get install -f --> Fix broken dependencies
+apt-get update --> Update package list	
+apt-get upgrade --> Upgrade all packages
+apt-get dist-upgrade --> Upgrade packages and handle dependencies
+apt-get install package_name --> Install a package
+apt-get remove package_name --> Remove a package
+apt-get purge package_name --> Remove a package and its configuration files
+apt-get autoremove --> Remove unused packages
+apt-get clean --> Remove downloaded package files
+apt-get autoclean --> Remove old package files
+apt-cache search package_name --> Search for a package
+apt-cache show package_name --> Show package details
+apt-cache policy package_name --> Show package version and repository
+apt-cache depends package_name --> Show package dependencies
+apt-cache madison package_name --> Show available versions of a package
+
+
+
+Socket Statistics : 
+ss -tulpn       # All listening ports with process info
+ss -tn state established   # Active TCP connections
+ss -s            # Summary of all socket states
+ss -4lpn         # IPv4 listening sockets with PIDs
+State	    |      Meaning
+ESTAB	    ->  Connection is established
+LISTEN	    ->  Socket is waiting for a connection
+CLOSE-WAIT	->  Remote side has closed, local side waits
+TIME-WAIT	->  Waiting after closing to handle stray packets
+SYN-SENT	->  TCP connection initiated, waiting for response
+SYN-RECV	->  Connection request received
+CLOSED	    ->  Socket is closed
+
+Flag	Description	Example
+-t	    Show TCP sockets only	ss -t state established
+-u	    Show UDP sockets only	ss -u
+-l	    Show listening sockets only	ss -l
+-a	    Show all sockets (listening and established)	ss -a
+-n	    Show numeric IPs and ports (no DNS/port name resolution)	ss -n
+-p	    Show processes using the sockets (needs sudo/root)	ss -p
+-s	    Show summary statistics (counts of sockets)	ss -s
+-r	    Display routing information	ss -r or ss -tr
+-4	    Show IPv4 sockets only	ss -4
+-6	    Show IPv6 sockets only	ss -6
+-o	    Show TCP socket timers (useful for time-wait/debugging)	ss -o
+-m	    Show memory usage for sockets	ss -m
+-e	    Show extended socket info	ss -e
+To see established connections:
+ss -t state established
+ss -u state established	
+ss -t state listening
+
+nc -zv localhost 8080 --> Check if port 8080 is open on localhost
+nc -zv example.com 80-90 --> Check if ports 80 to 90 are open on example.com
+nc means netcat
+-z means zero-I/O mode (just check if the port is open)
+v means verbose (show connection status)
+nc -l -p 1234 --> Listen on port 1234 for incoming connections
+
+lsof Command — List Open Files
+Flag	    Description	                                    Example
+-i	        Show network connections (TCP/UDP)	            lsof -i
+-i :port	Filter by port (e.g., port 80)	                lsof -i :80
+-i @ip:port	Filter by specific IP and port	                lsof -i @127.0.0.1:22 
+-u user	    Show files opened by a specific user	        lsof -u peeyush
+-t	        Return only process IDs (useful in scripts)	    lsof -t -i :443
+-p PID	    Show files opened by a specific process ID	    lsof -p 1234
+-n	        Skip hostname resolution (faster)	            lsof -i -n
+-c cmd	    Filter by command name (e.g., nginx)	        lsof -c nginx
++d dir	    Show open files in a directory (non-recursive)	lsof +d /var/log
++D /dir	    Show open files in a directory (recursive)	    lsof +D /var/log
+-d FD	    Filter by file descriptor                       lsof -d 1,2
+															-> Show all open files with file descriptor 1 and 2
+
+# 📘 Basic Port Numbers for DevOps
+
+## 🖥️ Remote Access
+| Service | Port | Protocol | Description         |
+|---------|------|----------|---------------------|
+| SSH     | 22   | TCP      | Secure shell access |
+
+## 🌐 Web Services
+| Service | Port | Protocol | Description              |
+|---------|------|----------|--------------------------|
+| HTTP    | 80   | TCP      | Web (unencrypted)        |
+| HTTPS   | 443  | TCP      | Secure web (SSL/TLS)     |
+
+## 📁 File Transfer
+| Service | Port | Protocol | Description               |
+|---------|------|----------|---------------------------|
+| FTP     | 21   | TCP      | File Transfer Protocol    |
+| SFTP    | 22   | TCP      | FTP over SSH              |
+| TFTP    | 69   | UDP      | Lightweight FTP           |
+| SCP     | 22   | TCP      | Secure Copy Protocol      |
+| Rsync   | 873  | TCP      | Remote file sync          |
+| SMB     | 445  | TCP      | Windows file sharing      |
+
+## 🛠️ DevOps Tools
+| Tool        | Port | Protocol | Description                  |
+|-------------|------|----------|------------------------------|
+| Docker API  | 2375 | TCP      | Docker remote management     |
+| K8s API     | 6443 | TCP      | Kubernetes control plane     |
+| Grafana     | 3000 | TCP      | Monitoring dashboards        |
+| Prometheus  | 9090 | TCP      | Metrics and alerts           |
+
+## 🗃️ Databases
+| DB        | Port  | Protocol | Description        |
+|-----------|-------|----------|--------------------|
+| MySQL     | 3306  | TCP      | Relational DB      |
+| PostgreSQL| 5432  | TCP      | Relational DB      |
+| MongoDB   | 27017 | TCP      | NoSQL Document DB  |
+| Redis     | 6379  | TCP      | In-memory cache    |
+
+## 🌐 Networking Basics
+| Service | Port     | Protocol | Description               |
+|---------|----------|----------|---------------------------|
+| DNS     | 53       | UDP/TCP  | Domain name resolution    |
+| DHCP    | 67/68    | UDP      | Dynamic IP allocation     |
+| NTP     | 123      | UDP      | Time synchronization      |
+| SNMP    | 161/162  | UDP/TCP  | Network monitoring        |
+| LDAP    | 389      | TCP      | Directory services        |
+| HTTPS   | 443      | TCP      | Secure web traffic        |
+| SMTP    | 25       | TCP      | Email sending             |
+| POP3    | 110      | TCP      | Email retrieval           |
+| IMAP    | 143      | TCP      | Email retrieval           |
+| RDP     | 3389     | TCP      | Remote Desktop Protocol   |
+| VNC     | 5900     | TCP      | Virtual Network Computing |
+
+rsync -avhz --delete-after --exclude 'logs/' --bwlimit=1000 --backup --backup-dir=/backup-old -e "ssh -p 2222" /data/ user@server:/backup/
+• -a: Archive mode
+• -v: Verbose
+• -z: Compress during transfer
+• --delete: Delete remote files that are not in the source (if you’re unsure! Use --dry-run to preview)
+  --delete-before: Deletes files on the destination before transferring new ones
+  --delete-after: Deletes files on the destination after transferring new ones 
+  	(Safer; ensures files are not deleted until the transfer is completed)
+• --exclude 'logs/': Exclude logs directory
+• --bwlimit=1000: Limit bandwidth to 1000 KB/s
+• --backup: Backup overwritten files
+• --backup-dir=/backup-old: Directory for backups of overwritten files
+• -e "ssh -p 2222": Use SSH on port 2222
+• -h: Human-readable: makes file sizes easier to read (e.g., 10M, 1G)
+• --suffix=.bak: Append .bak to the backup file
+
+• rsync -avz --dry-run /data/ user@server:/backup/
+--dry-run : hows what files would be transferred, but doesn’t actually do it.
+
+• rsync -avz --progress /data/ user@server:/backup/
+--progress: Shows progress during transfer
+
+• rsync -avz --remove-source-files /data/ user@server:/backup/      
+--remove-source-files: Deletes source files after transfer
+
+• rsync -avz --ignore-existing /data/ user@server:/backup/
+--ignore-existing: Skips files that already exist on the destination means 
+  it will not overwrite existing files on the destination
+
+• rsync -avz --update /data/ user@server:/backup/
+--update: Source file is newer than destination file (based on timestamp)
+
+• rsync -avz --checksum /data/ user@server:/backup/
+--checksum: Compares files based on checksum instead of timestamp . Copy only if the checksum is different
+  (slower, but ensures files are identical)
+
+• rsync -avz --exclude-from='exclude.txt' /data/ user@server:/backup/
+--exclude-from: Excludes files listed in exclude.txt        
+
+• rsync -avz --include='*.txt' --exclude='*' /data/ user@server:/backup/
+--include: Includes only .txt files, excludes everything else
+
+• rsync -av --prune-empty-dirs /source/ user@server:/backup/
+--prune-empty-dirs: Removes empty directories from the transfer
+
+• rsync --partial --append -avz file.iso user@remote:/data/
+--partial: Keeps partially transferred files
+--append: Appends data to partially transferred files
+  Assumes the partial file is intact. Risky if corruption occurred during interruption.
+
+• rsync --partial --append-verify -avz file.iso user@remote:/data/
+,--append-verify: Appends data to partially transferred files and verifies the integrity of the transferred data
+  Compares hashes of existing data before resuming. Safer for backups and critical files.
+
+
+scp -P -C 2222 -r -i /path/to/key.pem/data/ user@server:/backup/
+• -C: Compress data during transfer
+• -P: Use port 2222
+• -r: Recursively copy directories
+• -i: Use the specified private key for authentication
+• -v: Verbose output
+• -q: Quiet mode, suppresses progress and error messages
+• -p: Preserves file attributes (timestamps, permissions)
+• -l: Limits the bandwidth used (e.g., 1000k for 1000 KB/s) Eg: scp -l 1000   
+
+sudo apt install unzip tar xz-utils bzip2
+zip file.zip file1.txt file2.txt  # Create .zip
+zip -r file.zip folder/  # Create .zip from folder
+zip -u file.zip file1.txt  # Update .zip with new file 	
+zip -r -u file.zip folder/  # Update .zip with new folder
+zip -q file.zip file1.txt  # Quiet mode (no output)
+zip -d file.zip file1.txt  # Delete file from .zip
+zip -e file.zip file1.txt  # Create encrypted .zip. 
+zip -P password file.zip file1.txt  # Create encrypted .zip with password 
+(not recommended unless you're in a secured, automated script environment.)
+zip -T file.zip  # Test .zip integrity
+zip -j file.zip dummy/test/file1.txt dummy/demo/file2.txt  # Create .zip without directory structure
+
+unzip file.zip            # Unzip .zip
+unzip -l file.zip        # List .zip
+unzip -d folder file.zip  # Unzip to folder
+unzip -o file.zip        # Overwrite existing files without prompt
+unzip -n file.zip        # Skip existing files
+unzip -q file.zip        # Quiet mode (no output)
+unzip -o -q file.zip    # Quiet mode with overwrite
+unzip -x file.zip file1.txt file2.txt  # Exclude specific files
+unzip -x file.zip "*.txt" "*.jpg"  # Exclude all .txt and .jpg files
+
+tar -tf file.tar             # List .tar
+tar -tzf file.tar.gz         # List .tar.gz or .tgz
+tar -tjf file.tar.bz2        # List .tar.bz2
+tar -tJf file.tar.xz         # List .tar.xz
+
+🔹 -c = create
+🔹 -f = file name
+🔹 -x: extract
+🔹 -t: list contents
+🔹 -f: archive file name
+🔹 -z: gzip, -j: bzip2, -J: xz
+
+tar -cf new.tar folder/          # Create .tar
+tar -czf new.tar.gz folder/      # Create .tar.gz
+tar -cjf new.tar.bz2 folder/     # Create .tar.bz2
+tar -cJf new.tar.xz folder/      # Create .tar.xz
+xz -d file.tar.xz             # Extract .tar.xz 
+-d = decompress
+
+tar -xvf file.tar             # Extract .tar
+tar -xzvf file.tar.gz         # Extract .tar.gz
+tar -xjvf file.tar.bz2        # Extract .tar.bz2
+tar -xJvf file.tar.xz         # Extract .tar.xz
+tar -xzvf file.tar -C /path/to/folder  # Extract to specific folder
+tar -zvf file.tar --strip-components=1 -> Extract files without leading directory names
+tar -xvf file.tar --wildcards '*.txt'  # Extract only .txt files
+tar -xvf file.tar --exclude='*.txt'  # Exclude .txt files
+
+Feature           	| gzip (.gz)  | bzip2 (.bz2)     | xz (.xz)
+
+Compression Ratio 	| Low (≈2–3×) | Medium (≈2.5–4×) | High (≈3–6×)
+Compression Speed 	| Very fast   | Slow             | Slowest
+Decompression Speed | Very fast   | Moderate         | Moderate to slow
+Memory Usage      	| Minimal     | Moderate         | High (especially for compression)
+Command-line Flags 	| -z 		  | -j 				 | -J
+
+Insert the pattern : sed -i '/paatern/i\content' filename
+sed -i '/<\/tomcat-users>/i\                      
+  <role rolename="manager-gui"/>\n\
+  <role rolename="manager-script"/>\n\
+  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
+
+Output
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
+</tomcat-users>
+
+Append the pattern :  sed -i '/paatern/a\content' filename
+sed -i '/<\/tomcat-users>/a\
+  <role rolename="manager-gui"/>\n\
+  <role rolename="manager-script"/>\n\
+  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
+
+Output : 
+<tomcat-users>
+    ...
+</tomcat-users>
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
+
+
+
+\n --> New line character
+\ --> The backslash (\) at the end of the line in the sed command is used as a continuation character. It allows you to 
+split a long command across multiple lines for better readability. When you place a backslash at the end of a line, 
+it tells the shell that the command continues on the next line.
+
+
+echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
+nameserver 8.8.8.8
+# Adds Google DNS to resolve domain names
+# Place it in /etc/resolv.conf for temporary effect
+# Used when default DNS is slow, misconfigured, or restricted
