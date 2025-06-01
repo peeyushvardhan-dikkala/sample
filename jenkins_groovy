@@ -1,0 +1,882 @@
+Groovy STL for Jenkins:
+STL means "Standard Template Library" or "Shared Template Library". In Jenkins, this is more commonly known as the "Jenkins Shared Libraries".
+Groovy is an object-oriented scripting language for the Java platform. It integrates seamlessly with all existing Java libraries and is dynamically typed, meaning it doesn’t require strict type declarations.
+
+Jenkins pipelines are primarily written using Groovy DSL (Domain-Specific Language). This DSL allows developers to define CI/CD workflows as code inside a Jenkinsfile. Jenkins interprets this Groovy-based script to run builds, tests, deploy code, etc.
+
+Why Jenkins Uses Groovy:
+Jenkins Pipelines are DSLs (Domain-Specific Languages)
+Groovy is ideal for creating DSLs. Jenkins uses Groovy to define a Declarative or Scripted Pipeline syntax — this lets users write structured, readable pipeline code.
+
+Tight Integration with Java
+Jenkins is written in Java, and Groovy runs on the Java Virtual Machine (JVM). That makes it easy to integrate Groovy scripts directly into Jenkins without extra setup.
+
+Dynamic and Flexible
+Groovy is both scripting-friendly (like Python) and Java-compatible. It's powerful for automating tasks and writing logic that goes beyond simple shell scripts.
+
+What are Closures in Groovy?
+A Closure is a block of code that:
+Can be assigned to a variable
+Can be passed to a function
+Can be run (executed) later
+It's like a small function that remembers the variables around it when it was created — this is called lexical scope. Closures capture the variables in their lexical scope(Determined at compile-time, not at runtime), similar to lambda functions in Java or Python.
+
+Examples :
+def sayHello = { name -> 
+    println "Hello, $name"
+}
+sayHello("Alice")  // Output: Hello, Alice
+
+def services = ['auth', 'payment', 'user']
+services.each { service ->
+    stage("Build ${service}") {
+        steps {
+            sh "docker build -t myorg/${service}:latest ./services/${service}"
+        }
+    }
+}
+
+[1, 2, 3].each { num ->
+    println "Number: $num"
+}
+
+What is the use of def in Groovy?
+def is used to declare a variable without specifying its type. It's like saying “I’m declaring something, but I’ll let the language figure out the type.”
+
+def name = "Alice"   // Type inferred as String
+def age = 30         // Type inferred as Integer
+
+Declaring and Using Map and List in Groovy
+def myList = [1, 2, 3, 4]
+myList.each { item ->
+    println "Item: $item"
+}
+
+def myList = [10, 20, 30, 40, 50]
+println myList[0]  // 10
+println myList[2]  // 30
+
+println myList[1..3]  // [20, 30, 40]
+
+def firstEven = myList.find { it % 2 == 0 }
+println firstEven  // 10
+
+def allGreaterThan30 = myList.findAll { it > 30 }
+println allGreaterThan30  // [40, 50]
+
+println myList.get(2)  // 30
+
+For Maps :
+
+def myMap = [name: 'Alice', age: 30]
+myMap.each { key, value ->
+    println "$key = $value"
+}
+
+def users = [
+    [name: 'Alice', age: 30],
+    [name: 'Bob', age: 25]
+]
+
+users.each { user ->
+    println "Name: ${user.name}, Age: ${user.age}"
+}
+
+// Get the name of the first user
+println users[0].name  // Alice
+
+// Find user with age > 26
+def found = users.find { it.age > 26 }
+println found.name  // Alice
+
+it refers to the current item being processed.
+it.age means: access the age property of the current item
+
+What are some common pitfalls when using sh or bat steps in scripted Groovy pipelines?
+Pitfall 1: Command failure doesn't stop the build
+By default, sh fails the step if the command returns non-zero — but in Scripted Pipelines, you must capture and handle it manually.
+
+def result = sh(script: 'curl -sSf http://localhost:80', returnStatus: true)
+//sh(script: 'bash -c "ls -l"', returnStatus: true)
+if (result != 0) {
+    echo 'Web service is down! Alert the team or restart it.'
+} else {
+    echo 'Service is running!'
+}
+
+Pitfall 2: Environment variable substitution
+sh "echo $MY_VAR"  // ✅
+sh 'echo $MY_VAR'  // ❌ Doesn't expand
+
+1. Single Quotes '...'
+➤ Used for plain strings.
+No variable interpolation.
+No escape sequences (like \n) are interpreted
+
+def name = 'Alice'
+println 'Hello, $name'   // Output: Hello, $name
+
+2. Double Quotes "..."
+➤ Used when you want:
+Variable interpolation (embed variable values)
+Escape sequences like \n, \t, etc.
+
+def name = 'Alice'
+println "Hello, $name"   // Output: Hello, Alice
+
+def text = """This is
+a multi-line
+string."""
+println text
+
+There are two types of pipeline script:
+1)Declarative Pipeline
+2)Script Pipeline
+
+1. Declarative Pipeline
+Introduced to simplify and standardize the pipeline syntax.
+Uses a more structured and user-friendly syntax.
+Begins with a pipeline block.
+Easier to read and maintain, especially for teams.
+
+2. Scripted Pipeline
+Based entirely on Groovy.
+More flexible and powerful.
+Requires deeper Groovy knowledge.
+Useful for complex logic that cannot be easily expressed in declarative syntax.
+
+1)Examples of Declarative Pipeline:
+
+| `pipeline {}`      | Top-level block that defines a **declarative pipeline**. All pipeline configuration lives inside this block.                                       |
+| `agent`            | Specifies where the pipeline or a stage runs. Can be `any`, a specific `label`, or a container using `docker`.                                     |
+| `stages {}`        | Groups all the **individual stages** of the pipeline. Each stage represents a major step in the build or delivery process.                         |
+| `stage('Name') {}` | Defines a **single stage** within the pipeline (e.g., Build, Test, Deploy). Each stage typically contains a `steps {}` block with its tasks.       |
+| `steps {}`         | Contains the actual **build steps** to be executed, such as `sh`, `echo`, `checkout`, etc.                                                         |
+| `script {}`        | Executes **Groovy scripting logic** (e.g., `def`, `if`, `for`, loops, conditions) inside a declarative pipeline. Used when more control is needed. |
+
+Basic Declarative Pipeline :
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+                sh 'mvn clean package'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing...'
+                sh 'mvn test'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+                sh './deploy.sh'
+            }
+        }
+    }
+}
+
+agent: Specifies where the pipeline or a specific stage should run.
+any: Tells Jenkins to use any available agent from the pool of configured agents or executors on the Jenkins master (or a build node).
+
+agent { label 'linux' } -> → Run on agents with the linux label.
+
+
+Parameterized Build :
+
+pipeline {
+    agent any
+    environment {
+        APP_ENV = 'production'
+        DEPLOY_DIR = '/var/www/html'
+    }
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Git branch to build')
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: "${params.BRANCH_NAME}", url: 'https://github.com/your/repo.git'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying to ${APP_ENV} environment"
+                sh "cp -r build/* ${DEPLOY_DIR}/"
+            }
+        }
+
+        stage('Loop') {
+            steps {
+                script {
+                    def services = ['api', 'web', 'auth']
+                    for (s in services) {
+                        echo "Deploying ${s}..."
+                        sh "./deploy.sh ${s}"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build succeeded!'
+        }
+        failure {
+            echo 'Build failed.'
+        }
+        always {
+            echo 'Cleaning up...'
+            sh 'make clean'
+        }
+    }
+}
+
+Using Shared Libraries :
+@Library('my-shared-lib') _ 
+
+pipeline {
+    agent any
+    
+    stages {
+        stage('Example') {
+            steps {
+                // Using a function from the shared library
+                sayHello("World")
+                
+                // Using a pipeline template from the shared library
+                standardBuild()
+            }
+        }
+    }
+}
+
+
+when, equals, and allOf together in a Declarative Pipeline :
+
+when → Controls whether the stage runs.
+allOf → Combines multiple conditions.
+anyOf -> If any one of the conditions is true.
+equals → Compares parameter or variable values.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'ENV', defaultValue: 'dev', description: 'Target environment')
+        string(name: 'REGION', defaultValue: 'us-east', description: 'Deployment region')
+    }
+
+    stages {
+
+        stage('Conditional Deploy') {
+            when {
+                allOf {
+                    equals expected: 'production', actual: params.ENV
+                    equals expected: 'us-east', actual: params.REGION
+                }
+            }
+            steps {
+                echo "Deploying to production in US East region"
+            }
+        }
+
+        stage('Deploy if Production OR EU-West') {
+            when {
+                anyOf {
+                    equals expected: 'production', actual: params.ENV
+                    equals expected: 'eu-west', actual: params.REGION
+                }
+            }
+            steps {
+                echo "Deploying because one condition matched:"
+                echo "ENV: ${params.ENV}, REGION: ${params.REGION}"
+            }
+        }
+
+        stage('Other Environment') {
+            when {
+                not {
+                    equals expected: 'production', actual: params.ENV
+                }
+            }
+            steps {
+                echo "Skipping production deployment, ENV=${params.ENV}"
+            }
+        }
+
+        stage('Run Loop') {
+            steps {
+                sh '''
+                  echo "Starting"
+                  for i in 1 2 3; do
+                    echo "Loop $i"
+                  done
+                  echo "Finished"
+                '''
+            }
+        }
+
+        stage('Bash-Only Logic') {
+            steps {
+                sh '''" #/bin/bash   
+
+                    echo "🔧 Using Bash-only features"
+
+                    # Brace expansion
+                    echo "Numbers:"
+                    echo {1..5}
+
+
+                    # Arrays
+                    my_array=(apple banana cherry)
+                    echo "Fruits:"
+                    for fruit in "${my_array[@]}"; do
+                        echo "- $fruit"
+                    done
+
+                    # Associative array (requires Bash 4+)
+                    declare -A user_roles
+                    user_roles[alice]="admin"
+                    user_roles[bob]="dev"
+                    user_roles[eve]="tester"
+
+                    echo "User Roles:"
+                    for user in "${!user_roles[@]}"; do
+                        echo "$user is a ${user_roles[$user]}"
+                    done
+                    
+                    #${user_roles[@]} gives you the values: admin developer tester
+                    #${!user_roles[@]} gives you the keys: alice bob eve
+                    #${#array[@]} returns the number of elements
+
+                    # Advanced [[ ]] test
+                    myvar="hello"
+                    if [[ "$myvar" == h* ]]; then
+                        echo "Variable starts with h"
+                    fi
+
+                    # Function with local variables
+                    function greet() {
+                        local name=$1
+                        echo "Hello, $name!"
+                    }
+
+                    greet "DevOps"
+
+                    "
+                    '''
+            }
+        }
+    }
+}
+
+
+Declarative Jenkins Pipeline for Maven Build and SonarQube Analysis :
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven'  // Uses Maven configured in Jenkins global tools
+    }
+
+    stages {
+        stage('Clone Code') {
+            steps {
+                git 'https://github.com/peeyushvardhan-dikkala/one_tomcat.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Test with SonarQube') {
+            steps {
+                withSonarQubeEnv('MySonarServer') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+    }
+}
+
+
+Scripted Jenkins Pipeline for Maven Build and SonarQube Analysis :
+
+node {
+    stage('Clone Code') {
+        git 'https://github.com/peeyushvardhan-dikkala/one_tomcat.git'
+    }
+
+    stage('build') {
+    def mavenHome = tool name: 'maven', type: 'maven'
+    def mavenCMD = "${mavenHome}/bin/mvn"
+    sh "${mavenCMD} clean package"
+    }
+
+    stage('test') {
+        def mavenHome = tool name: "maven", type: "maven"
+        def mavenCMD = "${mavenHome}/bin/mvn"
+        sh "${mavenCMD} sonar:sonar"
+    }
+
+}
+
+mvn <plugin-prefix>:<goal>
+dishwasher:start = Use the dishwasher, and make it start cleaning.
+sonar:sonar= Use the SonarQube plugin, and make it start code analysis.
+
+1) How to conditionally run a stage using Groovy logic ?
+when block with expression (Declarative)
+or plain if inside script (Scripted)
+
+The expression must return true or false.
+You can reference parameters, environment variables, or custom logic.
+We will use .contains(), .startsWith, as Integer, 
+stage('Deploy') {
+    when {
+            
+            def allowedEnvs = ['prod', 'staging']
+            def allowedBranches = ['main']
+            def branch = env.BRANCH_NAME ?: '' #?: Elvis Operator --> def branch = env.BRANCH_NAME ? env.BRANCH_NAME : ''
+            def isPR = env.CHANGE_ID != null
+            def buildNum = env.BUILD_NUMBER as Integer
+
+            return allowedEnvs.contains(params.DEPLOY_ENV) &&
+                   (allowedBranches.contains(branch) || branch.startsWith('release-')) &&
+                   !isPR &&
+                   (buildNum % 2 == 0)  // Only even builds
+        }
+    }
+    steps {
+        echo "Deploying to ${params.DEPLOY_ENV} on branch ${env.BRANCH_NAME}, build #${env.BUILD_NUMBER}"
+    }
+}
+
+stage('Optional Stage') {
+    steps {
+        script {
+            if (env.BRANCH_NAME == 'main') {
+                echo 'This runs only on the main branch'
+            }
+        }
+    }
+}
+
+Echo All Useful Info :
+
+stage('Debug Info') {
+    steps {
+        script {
+            echo "Build Name: ${currentBuild.fullDisplayName}"
+            echo "Build Number: ${currentBuild.number}"
+            echo "Build Result: ${currentBuild.result}"
+            echo "Current Result: ${currentBuild.currentResult}"
+            echo "Build Duration: ${currentBuild.durationString}"
+            echo "Triggered By: ${currentBuild.buildCauses}"
+            echo "Build URL: ${env.BUILD_URL}"
+            echo "Job Name: ${env.JOB_NAME}"
+            echo "Workspace: ${env.WORKSPACE}"
+            echo "Node: ${env.NODE_NAME}"
+            echo "Git Commit: ${env.GIT_COMMIT}"
+            echo "Branch Name: ${env.BRANCH_NAME}"
+            echo "PID of current shell: $$"
+            sh '''
+                echo "PID of current shell: $$"
+                ps -p $$
+            '''
+        }
+    }
+}
+currentBuild.result will be null during the build but will be set when the build completes or during the post section.
+For current status during the build, use currentBuild.currentResult which updates dynamically.  
+
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'TARGET_JOB', defaultValue: 'other-job-name', description: 'Name of the job to trigger')
+        booleanParam(name: 'SHOULD_TRIGGER', defaultValue: true, description: 'Should we trigger the other job?')
+    }
+
+    stages {
+        stage('Show Build Info') {
+            steps {
+                echo "Running build: ${currentBuild.fullDisplayName}"
+                echo "Build URL: ${env.BUILD_URL}"
+                sleep time: 10, unit: 'SECONDS'
+            }
+        }
+
+        stage('Conditional Job Trigger') {
+            when {
+                expression { return params.SHOULD_TRIGGER }
+            }
+            steps {
+                script {
+                    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        echo "Triggering job '${params.TARGET_JOB}'..."
+                        sh 'exit 1'
+                    }
+                }
+            }
+        }
+
+        stage('Intentional Failure') {
+            steps {
+                script {
+                    error 'This error is intentional to demonstrate the `error` step.'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Build completed with status: ${currentBuild.currentResult}"
+        }
+        failure {
+            echo "Build failed. Please check logs for errors."
+        }
+    }
+}
+
+
+stage('Show info') {
+    steps {
+    sh '''
+    ls -l > response.txt
+    cat response.txt
+    '''
+}
+
+Best for logging/visual checks
+Fails build if ls fails
+Output only goes to console, not available as a variable
+
+stage('Show info') {
+    steps {
+        script {
+            def status = sh(script: 'ls -l > response.txt', returnStatus: true)
+            def output = ''
+            if (status == 0) {
+                output = readFile('response.txt').trim()
+            }
+            echo "Status: ${status}"
+            echo "Output: ${output}"
+        }
+    }
+}
+
+Best for conditional logic or downstream decisions
+Handles command failure gracefully
+
+If you want to get the output (HTML or response body) from curl, use returnStdout: true:
+def output = sh(script: 'curl -sSf http://localhost:80', returnStdout: true).trim()
+echo "Output: ${output}"
+
+How do you use try-catch-finally blocks in Groovy for error handling in Jenkins pipelines?
+script {
+    try {
+        def result = build job: "${params.TARGET_JOB}",
+        wait: true,                      # Whether to wait for the downstream job to complete before continuing
+        propagate: true,                 # If you set propagate: false, your pipeline won’t fail even if the triggered job fails.
+        parameters: [
+            string(name: 'REGION', value: 'us-east')
+        ]
+        echo "Triggered job result: ${result.getResult()}"
+    } catch (err) {
+        echo "Failed to trigger job: ${err.getMessage()}"
+    } finally {
+        echo "Finished triggering job..."
+    }
+}
+
+Write a Groovy script to check if a file exists and print its contents if it does.
+def filePath = 'example.txt'  // Change this to your file path It will check in /var/lib/jenkins/workspace/my-job/example.txt
+def fileExists = sh(script: "test -f ${filePath} && echo 'exists' || echo 'not exists'", returnStdout: true).trim()
+
+if (fileExists == 'exists') {
+    echo "File '${filePath}' exists. Contents:"
+    // Read the file contents using a shell command
+    def fileContents = sh(script: "cat ${filePath}", returnStdout: true).trim()
+    echo fileContents
+} else {
+    echo "File '${filePath}' does not exist."
+}
+
+How would you implement a retry mechanism using Groovy in a Jenkins pipeline?
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Retry Example') {
+            steps {
+                retry(3) {   // Try up to 3 times
+                    echo 'Trying something risky...'
+                    sh 'exit 1'  // Simulate failure
+                }
+            }
+        }
+    }
+}
+
+
+1) Custom Groovy Retry Logic (Inside script {})
+pipeline {
+    agent any
+
+    stages {
+        stage('Download File with Retry') {
+            steps {
+                script {
+                    int maxRetries = 5
+                    int attempt = 0
+                    boolean success = false
+
+                    while (attempt < maxRetries && !success) {
+                        try {
+                            attempt++
+                            echo "Attempt #${attempt} to download file"
+
+                            // Replace URL with your real file URL
+                            sh '''
+                                curl -fSL --retry 2 --retry-delay 5 -o downloaded_file.txt https://example.com/file.txt
+                            '''
+
+                            echo "File downloaded successfully on attempt #${attempt}"
+                            success = true
+
+                        } catch (Exception e) {
+                            echo "Attempt ${attempt} failed: ${e.message}"
+                            if (attempt == maxRetries) {
+                                error "Failed to download file after ${maxRetries} attempts, aborting build."
+                            } else {
+                                echo "Waiting 10 seconds before next retry..."
+                                sleep(time: 10, unit: 'SECONDS')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+Running Tests in Parallel on Multiple Platforms :
+1) Declarative :
+pipeline {
+    agent any
+    stages {
+        stage('Parallel') {
+            parallel {
+                stage('Task 1') { steps { echo 'Running Task 1' } }
+                stage('Task 2') { steps { echo 'Running Task 2' } }
+            }
+        }
+    }
+}
+
+2)Scripted :
+node {
+    def branches = [:]
+    def platforms = ['linux', 'windows', 'mac']
+
+    platforms.each { os ->
+        branches[os] = {
+            node(os) {
+                stage("Test on ${os}") {
+                    try {
+                        echo "Starting tests on ${os}..."
+
+                        if (os == 'linux') {
+                            sh 'make test-linux'      // Linux-specific test
+                        } else if (os == 'windows') {
+                            bat 'run-tests-windows.bat' // Windows-specific test
+                        } else if (os == 'mac') {
+                            sh 'make test-mac'        // Mac-specific test
+                        }
+
+                        echo "Completed tests on ${os}"
+                    } catch (Exception err) {
+                        echo "❌ Tests failed on ${os}: ${err.getMessage()}"
+                        // Optionally mark build as unstable
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }
+    }
+
+    parallel branches
+}
+
+catch (Exception err) --> Handle only real, defined problems
+catch (err) --> React to anything that might be a problem
+
+node {
+    def branches = [:]
+
+    ['Branch A', 'Branch B'].each { name ->
+        branches[name] = {
+            try {
+                stage(name) {
+                    echo "Running ${name}"
+                    if (name == 'Branch A') {
+                        sh 'exit 1'  // Simulate failure
+                    } else {
+                        sh 'echo Branch B succeeds'
+                    }
+                }
+            } catch (Exception e) {
+                echo "Error in ${name}: ${e.getMessage()}"
+            } finally {
+                echo "${name} cleanup complete"
+            }
+        }
+    }
+
+    parallel branches
+}
+
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Approval') {
+            steps {
+                input message: 'Select deployment environment:', ok: 'Deploy', cancel: 'Cancel', parameters: [
+                    choice(name: 'Environment', choices: ['Development', 'Staging', 'Production'], description: 'Choose the target environment')
+                ]
+            }
+        }
+    }
+}
+
+
+stash/unstash 
+
+stash 
+It is feature that
+Temporarily saves a set of files from the current workspace.
+Useful for transferring files between different stages or nodes in the same build.
+Files are compressed and stored on the Jenkins master during the build
+
+
+unstash :
+Restores files previously stashed in the same build.
+Extracts the stashed files into the current workspace.
+You must use the same stash name to unstash the files.
+unstash makes the files available for subsequent steps or stages on any node.
+
+stash includes: '**'    // stash everything inside workspace
+stash includes: '*.jar' // stash all JAR files in root folder only
+stash includes: 'src/**' // stash everything inside src folder recursively
+
+Path --> $JENKINS_HOME/workspace/<job_name>@tmp/stashes/
+
+pipeline {
+    agent none
+
+    stages {
+        stage('Build on Master') {
+            agent { label 'master' }
+            steps {
+                sh 'echo "dummy war content" > target/app.war'
+                stash name: 'war-file', includes: 'target/app.war'
+            }
+        }
+
+        stage('Deploy on Slave') {
+            agent { label 'slave' }
+            steps {
+                unstash 'war-file'
+                sh 'cp target/app.war /opt/tomcat/webapps/'
+            }
+        }
+    }
+}
+pipeline {
+    agent any
+
+    stages {
+        stage('Approval') {
+            agent { label 'master' }
+            steps {
+                input message: 'Select deployment environment:', ok: 'Deploy', cancel: 'Cancel', parameters: [
+                    choice(name: 'Environment', choices: ['Development', 'Staging', 'Production'], description: 'Choose the target environment')
+                ]
+            }
+        }
+    }
+}
+
+archiveArtifacts
+What it does:
+Saves files (artifacts) from your build workspace and stores them permanently on the Jenkins master (or the configured artifact storage).
+These artifacts are accessible later via the Jenkins UI or can be downloaded.
+Commonly used to save build outputs like JARs, WARs, reports, logs, test results, etc.
+When to use:
+You want to preserve build outputs after the job finishes.
+You want to share artifacts between builds or for historical records.
+Artifacts are often used in deployment steps, or downloaded by users or other jobs.
+
+Unarchive
+The unarchive step extracts files from an archive (e.g., a .zip or .war file).
+The mapping parameter lets you specify which files inside the archive to extract and where to put them in the workspace.
+
+unarchive mapping: [
+    'target/app1.war': 'deploy/app1',
+    'target/app2.zip': 'deploy/app2'
+]
+
+
+Path : $JENKINS_HOME/jobs/<job_name>/builds/<build_number>/archive/
+
+pipeline {
+    agent none
+
+    stages {
+        stage('Build') {
+            agent { label 'master' }
+            steps {
+                // Build your project, e.g., Maven build
+                sh 'mvn clean package -DskipTests'
+                
+                // Archive the built WAR file(s) so they are saved on Jenkins master
+                archiveArtifacts artifacts: 'target/*.war', allowEmptyArchive: true, onlyIfSuccessful: true, fingerprint: true
+            }
+        }
+        
+        stage('Deploy') {
+            agent { label 'slave' }
+            steps {
+                // Unarchive the WAR file(s) on this slave node
+                // Ensure the correct path is used for unarchiving
+                unarchive mapping: ['target/my-app.war' : '.']
+                
+                // Deploy the WAR file (example copy to a deployment directory)
+                sh '''
+                  echo "Deploying WAR file..."
+                  cp *.war /opt/tomcat/webapps/
+                '''
+            }
+        }
+    }
+}
+
+allowEmptyArchive: If set to true, the build will not fail if no artifacts are found.
+fingerprint: If set to true, fingerprints are used to track artifacts across builds and jobs, helping you trace where a file was 
+             created, used, or promoted.
