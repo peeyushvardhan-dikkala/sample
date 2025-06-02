@@ -720,8 +720,6 @@ apt-cache policy package_name --> Show package version and repository
 apt-cache depends package_name --> Show package dependencies
 apt-cache madison package_name --> Show available versions of a package
 
-
-
 Socket Statistics : 
 ss -tulpn       # All listening ports with process info
 ss -tn state established   # Active TCP connections
