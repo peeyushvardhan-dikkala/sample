@@ -15,13 +15,10 @@ df -T or lsblk -f or blkid → Show file system types which are mounted
 Mnemonic to remember the order of units:
 Big Kangaroos Make Great Tiny Puppies Eat Zebras Yearly.
 
-
 | Shortcut  | Action                                       |
 | --------- | -------------------------------------------- |
 | Ctrl + A  | Move cursor to beginning of line             |
 | Ctrl + E  | Move cursor to end of line                   |
-| Ctrl + B  | Move cursor back one character               |
-| Ctrl + F  | Move cursor forward one character            |
 | Alt + B   | Move cursor back one word                    |
 | Alt + F   | Move cursor forward one word                 |
 | Ctrl + K  | Delete from cursor to end of line            |
@@ -32,23 +29,71 @@ Big Kangaroos Make Great Tiny Puppies Eat Zebras Yearly.
 | Ctrl + L  | Clear screen (same as `clear`)               |
 | Ctrl + T  | Swap characters before and under cursor      |
 | Ctrl + _  | Undo last editing action                     |
+| Esc + .   | Insert last argument of previous command     |
+| Ctrl + D  | Exit the shell (logout)                      |
+| Ctrl + C  | Cancel current command                       |
+| Ctrl + Z  | Suspend current command(put it in background)|
+
+$$ → Current shell process ID
+Used to get the process ID of the current shell script or command.
+
+!! → Last command executed
+!$ → Last argument of the last command
+!^ → First argument of the last command
+
+!x → Last command starting with 'x'
+!ansible:p → Last command starting with 'ansible' and print it
+
+$ git comit -m "oops"
+$ ^comit^commit   # -> git commit -m "oops"
+
+!-3:2 → Third command from the end, second argument
+
+!?docker? → Last command containing 'docker'
+
+set -o histexpand # To expand command press Ctrl+Alt+e 
+bind 'Space:magic-space' # To expand command press Space in ~/.bashrc
+
+export PS1="\u@\h:\w\$ " --> primary prompt string in the shell 
+echo 'export PS1="\u@\h:\w$ "' >> ~/.bashrc
+source ~/.bashrc
+
+echo '"\C-t": "\C-e\C-u"' >> .inputrc
+bind -f ~/.inputrc
+
+vim :
+The quick brown fox --> The cursor is at q
+dw → deletes "quick"
+de → deletes "quick" (differs when punctuation involved)
+daw → deletes " quick"
+diw → deletes just "quick"
+d$	Delete to end of line
+d0	Delete to absolute beginning of line
+dG  → Delete to end of file
+
+34gg --> Go to 34th line number
+
+gg=G → Indent the entire file
+5== → Indent the current line and the next 4 lines
+V3j= → Indent the current line and the next 3 lines
+
+sudo !! is just a special case using word-designator !! (whole previous line). Saves re-typing a failed “permission denied” command.
 
 uname - Display System Information
     uname -s → Show kernel name
 	uname -a → Shows all system information
 	uname -r → Displays the kernel release version
-	uname -s → Prints the operating system name or kernel name
 	uname -m → Displays the machine hardware name/architecture
 	uname -n → Shows the hostname
 	uname -o → Displays the operating system name
 	uname -v → Shows the kernel version
 	uname -p → Displays the processor type
-	uname -i → Displays the hardware platform
+	uname -i → Displays the hardware platform 
 
 uptime - Check System Uptime
-	uptime -p → Pretty format – Shows uptime in a human-readable format (e.g., "up 3 hours, 15 minutes")
-	uptime -s → Since format – Displays the system start time (e.g., "2024-04-01 08:30:00")
-	uptime -V → Version – Shows the version of the uptime command
+	uptime -p → Pretty format -> Shows uptime in a human-readable format (e.g., "up 3 hours, 15 minutes")
+	uptime -s → Since format -> Displays the system start time (e.g., "2024-04-01 08:30:00")
+	uptime -V → Version -> Shows the version of the uptime command
 
 Display CPU Information
 	nproc → Show the number of processing units available
@@ -74,6 +119,7 @@ Useful Options:
 System Reboot History
     last reboot → History of system reboots 
     last -x | grep reboot → Show all reboots 
+	-x means "show extended information"
     last -x | grep shutdown → Show all shutdowns
     last -x | grep runlevel → Show all runlevel changes 
 	Runlevel means the state of the system
@@ -89,45 +135,49 @@ Network Commands
 	ip addr → Show IP addresses and network interfaces
 	ifconfig → (Deprecated) Display network configuration
     ip addr show dev eth0 → Show IP address for a specific interface`
-    ip link show → Show all network interfaces & MAC on the local system
     ip neigh show → Show ARP cache which show MAC address on the network
 	ARP means Address Resolution Protocol it is used to find the MAC address of a host
+	ip link show → Show all network interfaces & MAC on the local system
     ip link set eth0 up → Bring up a specific interface
     ip link set eth0 down → Bring down a specific interface
 
 date - Display and Format Date/Time
+Common Formatting Flags:
+Flag	Description				   Example
+%d		Day of month (01-31)		03
+%m		Month (01-12)				04
+%y		Year (2-digit)				25
+%Y		Year (4-digit)				2025
+%A		Full weekday name			Thursday
+%a		Abbreviated weekday name	Thu
+%B		Full month name				April
+%b		Abbreviated month name		Apr
+%H		Hour (00-23)				14
+%I		Hour (01-12)				02
+%M		Minutes (00-59)				30
+%S		Seconds (00-59)				45
+%p		AM/PM						PM
+%Z		Time zone					UTC means Coordinated Universal Time
+%F      ISO Date (%Y-%m-%d)	        2025-06-28
+%T		Time (%H:%M:%S)				14:45:05
+
 Show Time with Milliseconds:
-date +"%H:%M:%S:%3N"
+date +"%H:%M:%S:%3N" 
 date +"%I:%M:%S:%3N"
 date -f - means "read date strings from the input piped to me"
+-f means "file input"
 date -f input.txt -> Read from text file
 date -d "2024-04-03 10:15:00" +"%Y-%m-%d %I:%M:%S %p"
+-d means "display the date in a specific format"
 Eg : last reboot | awk '{print $5,$6,$7,$8}' | date -f - +"%Y-%m-%d %I:%M:%S %p"
 
 date +%s -> Show current epoch time
-Epoch time is the number of seconds that have elapsed since the Unix epoch, which is defined as 00:00:00 UTC on 1 January 1970.
 It is commonly used in computing and programming to represent time in a standardized format.
 
 date -d "2024-04-03 10:15:00" +%s
 Convert Epoch Time to Normal time:
 date -d @1745209628 --> Mon Apr 21 09:57:08 AM IST 2025
-
-Common Formatting Flags:
-Flag	Description	Example
-%Y	Year (4-digit)	2025
-%y	Year (2-digit)	25
-%m	Month (01-12)	04
-%B	Full month name	April
-%b	Abbreviated month name	Apr
-%d	Day of month (01-31)	03
-%A	Full weekday name	Thursday
-%a	Abbreviated weekday name	Thu
-%H	Hour (00-23)	14
-%I	Hour (01-12)	02
-%M	Minutes (00-59)	30
-%S	Seconds (00-59)	45
-%p	AM/PM	PM
-%Z	Time zone	UTC
+@ means "epoch time" in the date command
 
 sudo timedatectl set-timezone Asia/Kolkata -> Set timezone
 timedatectl list-timezones → List all time zones
@@ -138,12 +188,12 @@ timedatectl set-time "2024-04-03 10:15:00" → Set system time
 
 User Commands 
 Command	        Purpose                 	Output Example
-  who    Shows logged-in users	     user1 tty1 2025-04-03 10:15 (:0)
-whoami	 Displays current username	 user1
+  who    Shows logged-in users	     		user1 tty1 2025-04-03 10:15 (:0)
+whoami	 Displays current username			user1
+
 top - Monitor System Performance
-top -b -n 10 > top_log.txt
-	-b → Batch mode means run in the background
-	-n 10 → Run 10 iterations and exit
+htop → Interactive process viewer (requires installation)
+
 CPU Info
 	lscpu
 	uname -m
@@ -152,14 +202,12 @@ RAM Info
 	free -h → Human-readable format
     cat /proc/cpuinfo | grep -i "model name" | sort -u → CPU model
     cat /proc/meminfo → Memory info
-	top → Real-time system monitor
-    htop → Interactive process viewer
 ROM Info
 	lsblk → Displays information about block devices (disks, partitions, LVM, etc.) in a tree-like format.
 	blkid → Show block device attributes
 	df -h → Disk space usage
 	df --block-size=1G → Show sizes in GB
-	fdisk -l → List disk partitions
+	fdisk -l → List disk partitions fdisk means "fixed disk"
 File Operations
 	ls -lh --block-size=1G → Show sizes in GB(Giga Bytes)
 	ls -Sl → Sort files by size
@@ -167,19 +215,15 @@ File Operations
 	ls -lt --block-size=1G → List files by modification time in GB
 	ls -lt --block-size=1G | grep -E "pattern1|pattern2" | sort -u → Unique matches
 	ls -lt --time-style=long-iso → Show time in long ISO format
+	ls -lt --time-style=full-iso → Show time in full ISO format
 	ls -lt --time-style="+%Y-%m-%d %H:%M:%S:%3N" → Custom time format
-	
-	cp -u source.txt destination.txt → Copy only if source is newer
-	mv -u source.txt destination.txt → Move only if source is newer
-	mv -i source.txt destination.txt → Prompt before overwriting
-	mv -n source.txt destination.txt → No overwrite if destination exists source.txt
-	cp -n source.txt destination.txt → No overwrite if destination exists source.txt
-	cp -u source.txt destination.txt → Copy only if source is newer
-
 
 View File Contents
 	cat -n filename → Show with line numbers
 	cat -b filename → Ignore blank lines in numbering
+	cat -s filename → Squeeze multiple blank lines into one
+	cat -A filename → Show non-printing characters (e.g., tabs, newlines)
+
 	more f1 f2 f3 → View multiple files sequentially
 	cat file1 >> file2 → Append file1 to file2
 	cat file1 | tee file2 file3 → Copy content to multiple files
@@ -194,13 +238,15 @@ SEARCH COMMANDS
     Syntax : find [path] [options] [expression]
 
 	find . -maxdepth 2 -type d -name "folder*" → Find directories named "folder*" up to 2 levels deep
+	find . -mindepth 3 -type d 	→ Find directories at least 3 levels deep
 	find . -type f -iname "test*" -exec cp -t ../folder2/ {} + → Copy all files matching "test*" to folder2
 	find . -type f -perm 777 → Files with full permissions
 	find . -perm /u=w → Files where the user has write permission
 	find . -perm /g=x → Files where the group has execute permission
 	find . -perm /o=r → Files where others have read permission
-	find . -perm /a=rw → Files where all users have read and write permissions
+	find . -perm /a=rw → Files where all users have read and write permissions (all users means user, group, and others)
 	find . -type f -empty → Empty files
+	find . -type d -empty → Empty directories
 	find / -user username → Files owned by a specific user
 	find / -group groupname → Files belonging to a specific group
 	find . -mtime 10 → Modified exactly 10 days ago
@@ -221,16 +267,32 @@ SEARCH COMMANDS
 	find . -type f -name "*.txt" -exec grep -l "pattern" {} + → Find files containing "pattern"
 	find . -type f -name "*.txt" -exec grep -L "pattern" {} + → Find files not containing "pattern"
 	find . -type f -newermt "10 days ago" ! -newermt "5 days ago" → Modified between 10 and 5 days ago
-	find . -type f -newerct "$(date -d '60 seconds ago')" → Status changed in the last 60 seconds
-	find . -name "*.log" | xargs -I {} mv {} archive/ -I {} -> Inserting {} in the command
+	find . -name "*.log" | xargs -I {} mv {} archive/ # -I {} -> Inserting {} in the command
 	xargs -n 1 -> Process one argument at a time
-	find . -name "*.txt" | xargs grep "search_string"
+	find . -name "*.txt" | xargs grep "search_string" 
 	find . -type f -newerct "$(date -d '1 hour ago')" ! -newerct "$(date -d '30 minutes ago')" → Status changed between 1 hour and 30 minutes ago
-	stat -c FORMAT file → Custom file info output
     test -d "target" && echo "yes" || echo "no" --> To test directory is there in the path
 	test -f "file1.txt" && echo "yes" || echo "no"
+	file file1.txt or file /opt → Determine file type
+	sed -i 's/[ \t]*//g' file.txt → Remove all spaces and tabs from file.txt
+	sed -i 's/[ \t]*$//' file.txt → Remove trailing spaces and tabs from each line in file.txt
+	sed -i 's/^[ \t]*//' file.txt → Remove leading spaces and tabs from each line in file.txt
 
-stat Format Options
+	2>&1 → Redirect standard error to standard output where & means "file descriptor"
+
+	echo "Hi I   am DevOps   Engineer" | xargs echo → Remove extra spaces
+
+	xargs -d '\n' -a packages.txt sudo apt install -y
+	-a means "read input from a file"
+	-d '\n' means "use newline as the delimiter"
+
+	find . -name "*.mp3" -print0 | xargs -0 rm
+	-print0 means "print file names followed by a null character"
+	-0 means "use null character as the delimiter"
+
+	echo "" | xargs -r echo "Deleting" --> This will not print "Deleting" if the input is empty
+
+stat    Format Options
 Option	Description
 %n	    File name
 %s	    File size in bytes
@@ -245,52 +307,102 @@ Option	Description
 %h	    Number of hard links
 %l	    Symbolic link target
 
+stat -c "%n %s %y" file.txt → Show file name, size, and modification time
+-c means "custom format"
+
+awk:
+awk means Aho, Weinberger, and Kernighan 
+It is a powerful text processing tool used for pattern scanning and processing.
+
+awk '{ print NR, $0 }' file.txt → Print line number and entire line
+awk '{print $1, $3}' file.txt → Print first and third columns
+awk -F':' '{print $1, $3}' /etc/passwd → Print first and third fields of /etc/passwd
+awk '/pattern/ {print $1, $2}' file.txt → Print first and second columns of lines matching "pattern"
+awk '!/success/' results.txt → Print all lines except those containing "success"
+awk 'tolower($0)~/error/' results.txt → Print lines containing "error" (case-insensitive) 
+awk '{if ($3 > 50) print $1, $2}' file.txt → Print first and second columns where third column is greater than 50
+awk '{sum += $2} END {print sum}' file.txt → Sum of second column
+awk '{print $1, $2, $3}' file.txt | sort -k2,2n → Sort by second column numerically ( -k2,2 means sort by the second column)
+awk '{print $1, $2, $3}' file.txt | sort -k2,2 → Sort by second column alphabetically
+awk 'BEGIN {FS="|" ; OFS=","} {print $1, $2}' sample.txt → Set input field separator to "|" and output field separator to ","
+awk 'BEGIN {FS="|"} {printf "%-4s - %s\n", $1, $2}' sample.txt → Set field separator to "|" and format output 
+%-4s means left-align the first field in a 4-character wide field
+%4s  means right-align the first field in a 4-character wide field 
+%s means string
+%d means integer
+
+awk NF filename → Print non-empty lines (NF means Number of Fields)
+
+BEGIN  means "before processing any input" 
+END means "after processing all input"
+NR means "Number of Records" (line number)
+NF means "Number of Fields" (number of columns in the current line)
+FS means "Field Separator" (default is whitespace)
+OFS means "Output Field Separator" (default is whitespace)
+$0 means "the entire line"
+
+Usecase :
+awk 'BEGIN {print "Header1,Header2"} {print $1 "," $2}' file.txt
+	# This will print a header line before processing the input file.
+awk 'BEGIN {print "Header1,Header2"} {print $1 "," $2} END {print "Footer"}' file.txt
+	# This will print a footer line after processing the input file.
+awk 'NR==1 {print "Header1,Header2"} {print $1 "," $2}' file.txt
+	# This will print a header line only for the first record.
+awk '{ print NR, $NF }'
+	# This will print the line number and the last field of each line.
+
 grep Commands
 	grep "word" file1 file2 file3
-	grep -c "word" file
+	grep -c "word" file -> Count occurrences of "word" in file
+	grep -w "word" filename -> Match whole word
+	grep -o "e" |wc -l -> Count occurrences of "e"
+	grep -o "pattern" filename -> Show only matching parts
 	grep -e "pattern1" -e "pattern2" filename
-	grep -L "pattern" filename -> Find files not containing "pattern"
+	grep -E "pattern1|pattern2" filename -> Extended regex search
 	grep -l "pattern" filename -> Find files containing "pattern"
+	grep -L "pattern" filename -> Find files not containing "pattern"
 	grep -v "pattern" filename -> Exclude lines with "pattern"
 	grep -i "pattern" filename -> Case-insensitive search
 	grep -r "pattern" /path/to/dir -> Recursive search in directory
-	grep -w "word" filename -> Match whole word
 	grep -n "pattern" filename -> Show line numbers
 	grep -A 3 "pattern" filename -> Show 3 lines after the match
 	grep -B 3 "pattern" filename -> Show 3 lines before the match
 	grep -C 3 "pattern" filename -> Show 3 lines before and after the match
 	grep -q "pattern" filename -> Quiet mode (no output, just exit status). Used in scripts
 	grep -m 5 "pattern" filename -> Stop after 5 matches
-	grep -E "regex" filename -> Extended regex
 	grep -F "fixed string" filename -> Fixed string search (faster) 
 	Eg grep -F "a.*b" file.txt 
-	Finds lines containing the *literal string "a.b" (not regex) — no special meaning to * or .
-	grep -o "pattern" filename -> Show only matching parts
+	Finds lines containing the literal string "a.b" (not regex) — no special meaning to * or .
 	grep -r "pattern" /path/to/dir --include="*.txt" -> Search only in .txt files
 	grep -r "pattern" /path/to/dir --exclude="*.log" -> Exclude .log files
 	grep -r "pattern" /path/to/dir --exclude-dir="dir_name" -> Exclude specific directory
 	sudo cut -d: -f1,7 /etc/passwd --> It will show the first and seventh fields of the /etc/passwd file, separated by a colon (:).
-	awk NF filename (or) grep -v '^$' filename (or) sed '/^$/d' filename --> It will show the non-blank lines
+	awk NF filename (or) grep -v '^$' filename --> It will show the non-blank lines
 	sed -i '/^$/d' filename --> To remove blank lines from a file 
-	grep -m3 "pattern" filename --> Outputs those first 3 matching lines
+
 	grep -c -a "search_term" possibly_binary.file --> -a is used to treat binary files as text
+	-c means count the number of matching lines
+
+	grep "" file.txt --> It will show all lines in the file
+	"" means an empty string, so it matches every line in the file.
+
+	grep -H "pattern" file1 file2 file3 
+	--> -H means "show the filename with the matching lines"
     
 	eval means executes the string as a command
 	command ls means executes the command without using shell features like aliases
 	type command_name → Show command type (alias, function, built-in, executable)
 	which command_name → Show command path
+	man command_name → Show manual page for command
 
 	Default path for user commands is /usr/bin:/bin:/usr/sbin:/sbin used by the shell to search for executable files.
 	User path is set in /etc/profile or ~/.bashrc or ~/.bash_profile
 	Default path is best to use in scripts to ensure commands are found correctly.
-
 	
 	Escape means make special/invisible characters visible
 	Literal means treat special characters as normal characters
 	\ is the escape character in most shells
-	printf "%q\n" * --> %q in printf escapes special characters in a shell-compatible way
-	                  (so the output can be reused as input in shell commands).
-					--> Guarantees the output is safe for eval or shell reuse.
+	printf "%q\n" * --> Guarantees the output is safe for eval or shell reuse.
 					--> %q means quote the argument in a way that it can be reused as a shell command.
 	Example : 
 	121.002.20000#2025+10obj.cfg
@@ -332,6 +444,54 @@ grep Commands
 	This is a multi-line input
 	EOF 
 
+sed means Stream Editor
+sed -i 's/old_text/new_text/g' file.txt → Replace all occurrences of "old_text" with "new_text" in file.txt
+sed -i 's/old_text/new_text/' file.txt → Replace only the first occurrence of "old_text" with "new_text" in file.txt
+sed -i 's/old_text/new_text/2' file.txt → Replace the second occurrence of "old_text" with "new_text" in file.txt
+sed -i '$d' file.txt → Delete the last line of file.txt
+sed -i '1d' file.txt → Delete the first line of file.txt
+sed -i '/pattern/d' file.txt → Delete lines containing "pattern" in file.txt
+sed '/pattern/c\new line' file.txt → Change lines containing "old line" to "new line" in file.txt
+sed -n '/pattern/p' file.txt → Print only lines containing "pattern" in file.txt
+sed -n '1,5p' file.txt → Print lines 1 to 5 from file.txt
+sed -e 's/old_text/new_text/g' -e 's/another_old_text/another_new_text/g' file.txt → Multiple replacements in one command
+sed -i 's/old/new/g; s/another_old/another_new/g' file.txt → Multiple replacements in one command with semicolon
+sed -i 's/\w\+ing/\U&/g' file.txt → Convert all words ending with "ing" to uppercase
+sed 's/.*/\L&/g' → Convert entire file to lowercase
+
+Insert the pattern : sed -i '/paatern/i\content' filename
+sed -i '/<\/tomcat-users>/i\                      
+  <role rolename="manager-gui"/>\n\
+  <role rolename="manager-script"/>\n\
+  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
+
+Output
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
+</tomcat-users>
+
+Append the pattern :  sed -i '/pattern/a\content' filename
+sed -i '/<\/tomcat-users>/a\
+  <role rolename="manager-gui"/>\n\
+  <role rolename="manager-script"/>\n\
+  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
+
+Output : 
+<tomcat-users>
+    ...
+</tomcat-users>
+<role rolename="manager-gui"/>
+<role rolename="manager-script"/>
+<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
+
+
+\n --> New line character
+\ --> The backslash (\) at the end of the line in the sed command is used as a continuation character. It allows you to 
+split a long command across multiple lines for better readability. When you place a backslash at the end of a line, 
+it tells the shell that the command continues on the next line.
+
+
 User Management Commands
 	useradd <username> → Just add user without any options
 	useradd -m -d /custom/path/yaswanth -s /bin/bash -u 1501 -g users -G sudo,developers -e 2025-12-31 username
@@ -346,21 +506,23 @@ User Management Commands
 	useradd -s /bin/false username → Disabling the ability to log in for that user.
 	for service accounts or users that should not log in interactively but may still be needed for other system tasks 
 	(like running background processes or owning files).
-
+    
+	useradd -M username → No home directory (e.g., for system users)
 	useradd -r username → Add system user (no home directory)
-	useradd -N username → No user group
+	useradd -N username → When you're using shared groups
 
 	adduser <username> → Interactive user add
-	useradd -U username → User group with same name
-	useradd -M username → No home directory (e.g., for system users)
+	useradd -U username → User group with same name explicitly created
+	
+	useradd -D → View default useradd options 
+	cat /etc/default/useradd → View default useradd options
 
-	useradd -D → View default useradd options
-	useradd -D -b /opt/users -s /bin/bash  -f 30 -g users username
+	useradd -D -b /opt/users -s /bin/bash -f 30 -g users username
 	# Set default options for new users
 	-b → base home directory
 	-e → expire date (YYYY-MM-DD)
 	-s → default shell (Eg: /etc/skel)	
-	-k → skeleton directory
+	-k → skeleton directory means the default files and directories that will be copied to the new user's home directory
 	-f → inactivity period (Eg : 30 days after password expiry it will be disabled)
 	-g → default group (Eg : users) 
 
@@ -371,11 +533,15 @@ User Management Commands
 	cat /etc/passwd -> Show user details
 	cat /etc/shadow -> Show password details
 
-	sudo vipw #Safer way to edit /etc/passwd using the vipw command (locks the file during edit)
+	sudo vipw # Safer way to edit /etc/passwd using the vipw command (locks the file during edit) 
+	sudo vipw -s username # Edit /etc/shadow safely shadow means password file
+	sudo vigr # Edit /etc/group safely
+	sudo pwck  # Check for inconsistencies in /etc/passwd and /etc/shadow
+	sudo grpck  # Check for inconsistencies in /etc/group 
 
-	sudo vipw -s username # Edit /etc/shadow safely
-	sudo vigr -s group   # Edit /etc/gshadow safely
+	sudo useradd -D -s /bin/bash # Set default shell for new users to /bin/bash
 	cat /etc/environment -> Show environment variables (EDITOR=vim, then source /etc/environment)
+
 	sudo chsh -s /bin/bash jenkins 
 	#Interactive and user-friendly, it will also check if the shell exists in /etc/shells and refuse invalid shells.
 	chsh = Change SHell 
@@ -383,7 +549,7 @@ User Management Commands
 User mod Command :
 sudo usermod -l johnny -u 1600 -d /home/johnny -m -g staff -G docker -s /bin/zsh -e "2023-02-09"  john
 What it does:
-    -l johnny: Renames user john to johnny
+    -l johnny: -l means "login name". Renames user john to johnny
     -u 1600: Changes UID
     -d /home/johnny: Sets new home directory
     -m: Moves home directory contents
@@ -392,8 +558,11 @@ What it does:
     -s /bin/zsh: Changes login shell
 
 Group Management
+	getent group → Show all groups 
+	      (or)
+	cat /etc/group → Show all groups
 	groupadd groupname -> Add group(default GID)
-	groupadd -f developers → Don't error if already exists
+	groupadd -f developers → Don't error if already exists. -f means "force"
     groupadd -g 2025 groupname → Add group with specific GID
 	addgroup groupname → Add group (Debian/Ubuntu)
 	groupadd -r groupname → Add system group
@@ -401,17 +570,25 @@ Group Management
 	usermod -aG groupname username → Add user to group
 	deluser username groupname -> Remove user from group (Debian/Ubuntu)
     gpasswd -d username groupname → Remove user from group (Red Hat/CentOS)
-	groupmod -n newgroup oldgroup → Rename group
+
+Group Modification Commands:
+	groupmod -g 2025 groupname → Change group ID
+	groupmod -n newname oldname → Rename group. -n means "new name"
+	groupmod -o -g 2025 groupname → Change group ID and allow non-unique GID. -o means "non-unique"
+	groupmod -o -n newname oldname → Rename group and allow non-unique GID
+
+Delete Group Commands:
 	groupdel groupname → Delete group 
 	delgroup groupname -> To remove a group (Debian/Ubuntu only)
-	newgrp qa_team  # if your user was recently added to a group and you want to activate the new group membership
-	                 ignored without logging out and back in.
+	newgrp qa_team  # If your user was recently added to a group and you want to activate the new group membership
+                      ignored without logging out and back in.
 
 Check Group Membership
 	id username → Show user ID and groups
 	id -g username → Show primary group ID
 	id -gn username → Show primary group name
 	id -u username → Show user ID
+
 	groups username → Show groups for a user
 	getent group groupname → Show group details
 	getent passwd username → Show user details
@@ -441,7 +618,6 @@ Options:
 	-m, --mindays MIN_DAYS → Minimum password age (days before change)
 	-M, --maxdays MAX_DAYS → Maximum password age (password expiry)
 	-W, --warndays WARN_DAYS → Expiry warning days
-	-i, --iso8601 → Use ISO 8601 date output
 	-h, --help → Display help message
 
 Switching Users
@@ -459,22 +635,25 @@ Permission Commands
 	chmod 777 file/foldername → Change permissions
 
 	chmod 2775 shared_dir : New files inside the directory inherit the directory's group
+	chmod 1755 shared_dir : New files inside the directory inherit the directory's group and set the sticky bit 
+	sticky bit means only the owner of the file can delete or rename it, even if others have write permissions.
+
+	chmod 4775 shared_dir : Set the setuid bit, allowing users to execute files with the permissions of the file owner
+	Means when a user runs a file with the setuid bit set, it runs with the permissions of the file owner, not the user running it.
 
     Very important command :    
 	sudo chattr +i filename -> a file is marked as immutable, it cannot be modified, deleted, or renamed, even by the root user
     lsattr filename -> To check the attributes of a file
+	----i---------e------- file means it is immutable
+	--------------e------- file means it is not immutable
+	
     chattr +a filename -> Append-only attribute, only allows appending data
 	sudo chattr -i filename -> To remove the immutable attribute
 	lsattr filename ->  To check the attributes of a file
 
-	The umask (user file creation mask) command controls the default file permissions assigned when a file or directory is created. 
-	The value of umask acts as a subtractive mask, which subtracts permissions from the default 666 (for files) or 777 (for directories).
-	umask 022 → Default permissions for files: 644, directories: 755
-	umask 027 → Default permissions for files: 640, directories: 750
-	set umask 027 → Set umask for the current session
-	
 	ufw means Uncomplicated Firewall
-
+	ufw enable → Enable the firewall
+	ufw disable → Disable the firewall
 	ufw status verbose → Show firewall status
 	ufw allow 22/tcp → Allow SSH traffic
 	ufw allow 80/tcp → Allow HTTP traffic
@@ -485,10 +664,11 @@ Permission Commands
 	sudo ufw delete 6   # delete the rule with higher number first
 	sudo ufw delete 5   # then delete the one that was above it
 
+Pathname Resolver commands:
 	namei -l /path/to/file.txt  # Shows permissions at each level
 	namei -m /path/to/file.txt  # Shows permissions and ownership at each level
-
-ps -aux | grep processname 
+	
+ps aux | grep processname 
 --> It shows all processes running on the system, including those owned by other users.
 a --> Show processes for all users
 u --> Show user-oriented format
@@ -500,8 +680,12 @@ ps -ef --sort=-%mem   # Sort processes by memory usage (descending)
 
 ps -ef | grep processname  <--> ps -fp PID
 --> It shows all processes running on the system, including those owned by other users.
--e --> Show all processes
+-e --> Show all processes. e means "everything"
 -f --> Show full format listing (including command line arguments, PPID)
+
+ps aux vs ps -ef 
+	ps aux → BSD-style output, shows processes for all users, includes CPU and memory usage, and command line arguments.
+	ps -ef → UNIX-style output, shows processes for all users, includes PID, PPID, UID, and command line arguments.
 	
 pkill [options] pattern
 Common Flags:
@@ -523,7 +707,6 @@ Examples:
 	pkill -o python → Kills the oldest python process
 	pkill -n vim → Kills the most recent vim process
 	pkill -x sshd → Kills only if the process name is exactly "sshd"
-	pkill -e python → Echo the names of processes being killed
 
 pgrep [options] pattern --> It prints the process IDs (PIDs) of running processes that match the given name or pattern.
 Common Flags:	
@@ -535,6 +718,8 @@ Option | Description | Example
 -o | Return only the oldest matching process | pgrep -o python
 -v | Invert match (exclude matches) | pgrep -v bash
 -d <char> | Set delimiter for PIDs (default newline) | pgrep -d, python → 1234,1240
+-i | Case-insensitive match | pgrep -i python
+-P <pid> | Show children of a specific PID | pgrep -P 1234	
 
 Signal	Number	Name	Description
   0	    0	    N/A	    Check if a process exists (no signal sent). 0 → Process exists, and you can signal it
@@ -571,6 +756,11 @@ Keeps processes running after terminal logout
 You're an IT admin connecting to a remote Linux server over SSH. You're about to leave for the airport, but you need to start a long-running
 backup of important files to another server. You won’t be connected to the terminal after your laptop goes to sleep or disconnects from Wi-Fi.
 
+nohup rsync -avz /var/www/ user@backupserver:/backups/ > backup.log 2>&1 &
+nohup → ignores hangup signal (keeps running after logout)
+> backup.log 2>&1 → saves both stdout and stderr to a log file
+& → runs in background so you can close the terminal
+
 screen -S mysession
 rsync -avz -e "ssh -i ~/.ssh/id_ed25519" file.txt user@remote:/path/
 # Press Ctrl+A, then D to detach from the screen session
@@ -578,6 +768,7 @@ rsync -avz -e "ssh -i ~/.ssh/id_ed25519" file.txt user@remote:/path/
 # To reattach later, use:
 screen -r mysession --> Reattach to the screen session
 screen -XS backupjob quit --> Terminate the screen session
+-X means "send command to screen session"
 screen -ls --> List all screen sessions
 
 screen -dmS mysession bash -c 'rsync -avz /var/www/ user@backupserver:/backups/; exec bash' 
@@ -617,17 +808,15 @@ api.example.com	           Destination – resolved to an IP and probed hop by h
 4)
 • wget: Primarily used for downloading files over HTTP, HTTPS, and FTP. It's designed to fetch content from the web, often used for bulk downloads or mirroring websites.
 • curl: A tool for transferring data to or from a server, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP, SCP, and more). 
-        It's more flexible and can handle various data transfer tasks beyond just downloading files.
+It's more flexible and can handle various data transfer tasks beyond just downloading files.
 
-wget -r -l2 -nc --limit-rate=500k --user-agent="Mozilla/5.0" --no-check-certificate -P -N 
-/path/to/save https://example.com
+wget -r -l 1 -nc --limit-rate=300k --no-check-certificate -N -P ~/Downloads https://example.com/docs/
 
 Explanation:-
-	• -r: Recursively download the website.`
+	• -r: Recursively download the website.
 	• -l2: Limit the recursion depth to 2 levels (you can increase or decrease as needed).
 	• -nc: Skip downloading files that already exist (no clobber).
 	• --limit-rate=500k: Limit download speed to 500 KB/s.
-	• --user-agent or -U ="Mozilla/5.0": Set a custom user-agent (useful for websites blocking default agents).
 	• --no-check-certificate: Ignore SSL certificate verification (use with caution).
 	• -P /path/to/save: Save the files to a specific directory (replace with your desired path).
 	• https://example.com: The URL of the website you want to download.
@@ -642,6 +831,10 @@ Explanation:-
 	  wget --tries=inf http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo
 
 For practice go through this website : https://phoenixnap.com/kb/wget-command-with-examples	
+5) dig +short google.com --> It will show the IP address of google.com
+5) nmcli device show eth0 | grep IP4.ADDRESS
+   --> It will show the IPv4 address of the eth0 interface
+6) nslookup google.com --> It will show the IP address of google.com
 
 Problem :
 peeyush@peeyush:/opt/peeyush/maven/peeyush$ wget https://get.jenkins.io/war-stable/latest/jenkins.war
@@ -657,7 +850,6 @@ curl -O --limit-rate 500k -A -z "Mozilla/5.0" -k https://example.com/file.zip:
   -o newname.zip: Save the file with a custom name.
 • --limit-rate 500k: Limits the download speed to 500 KB/s.
 • -# : Show progress bar.
-• -A "Mozilla/5.0": Sets the custom user-agent (mimicking a browser).
 • -k: Ignores SSL certificate verification.
 • -z: If you want to download the file only if it’s newer, you can use the -z 
 • curl -C - -O https://example.com/largefile.zip --> Supports resuming downloads with the -C - flag
@@ -667,7 +859,6 @@ curl -O --limit-rate 500k -A -z "Mozilla/5.0" -k https://example.com/file.zip:
 • -L: Follow redirects (in case the URL redirects to another location).
 • -w "%{http_code}\n": Print the HTTP response code (e.g., 200 for success, 404 for not found).
 • -s: Silent mode (no progress bar or error messages).
-• -z: Download the file only if it has been modified since the last download.
 • -K urls.txt: Download multiple files from a list in urls.txt. Eg: url = "https://example.com/file1.zip" in urls.txt
 • --form "file=@/path/to/file" https://example.com/upload: Upload a file using a form submission.
 • -u username:password URL : Use basic authentication with the provided username and password.
@@ -681,46 +872,57 @@ Recursive download           | -r                     | ❌             	   | On
 Recursion depth 			 | -l2 			          | ❌ 			  	   | Only in wget; sets max recursion level.
 Skip existing files 		 | -nc 			          | ❌ 			       | wget's --no-clobber skips existing files.
 Limit download speed 		 |--limit-rate=500k       | --limit-rate 500k    | Both support speed limiting.
-Set user-agent 				 | --user-agent="..." or -U | -A "..."           | Mimics browser user-agent.
 Ignore SSL cert check        | --no-check-certificate | -k                   | Disables SSL verification.
-Save to specific directory   | -P /path/              | -o /path/filename    | wget saves to dir; curl needs full output path.
-Download if updated			 | -N 					  | -z filename 	     | Downloads only if newer than local file.
-Background download 		 | -b 					  | ❌ 				   | Only wget supports background mode.
+Save to specific directory   | -P /path/              | -o /path/filen ame    | wget saves to dir; curl needs full output path.
+Download if updated			 | -N 					  | -z   	              | Downloads only if newer than local file.
+Background download 		 | -b 					  | ❌ 				    | Only wget supports background mode.
 Resume broken download 		 | -c 					  | -C - 				 | Both support resuming partial downloads.
 Download from list 			 | -i urls.txt 			  | -K urls.txt 		 | wget supports URL lists from file.
 Quiet with progress bar 	 | -q --show-progress 	  | -s 					 | Both support silent mode with some output.
-Mirror entire site           | -m 					  | ❌ 				   | Only wget can mirror sites recursively.
+Mirror entire site           | -m 					  | ❌ 				    | Only wget can mirror sites recursively.
 Infinite retry 			     | --tries=inf 			  | --retry 3            | wget can retry forever; curl needs manual retry count.
 Set timeout 				 | --timeout=30 		  | --max-time 30 		 | Both support setting timeouts.
 Follow redirects 			 | Default 				  | -L 					 | wget follows redirects by default; curl needs -L.
-Print HTTP status code 		 | ❌ 				     | -w "%{http_code}\n" | Only curl can print HTTP status directly.
-
-curl -s https://example.com/folder/ | grep -o 'href="[^"]*"' | cut -d'"' -f2 --> 
-simulate recursion in curl by scraping links from a webpage that lists files.
+Print HTTP status code 		 | ❌ 				     | -w "%{http_code}\n"  | Only curl can print HTTP status directly.
 
 Ubuntu/Debian Package Management
+dpkg -i package.deb --> Install a .deb package
 dpkg --get-selections --> List all installed packages
 dpkg --get-selections | grep -v deinstall --> List installed packages
 dpkg --set-selections < package_list.txt --> Import packages from a file
 dpkg --get-selections | grep -v deinstall > package_list.txt --> Export installed packages to a file
 apt-get dselect-upgrade --> Install packages from the list
+sudo apt install $(cat my-package-list.txt) --> Install packages from a file
+
 apt-get install -f --> Fix broken dependencies
-apt-get update --> Update package list	
+sudo apt -f install --> Fix broken dependencies (newer command)
+apt-get update --> Update package list 
 apt-get upgrade --> Upgrade all packages
-apt-get dist-upgrade --> Upgrade packages and handle dependencies
+apt-get dist-upgrade --> Install required new packages. Remove conflicting or outdated ones. Upgrade everything safely
 apt-get install package_name --> Install a package
 apt-get remove package_name --> Remove a package
 apt-get purge package_name --> Remove a package and its configuration files
 apt-get autoremove --> Remove unused packages
-apt-get clean --> Remove downloaded package files
+apt-get clean --> Remove downloaded package files which are no longer needed
 apt-get autoclean --> Remove old package files
 apt-cache search package_name --> Search for a package
 apt-cache show package_name --> Show package details
 apt-cache policy package_name --> Show package version and repository
 apt-cache depends package_name --> Show package dependencies
-apt-cache madison package_name --> Show available versions of a package
 
-
+Amazon Linux / RHEL / CentOS (RPM-based)
+yum list installed --> List all installed packages
+rpm -qa --> List all installed packages (RPM). -qa means "query all"
+rpm -qa | grep package_name --> Search for a specific package
+yum install package_name --> Install a package
+yum remove package_name --> Remove a package
+yum update --> Update all packages
+yum upgrade --> Upgrade all packages (similar to update)
+yum clean all --> Clean up cached package files
+yum search package_name --> Search for a package
+yum provides file_name --> Find which package provides a specific file
+yum insensitive search package_name --> Search for a package (case-insensitive)
+yum info package_name --> Show package details
 
 Socket Statistics : 
 ss -tulpn       # All listening ports with process info
@@ -747,20 +949,23 @@ Flag	Description	Example
 -r	    Display routing information	ss -r or ss -tr
 -4	    Show IPv4 sockets only	ss -4
 -6	    Show IPv6 sockets only	ss -6
--o	    Show TCP socket timers (useful for time-wait/debugging)	ss -o
--m	    Show memory usage for sockets	ss -m
--e	    Show extended socket info	ss -e
+
 To see established connections:
 ss -t state established
 ss -u state established	
 ss -t state listening
 
+To check open ports:
 nc -zv localhost 8080 --> Check if port 8080 is open on localhost
 nc -zv example.com 80-90 --> Check if ports 80 to 90 are open on example.com
 nc means netcat
 -z means zero-I/O mode (just check if the port is open)
 v means verbose (show connection status)
-nc -l -p 1234 --> Listen on port 1234 for incoming connections
+
+What is lsof?
+lsof (List Open Files) is a command-line utility that displays information about files opened by processes. 
+In Unix-like operating systems, everything is treated as a file, including regular files, directories, sockets, and devices. 
+lsof provides a way to see which files are currently in use, which processes are using them, and various attributes of those files.	
 
 lsof Command — List Open Files
 Flag	    Description	                                    Example
@@ -774,8 +979,7 @@ Flag	    Description	                                    Example
 -c cmd	    Filter by command name (e.g., nginx)	        lsof -c nginx
 +d dir	    Show open files in a directory (non-recursive)	lsof +d /var/log
 +D /dir	    Show open files in a directory (recursive)	    lsof +D /var/log
--d FD	    Filter by file descriptor                       lsof -d 1,2
-															-> Show all open files with file descriptor 1 and 2
+-d FD	    Filter by file descriptor                       lsof -d 1,2 -> Show all open files with file descriptor 1 and 2
 
 # 📘 Basic Port Numbers for DevOps
 
@@ -832,9 +1036,9 @@ Flag	    Description	                                    Example
 | VNC     | 5900     | TCP      | Virtual Network Computing |
 
 rsync -avhz --delete-after --exclude 'logs/' --bwlimit=1000 --backup --backup-dir=/backup-old -e "ssh -p 2222" /data/ user@server:/backup/
-• -a: Archive mode
+• -a: Archive mode (maintains permissions, timestamps, symlinks) 
 • -v: Verbose
-• -z: Compress during transfer
+• -z: Compress during transfer ()
 • --delete: Delete remote files that are not in the source (if you’re unsure! Use --dry-run to preview)
   --delete-before: Deletes files on the destination before transferring new ones
   --delete-after: Deletes files on the destination after transferring new ones 
@@ -913,11 +1117,10 @@ unzip file.zip            # Unzip .zip
 unzip -l file.zip        # List .zip
 unzip -d folder file.zip  # Unzip to folder
 unzip -o file.zip        # Overwrite existing files without prompt
-unzip -n file.zip        # Skip existing files
 unzip -q file.zip        # Quiet mode (no output)
 unzip -o -q file.zip    # Quiet mode with overwrite
-unzip -x file.zip file1.txt file2.txt  # Exclude specific files
-unzip -x file.zip "*.txt" "*.jpg"  # Exclude all .txt and .jpg files
+unzip -x file.zip file1.txt file2.txt  # Unzip specific files
+unzip -x file.zip "*.txt" "*.jpg"  # Unzip all .txt and .jpg files
 
 tar -tf file.tar             # List .tar
 tar -tzf file.tar.gz         # List .tar.gz or .tgz
@@ -935,17 +1138,18 @@ tar -cf new.tar folder/          # Create .tar
 tar -czf new.tar.gz folder/      # Create .tar.gz
 tar -cjf new.tar.bz2 folder/     # Create .tar.bz2
 tar -cJf new.tar.xz folder/      # Create .tar.xz
-xz -d file.tar.xz             # Extract .tar.xz 
--d = decompress
+xz -d file.tar.xz             # Extract .tar.xz to file.tar for inspection or further processing
+-d = decompress 
 
+tar -xzvf file.tar -C /path/to/folder  # Extract to specific folder
+tar -xvf file.tar --wildcards '*.txt'  # Extract only .txt files
+tar -xvf file.tar --exclude='*.txt'  # Exclude .txt files
 tar -xvf file.tar             # Extract .tar
+
 tar -xzvf file.tar.gz         # Extract .tar.gz
 tar -xjvf file.tar.bz2        # Extract .tar.bz2
 tar -xJvf file.tar.xz         # Extract .tar.xz
-tar -xzvf file.tar -C /path/to/folder  # Extract to specific folder
-tar -zvf file.tar --strip-components=1 -> Extract files without leading directory names
-tar -xvf file.tar --wildcards '*.txt'  # Extract only .txt files
-tar -xvf file.tar --exclude='*.txt'  # Exclude .txt files
+tar -xvf file.tar --strip-components=1  # Extract and remove top-level directory you want to extract only the contents of that folder, not the folder itself.
 
 Feature           	| gzip (.gz)  | bzip2 (.bz2)     | xz (.xz)
 
@@ -955,42 +1159,41 @@ Decompression Speed | Very fast   | Moderate         | Moderate to slow
 Memory Usage      	| Minimal     | Moderate         | High (especially for compression)
 Command-line Flags 	| -z 		  | -j 				 | -J
 
-Insert the pattern : sed -i '/paatern/i\content' filename
-sed -i '/<\/tomcat-users>/i\                      
-  <role rolename="manager-gui"/>\n\
-  <role rolename="manager-script"/>\n\
-  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
-
-Output
-<role rolename="manager-gui"/>
-<role rolename="manager-script"/>
-<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
-</tomcat-users>
-
-Append the pattern :  sed -i '/paatern/a\content' filename
-sed -i '/<\/tomcat-users>/a\
-  <role rolename="manager-gui"/>\n\
-  <role rolename="manager-script"/>\n\
-  <user username="admin" password="fair123" roles="manager-gui,manager-script"/>'
-
-Output : 
-<tomcat-users>
-    ...
-</tomcat-users>
-<role rolename="manager-gui"/>
-<role rolename="manager-script"/>
-<user username="admin" password="fair123" roles="manager-gui,manager-script"/>
-
-
-
-\n --> New line character
-\ --> The backslash (\) at the end of the line in the sed command is used as a continuation character. It allows you to 
-split a long command across multiple lines for better readability. When you place a backslash at the end of a line, 
-it tells the shell that the command continues on the next line.
-
-
 echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf > /dev/null
 nameserver 8.8.8.8
 # Adds Google DNS to resolve domain names
 # Place it in /etc/resolv.conf for temporary effect
 # Used when default DNS is slow, misconfigured, or restricted
+
+nl file.txt       # Displays line numbers alongside the content of file.txt
+nl -b a file.txt  # Displays line numbers for all lines, including empty lines
+nl -b t file.txt  # Displays line numbers only for non-empty lines
+
+Used to manage services, check system state, and manage targets (runlevels).
+| Command                               | Description                                      |
+| ------------------------------------- | ------------------------------------------------ |
+| `systemctl status`                    | Show overall systemd status                      |
+| `systemctl status <service>`          | Show status of a service (e.g., `nginx`, `sshd`) |
+| `systemctl start <service>`           | Start a service                                  |
+| `systemctl stop <service>`            | Stop a service                                   |
+| `systemctl restart <service>`         | Restart a service                                |
+| `systemctl reload <service>`          | Reload config without restarting (if supported)  |
+| `systemctl enable <service>`          | Enable service to start on boot                  |
+| `systemctl disable <service>`         | Disable service from starting on boot            |
+| `systemctl is-active <service>`       | Check if a service is running                    |
+| `systemctl is-enabled <service>`      | Check if a service is enabled to start at boot   |
+| `systemctl list-units --type=service` | List all loaded services                         |
+| `systemctl list-unit-files`           | List all unit files and their states             |
+| `systemctl reboot`                    | Reboot the system                                |
+| `systemctl poweroff`                  | Shutdown the system                              |
+
+journalctl: 
+Used to view logs managed by the systemd journal.
+
+journalctl -xe  # View recent system logs with errors and warnings
+journalctl -u service_name  # View logs for a specific service
+journalctl -f  # Follow logs in real-time (similar to tail -f)
+journalctl --since "2023-10-01" --until "2023-10-31"  # View logs for a specific date range
+journalctl --since "2 hours ago"  
+journalctl -b  --> Show logs from current boot
+journalctl -b -1 --> Show logs from previous boot
