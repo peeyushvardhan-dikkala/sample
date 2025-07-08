@@ -1,0 +1,538 @@
+1) enum class:
+#include <iostream>
+using namespace std;
+
+enum class Gender {
+    Male,
+    Female
+};
+
+struct Data {
+    string name;
+    int age;
+    Gender gender;
+};
+
+string getGenderString(Gender g) {
+    return (g == Gender::Male) ? "Male" : "Female";
+}
+
+int main() {
+    Data person = {"Alice", 62, Gender::Female};
+
+    cout << "Name: " << person.name
+         << ", Age: " << person.age
+         << ", Gender: " << getGenderString(person.gender) << endl;
+
+    return 0;
+}
+
+2) enum with switch statement:
+#include <iostream>
+using namespace std;
+
+enum Weather { SUNNY, CLOUDY, RAINY };
+
+string getWeatherName(Weather w) {
+    switch (w) {
+        case SUNNY: return "Sunny";
+        case CLOUDY: return "Cloudy";
+        case RAINY: return "Rainy";
+        default: return "Unknown";
+    }
+}
+
+int main() {
+    Weather w = CLOUDY;
+    cout << "Weather: " << getWeatherName(w) << endl;
+
+    return 0;
+}
+
+3) enum with bitwise operations:
+#include <iostream>
+using namespace std;
+
+enum class Permissions {
+    None    = 0,
+    Read    = 1 << 0,   // 0001
+    Write   = 1 << 1,   // 0010
+    Execute = 1 << 2    // 0100
+};
+
+// Overload bitwise OR
+inline Permissions operator|(Permissions lhs, Permissions rhs) {
+    return static_cast<Permissions>(
+        static_cast<int>(lhs) | static_cast<int>(rhs)
+    );
+}
+
+// Overload bitwise AND
+inline int operator&(Permissions lhs, Permissions rhs) {
+    return static_cast<int>(lhs) & static_cast<int>(rhs);
+}
+
+struct File {
+    string name;
+    Permissions permissions;
+};
+
+string getPermissionsString(Permissions p) {
+    string result;
+    if (p & Permissions::Read)    result += "Read ";
+    if (p & Permissions::Write)   result += "Write ";
+    if (p & Permissions::Execute) result += "Execute ";
+    return result.empty() ? "None" : result;
+}
+
+int main() {
+    File file = {"example.txt", Permissions::Read | Permissions::Write};
+
+    cout << "File: " << file.name
+         << ", Permissions: " << getPermissionsString(file.permissions) << endl;
+
+    return 0;
+}
+
+4) Structure:
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Struct to hold student data
+struct Student {
+    int rollNo;
+    string name;
+    float marks;
+};
+
+// Class to manage students
+class StudentManager {
+private:
+    vector<Student> students;
+
+public:
+    void addStudent(int roll, string name, float marks) {
+        students.push_back({roll, name, marks});
+    }
+
+    void displayAll() {
+        cout << "\n--- Student List ---\n";
+        for (const auto& s : students) {
+            cout << "Roll No: " << s.rollNo
+                 << ", Name: " << s.name
+                 << ", Marks: " << s.marks << endl;
+        }
+    }
+
+    float calculateAverage() {
+        if (students.empty()) return 0;
+        float total = 0;
+        for (const auto& s : students)
+            total += s.marks;
+        return total / students.size();
+    }
+};
+
+int main() {
+    StudentManager manager;
+
+    // Add students
+    manager.addStudent(101, "Alice", 85.5);
+    manager.addStudent(102, "Bob", 78.0);
+    manager.addStudent(103, "Charlie", 92.3);
+
+    // Display all students
+    manager.displayAll();
+
+    // Show average marks
+    cout << "\nAverage Marks: " << manager.calculateAverage() << endl;
+
+    return 0;
+}
+
+5) Basic Structure:
+#include <iostream>
+using namespace std;
+
+// Define a structure
+struct Person {
+    string name;
+    int age;
+};
+
+int main() {
+    // Declare and initialize a structure variable
+    Person p;
+
+    cout << "Enter age: ";
+    cin >> p.age;
+
+    // Clear leftover newline before using getline
+    cin.ignore(); // Very important!
+
+    // Get input from user
+    cout << "Enter name: ";
+    getline(cin, p.name);
+
+    // Display the data
+    cout << "\n--- Person Info ---\n";
+    cout << "Name: " << p.name << endl;
+    cout << "Age: " << p.age << endl;
+
+    return 0;
+}
+
+6) Count the digits: 
+int countDigits(int n) {
+    int count=0;
+    while(n>0) {
+        n=n/10;
+        count++;
+    }
+    return count;
+}
+or
+int len=to_string(abs(str)).length();
+
+7)Power with base:
+int intPower(int base, int exp) {
+    int result=1;
+
+    for(int i=0;i<exp;i++)
+    {
+        result=result*i;
+    }
+    return result;
+}
+or
+#include<cmath> int result=pow(base,exponent);
+
+8)To filter single number at a time:
+int revNumber(int n) {
+    int rev=0;
+    while(n>0) {
+        int digit=n%10; // Get the last digit
+        rev=rev*10+digit; // Add it to rev
+        n=n/10; // Extract the last digit and add it to rev
+    }
+    return rev;
+}
+
+9) Reverse words in a sentence:
+#include <iostream>
+#include <sstream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    string sentence = "cat dog bat";
+    stringstream ss(sentence);
+    string word, result = "";
+    bool first = true;
+
+    while (ss >> word) {
+        if (!first) result += " ";           // Add space *only after* the first word
+        reverse(word.begin(), word.end());   // Reverse each word
+        result += word;
+        first = false;
+    }
+
+    cout << "Reversed words: " << result << endl;
+    return 0;
+}
+//Reversed words: tac god tab
+
+10) Youtube Channel Collection using operator overloading:
+#include<iostream>
+#include<list>
+#include<sstream>
+using namespace std;
+
+struct YoutubeChannel {
+    string Name;
+    int SubscribersCount;
+
+    YoutubeChannel(string name, int subscriberCount) {
+        Name = name;
+        SubscribersCount = subscriberCount;
+    }
+
+    bool operator==(const YoutubeChannel& yt) const {
+        return this->Name == yt.Name;
+    }
+
+};
+
+struct Mycollection {
+    list<YoutubeChannel> myChannels;
+
+    void operator+=(YoutubeChannel& channel) {
+        myChannels.push_back(channel);
+    }
+
+    Mycollection& operator+=(const Mycollection& collection) {
+        for (const YoutubeChannel& channel : collection.myChannels) {
+            myChannels.push_back(channel);
+        }
+        return *this;
+    }
+
+    void operator-=(YoutubeChannel& channel) {
+        myChannels.remove(channel);
+    }
+
+};
+
+ostream& operator<<(ostream& out, YoutubeChannel& yt)
+{
+    out<<"YoutubeName : "<<yt.Name<<", Youtube SubscriberCount: "<<yt.SubscribersCount<<endl;
+    return out;
+}
+
+// Print the full collection
+ostream& operator<<(ostream& out, Mycollection& collection) {
+    for (YoutubeChannel& yt : collection.myChannels) {
+        out<<yt;
+    }
+    return out;
+}
+
+int main() {
+    YoutubeChannel P = YoutubeChannel("Peeyush", 10000);
+    YoutubeChannel Q = YoutubeChannel("Yaswanth", 60000);
+    Mycollection myCollection;
+    myCollection += P;
+    myCollection += Q;
+    cout<<myCollection;
+}
+
+// Output:
+// YoutubeName : Peeyush, Youtube SubscriberCount: 10000    
+// YoutubeName : Yaswanth, Youtube SubscriberCount: 60000       
+// Adding more channels
+
+11) Advanced Youtube Channel Collection:
+#include <iostream>
+#include <list>
+#include <sstream>
+#include <algorithm>
+using namespace std;
+
+struct YoutubeChannel {
+    string Name;
+    int SubscribersCount;
+
+    YoutubeChannel(string name = "", int subscriberCount = 0)
+        : Name(name), SubscribersCount(subscriberCount) {}
+
+    bool operator==(const YoutubeChannel& yt) const {
+        return this->Name == yt.Name;
+    } 
+
+    bool operator!=(const YoutubeChannel& yt) const {
+        return !(*this == yt);
+    }
+
+    // Prefix increment: ++channel (adds 100 subscribers)
+    YoutubeChannel& operator++() {
+        SubscribersCount += 100;
+        return *this;
+    }
+
+    // Postfix increment: channel++
+    YoutubeChannel operator++(int) {
+        YoutubeChannel temp = *this;
+        ++(*this);
+        return temp;
+    }
+
+    // Boolean conversion
+    operator bool() const {
+        return SubscribersCount > 0;
+    }
+
+    // Stream output
+    friend ostream& operator<<(ostream& out, const YoutubeChannel& yt) {
+        out << "YoutubeName: " << yt.Name
+            << ", Subscribers: " << yt.SubscribersCount << endl;
+        return out;
+    }
+
+    // Stream input
+    friend istream& operator>>(istream& in, YoutubeChannel& yt) {
+        cout << "Enter channel name: ";
+        getline(in, yt.Name);
+        cout << "Enter subscriber count: ";
+        in >> yt.SubscribersCount;
+        in.ignore(); // flush newline
+        return in;
+    }
+};
+
+struct Mycollection {
+    list<YoutubeChannel> myChannels;
+
+    void operator+=(const YoutubeChannel& channel) {
+        myChannels.push_back(channel);
+    }
+
+    Mycollection& operator+=(const Mycollection& collection) {
+        for (const YoutubeChannel& channel : collection.myChannels) {
+            myChannels.push_back(channel);
+        }
+        return *this;
+    }
+
+    void operator-=(const YoutubeChannel& channel) {
+        myChannels.remove(channel);
+    }
+
+    // Binary + operator: returns new merged collection
+    Mycollection operator+(const Mycollection& other) const {
+        Mycollection result = *this;
+        result += other;
+        return result;
+    }
+
+    // Binary - operator: returns new collection with subtracted elements
+    Mycollection operator-(const Mycollection& other) const {
+        Mycollection result = *this;
+        for (const YoutubeChannel& channel : other.myChannels) {
+            result -= channel;
+        }
+        return result;
+    }
+
+    // Equality based on content
+    bool operator==(const Mycollection& other) const {
+        return myChannels == other.myChannels;
+    }
+
+    // Access via index (non-const)
+    YoutubeChannel& operator[](int index) {
+        auto it = myChannels.begin();
+        advance(it, index);
+        return *it;
+    }
+
+    // Access via index (const)
+    const YoutubeChannel& operator[](int index) const {
+        auto it = myChannels.begin();
+        advance(it, index); //advance iterator is used to move the iterator to the specified index
+        if (it == myChannels.end()) {
+            throw out_of_range("Index out of range");
+        }
+        return *it;
+    }
+
+    // Function call operator: search by name
+    YoutubeChannel* operator()(const string& name) {
+        for (YoutubeChannel& channel : myChannels) {
+            if (channel.Name == name)
+                return &channel;
+        }
+        return nullptr;
+    }
+
+    // Logical NOT: true if collection is empty
+    bool operator!() const {
+        return myChannels.empty();
+    }
+
+    // Stream output for collection
+    friend ostream& operator<<(ostream& out, const Mycollection& collection) {
+        if (collection.myChannels.empty()) {
+            out << "Collection is empty.\n";
+        } else {
+            for (const auto& yt : collection.myChannels) {
+                out << yt;
+            }
+        }
+        return out;
+    }
+};
+
+int main() {
+    YoutubeChannel a("AlphaTech", 1500);
+    YoutubeChannel b("BetaScience", 3000);
+    YoutubeChannel c("GammaGaming", 500);
+
+    Mycollection col1, col2;
+    col1 += a;
+    col1 += b;
+    col2 += c;
+
+    cout << "Collection 1:\n" << col1;
+    cout << "Collection 2:\n" << col2;
+
+    // Test +
+    Mycollection merged = col1 + col2;
+    cout << "Merged Collection:\n" << merged;
+
+    // Test -
+    Mycollection removed = merged - col2;
+    cout << "After Subtraction:\n" << removed;
+
+    // Test operator[]
+    cout << "First Channel in col1: " << col1[0];
+
+    // Test operator()
+    YoutubeChannel* found = merged("BetaScience");
+    if (found) {
+        cout << "Found: " << *found;
+    }
+
+    // Test logical NOT
+    if (!Mycollection()) {
+        cout << "Empty collection detected.\n";
+    }
+
+    // Test increment
+    ++col1[0];
+    col1[1]++;
+    cout << "After increment:\n" << col1;
+
+    // Test input operator
+    YoutubeChannel newChannel;
+    cin >> newChannel;
+    col1 += newChannel;
+    cout << "After input:\n" << col1;
+
+    return 0;
+}
+
+12) For Better Understanding:
+// Online C++ compiler to run C++ program online
+#include <iostream>
+using namespace std;
+class Light {
+public:
+    bool isOn = false;
+
+    bool operator!() const {
+        return !isOn;  // 👈 Checks this object's state
+    }
+};
+
+int main() {
+    Light lamp;
+Light torch;
+torch.isOn = true;
+Light lamp;
+
+if (!lamp) {
+    cout << "Lamp is OFF\n";  // ✅ Runs because isOn is false, so !isOn is true
+}
+
+lamp.isOn = true;
+
+if (!lamp) {
+    cout << "Lamp is OFF\n";  // ❌ Doesn’t run now, because isOn is true, so !isOn is false
+}
+//When you use !lamp,  the compiler actually does this: 
+// if (lamp.operator!()) { ... }
+// So operator!() is called on the object lamp.
+
+    return 0;
+}
