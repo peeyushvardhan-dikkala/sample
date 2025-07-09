@@ -378,8 +378,11 @@ struct Mycollection {
     }
 
     Mycollection& operator+=(const Mycollection& collection) {
-        for (const YoutubeChannel& channel : collection.myChannels) {
-            myChannels.push_back(channel);
+        for (const YoutubeChannel& yt : other.myChannels) {
+        // Optional: prevent duplicates
+        if (std::find(myChannels.begin(), myChannels.end(), yt) == myChannels.end()) {
+            myChannels.push_back(yt);
+            }
         }
         return *this;
     }
