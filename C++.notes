@@ -1,0 +1,825 @@
+C++
+
+1) Why C++ is better than Java?
+C++ is often considered better than Java for several reasons, especially in performance-critical applications:
+1) Performance:
+C++ compiles directly to machine code, which means it runs faster than Java, which runs on the Java Virtual Machine (JVM).
+C++ allows for low-level memory management, giving you control over how memory is allocated and deallocated.
+This can lead to more efficient use of resources, especially in systems programming or real-time applications.
+2) Memory Management:
+C++ uses manual memory management with `new` and `delete`, allowing for precise control over memory allocation.
+You can optimize memory usage and avoid garbage collection pauses that can occur in Java.
+3) Real-time Systems:
+C++ is often preferred for real-time systems where predictable performance is crucial.
+Java's garbage collector can introduce unpredictable latency, which is not suitable for real-time applications.
+4) System-Level Programming:
+C++ is widely used for system-level programming, such as operating systems, embedded systems, and game development.
+It provides low-level access to hardware and system resources, making it ideal for performance-critical applications.
+5) Portability:
+C++ code can be compiled on any platform with a C++ compiler, making it portable across different systems.
+Java is also portable, but it requires the JVM to run, which adds an extra layer of abstraction.
+
+In C++, you can avoid any memory allocation during runtime and ensure constant-time operations.
+In Java, even with tuning, a garbage collection pause could introduce unpredictable latency — bad for real-time systems.
+Java programs run on the Java Virtual Machine (JVM), which adds a layer between your code and the hardware. This offers portability and safety, but also introduces some performance overhead,
+
+2) Memory Layout: 
+High Address
++--------------------+
+|      Stack         | 
+|--------------------|
+|      Heap          | 
+|--------------------|
+| .bss  (zero init)  |
+| .data (initialized)| 
+| .rodata (const)    | ← "hello"
+| .text (code)       | 
++--------------------+
+Low Address
+
++-------------------------+
+|       Stack            | ← Local vars, function calls , Grows Downward
++-------------------------+
+|       Heap             | ← new/malloc , Grows Upward
++-------------------------+
+|   Uninitialized Data   | ← int x;
+|      (BSS Segment)     | 
++-------------------------+
+|   Initialized Data     |
+|     (Data Segment)     |← int x = 5;
++-------------------------+
+|     Read-Only Data     |
+|       (.rodata)        |
++-------------------------+
+|       Text             |← main(), func()
+|   (Code Segment)       |
++-------------------------+
+
+a) Stack:
+Stack is where local variables and function calls are stored. It grows downwards in memory.
+The stack area traditionally adjoined the heap area, but modern systems may have them separated.
+When the stack runs out of space, it can lead to a stack overflow.
+When the stack pointer met the heap pointer, it can lead to a stack overflow.
+It is in LIFO structure (Last In First Out), meaning the last function called is the first to return.
+The stack pointer (SP) points to the top of the stack, and it grows downwards in memory.
+The set of values in the stack is called a stack frame, which contains:
+- Function arguments
+- Local variables
+- Return address
+- Function call/return tracking
+ - Function call/return tracking via the stack means:
+    When a function is called, the CPU uses the stack to remember:
+        Where to return
+        What values (args, locals) to use
+    When the function returns, it pops that info off and resumes normally.
+Managed automatically by the compiler.
+b) Heap:
+Heap is where dynamically allocated memory (using `new` or `malloc`) is stored. It grows upwards in memory.
+The heap is used for objects that need to persist beyond the scope of a function call.
+It is managed manually by the programmer, meaning you must allocate and deallocate memory explicitly.
+When you allocate memory on the heap, you must remember to free it to avoid memory leaks. Using `delete` or `free` is essential to release memory back to the system.
+
+c) .bss, .data, .rodata, .text:
+These are sections of the program's memory layout:
+- **.bss (Block Started by Symbol):**: Contains uninitialized global and static variables. It is zero-initialized by the system.
+- **.data**: Contains initialized global and static variables.
+- **.rodata**: Contains read-only data, such as string literals or constant values.
+- **.text**: Stores compiled instructions from your source code, including functions and methods.
+
+Eg: global const char* str = "hello world";
+The string literal "hello world" is stored in the `.rodata` section, which is read-only.
+The pointer variable str is in the initialized data segment(i.e., read-write memory).
+
+.text vs Stack:
+The `.text` section contains the actual compiled code of your program, while the stack is used for managing function calls and local variables.
+The `.text` section is static and does not change during program execution, while the stack grows and shrinks dynamically as functions are called and return.
+
+.text Includes things like:
+main()
+any other functions
+inline assembly
+It's read-only for safety (accidentally writing here = crash).
+
+2)Why we should learn C++ ?
+I chose to learn C++ because it gives me a deep understanding of how computers manage memory and resources, and it builds a strong foundation in core programming concepts that apply across all languages.
+
+C++ teaches you:
+How memory works (new, delete, pointers)
+What compilers and linkers do
+
+C++ is extremely fast — often faster than Java, Python, or JavaScript — because:
+It compiles to machine code
+There’s no garbage collector slowing things down
+You optimize your own memory
+
+Machine code is platform-specific: An .exe compiled on Windows won't run on Linux unless recompiled.
+But the source code can be compiled on any machine with a C++ compiler.
+Can be recompiled or interpreted anywhere
+
+A machine-independent language (like C++, Java, or Python) can run on any machine — as long as there is the right compiler or interpreter for that platform.
+
+2) Tokens in Cpp:
+Tokens are the basic units in a C++ program, like words in a sentence. 
+A lexical token is a sequence of characters that can be treated as a unit in the grammar of the programming languages.
+King Is Computing Some Overloaded Programs
+
+| Token Type                      | Example                        | Description                                      |
+| ------------------------------- | ------------------------------ | ------------------------------------------------ |
+| **1. Keywords**                 | `int`, `return`, `if`, `while` | Reserved words in C++ with special meaning       |
+| **2. Identifiers**              | `main`, `myVariable`, `sum`    | Names given to variables, functions, classes     |
+| **3. Constants / Literals**     | `10`, `3.14`, `'A'`, `"Hello"` | Fixed values                                     |
+| **4. Strings**                  | `"Hello World"`                | Sequence of characters enclosed in double quotes |
+| **5. Operators**                | `+`, `-`, `*`, `=`, `==`       | Perform operations (math, logical, etc.)         |
+| **6. Punctuators / Separators** | `;`, `{}`, `()`, `,`           | Symbols used to structure code                   |
+
+3) The C++ compiler processes your source code in several phases, each transforming the code into a more machine-friendly format. Here’s a simplified overview of the main phases:
+1. **Lexical Analysis**: The compiler reads the source code and breaks it down into tokens, which are the smallest units of meaning (like keywords, identifiers, operators, etc.).
+2. **Syntax Analysis (Parsing)**: The compiler checks the grammar of the code, ensuring it follows the rules of the C++ language. It builds a parse tree or abstract syntax tree (AST) to represent the structure of the code.
+3. **Semantic Analysis**: The compiler checks the meaning of the code, ensuring that types are correct, variables are declared before use, and other semantic rules are followed. It may also perform type checking and scope resolution.
+4. **Intermediate Code Generation**: The compiler converts the AST into an intermediate representation (IR), which is a lower-level, machine-neutral code that is easier to optimize and translate into machine code.
+5. **Optimization (Optional)**: The compiler may optimize the intermediate code to improve performance without changing the program's meaning. This can include removing unnecessary code, inlining functions, or optimizing loops.
+6. **Code Generation & Linking**: The compiler translates the optimized intermediate code into machine code specific to the target CPU architecture. It produces an executable file (like `.exe` or `.out`) and may link it with libraries or other object files to resolve external references.
+This process ensures that your C++ code is transformed into an efficient executable that can run on your computer.  
+7. **Error Handling**: Throughout these phases, the compiler checks for errors and warnings, providing feedback to the programmer about issues in the code that need to be fixed before successful compilation.
+Here’s a visual representation of the C++ compilation process:    
+Here’s a visual representation of the C++ compilation process:
+           🔽 Your C++ Source Code (main.cpp)
+              ┌─────────────────────────────────────────────--------┐
+              │ 1. Lexical Analysis: Breaks code into tokens        │  
+              │ 2. Syntax Analysis: Checks grammar, builds AST      │
+              │ 3. Semantic Analysis: Validates meaning, types      │
+              │ 4. Intermediate Code Generation: Converts AST to IR │
+              │ 5. Optimization: Improves performance (optional)    │
+              │ 6. Code Generation & Linking: Produces executable   │
+              └───────────────────────────────────────────---------─┘
+When we say "intermediate code generation" (step 4), we mean that the compiler transforms the Abstract Syntax Tree (AST) into a more machine-friendly, intermediate representation (IR), which is a step closer to machine code — but still not quite hardware-specific.
+ 
+4)we mean that the compiler transforms the Abstract Syntax Tree (AST) into a more machine-friendly, intermediate representation (IR), which is a step closer to machine code — but still not quite hardware-specific.
+
+Comments in C++:
+
+Comments in C++ are meant to explain the code as well as to make it more readable. Their purpose is to provide information about code lines. Programmers commonly use comments to document their work
+// Single lines Use Ctrl+/
+/* Multiline Comment */ 
+
+5)C++ Data types:
+Data types specify the type of data that a variable can store. Whenever a variable is defined in C++, the compiler allocates some memory for that variable based on the data.
+
+1) Built-in (Primitive) Data Types
+2) Derived Data Types --> Pointers, Arrays, References, Functions – int func(int a)
+3) User-defined Data Types --> struct, class, union, enum, typedef, using
+4) Standard Library Types --> std::string, std::vector, std::array,std::map, std::unordered_map, std::pair, std::tuple
+                              std::variant, std::optional
+5) Void Type --> Represents no type, used in functions that return nothing.
+6) Modern CPUs are designed to read memory in fixed-size chunks, often called words. The size of these chunks depends on the CPU architecture:
+| CPU Architecture | Word Size | Typical Chunk           |
+| ---------------- | --------- | ----------------------- |
+| 32-bit           | 4 bytes   | Reads 4 bytes at a time |
+| 64-bit           | 8 bytes   | Reads 8 bytes at a time |
+
+| Data Type     | Size (Typical) | Description                            |
+| ------------- | -------------- | -------------------------------------- |
+| `bool`        | 1 byte         | Boolean value (`true` or `false`)      |
+| `char`        | 1 byte         | Single character (ASCII)               |
+| `wchar_t`     | 2 or 4 bytes   | Wide character (Unicode)               |
+| `short`       | 2 bytes        | Short integer                          |
+| `int`         | 4 bytes        | Standard integer                       |
+| `float`       | 4 bytes        | Single-precision floating-point        |
+| `long`        | 4 or 8 bytes   | Long integer (platform-dependent)      |
+| `long long`   | 8 bytes        | Larger integer                         |
+| `double`      | 8 bytes        | Double-precision floating-point        |
+| `long double` | 8, 12, or 16 B | Extended precision (compiler-specific) |
+| `void`        | 0 bytes        | No value / empty type                  |
+
+bool vs bool_t :
+In C++, `bool` is a built-in data type that represents boolean values (`true` or `false`). It is used for logical operations and conditions.
+`bool_t` is not a standard C++ type; it might be defined in some libraries or frameworks as a typedef or alias for `bool`, but it is not part of the C++ standard.  
+Used in legacy C is `typedef int bool_t;` to represent boolean values, but this is not recommended in modern C++.
+// and can lead to confusion. In modern C++, always use `bool` for boolean values.
+// and to optimize memory access patterns for better performance.
+// In C++, the `bool` type is typically 1 byte, but it can be larger depending on the compiler and platform.
+// The `bool_t` type is not standard in C++ and may refer to a custom type defined in some libraries or frameworks.
+// or in C as `typedef int bool_t;` to represent boolean values, but this is not recommended in modern C++.
+
+7) In C++, string is a class from the STL that manages dynamic character arrays.
+std::string internally holds a pointer to a dynamically allocated character array on the heap. This allows the string to manage memory flexibly as its size changes. The object on the stack only stores metadata — like the pointer, size, and capacity — not the actual characters.
+
+8) Why Is Padding Necessary in C++? 
+Padding in C++ refers to the insertion of unused bytes between members of a structure or class to ensure proper memory alignment
+
+Padding is necessary to maintain proper memory alignment for data members within a structure or class.
+
+Most modern CPUs require that data types be stored at memory addresses that are multiples of their size — for example, a 4-byte int should start at an address divisible by 4. If this alignment is not respected, the CPU may need extra cycles to access the data, or on some systems, it may result in a crash due to misaligned access.
+
+9) Imagine you are a librarian handling a list of books. You have a pointer (iterator) to the current book.
+Post Increment Operator(i++):
+Give me the book you’re currently pointing at, then move to the next book.
+
+To do this:
+You photocopy the current book’s page (make a copy).
+You move to the next book.
+You hand me the copy (the page before moving).
+📦 Extra step: You had to make a copy.
+
+Pre Increment Operator(++i ):
+First move to the next book, then give me that book.
+
+You just walk to the next book.
+You give me the book you’re now pointing to.
+✅ No need to copy anything.
+
+Why we need copy ?
+i++ needs a copy to return the original value before incrementing.
+Whereas ++i does not need a copy because it returns the new value after incrementing.
+
+Real-Life Analogy: Elevator Button Example
+Imagine you're on floor 5, and you press a button to go up 1 floor. But someone asks:
+“Tell me which floor you were on before you pressed the button.”
+You can’t just point to the elevator — it’s already moved. You’d need to write down your floor (make a copy) before moving, so the other person has the correct info.
+
+// Post-increment
+MyType MyType::operator++(int) {
+    MyType temp = *this;  // make copy
+    ++(*this);            // pre-increment actual value
+    return temp;          // return original
+}
+// Pre-increment
+MyType& MyType::operator++() {
+    // increment actual value
+    // no need to make a copy
+    return *this;  // return reference to updated object
+}
+
+In low-level performance-critical code, you might prefer pre-increment (++i) because it avoids the overhead of copying.
+
+10) Structure:
+In C++, a structure (or struct) is a user-defined data type that allows you to group variables of different types under a single name. These variables, known as members, can be of different types
+
+Feature	                                struct	class
+Default access modifier	                public	private
+Supports member functions	            ✅ Yes	✅ Yes  
+Supports inheritance	                ✅ Yes	✅ Yes
+Supports constructors/destructors	    ✅ Yes	✅ Yes
+
+11) Enumerator: 
+An enum (short for enumeration) is a user-defined type in C++ that consists of a set of named integral constants.
+It improves code readability and makes programs easier to maintain by using meaningful names instead of raw numbers.
+
+enum class for type safety
+Avoids name conflicts (no Male/Female pollution in global namespace)
+Safer comparisons (gender == Gender::Male)
+
+12) Call by value vs Call by reference: 
+In call by value, a copy of the variable is passed — changes don’t affect the original.
+Use call by value when the function just reads or logs data.
+
+In call by reference, a reference (alias) is passed — so changes directly affect the original variable.(an alias for the original variable.)
+Use call by reference when the function modifies the input — like sorting, updating, or swapping.
+
+Use call by value when you don't want the original data modified, and call by reference when you do.
+
+13) Entry Controlled Loop  - while
+    Exit Controlled Loop   - do {..}while(condition) 
+    Count Controlled Loop  - for
+    Conditional Statement  - if(condition){}, if{} else{}, if {} else if ()
+    
+Use do-while when the task must happen at least once, like menus or user input validation.
+Use while when the condition must be true first, like checking a file is open before reading.
+
+14)
+| Term                 | Meaning                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| **Dangling Pointer** | A pointer pointing to memory that has already been **freed or deleted**.                    |
+| **Void Pointer**     | A **generic pointer** that can point to any data type (but can't be dereferenced directly). |
+| **Wild Pointer**     | A pointer that has been declared but **not initialized** (points to random memory).         |
+
+15) Initialize list:
+In C++, an initializer list is a way to initialize objects, especially useful for classes and structs. It allows you to set values for member variables directly in the constructor's parameter list.
+
+Number of operations will be reduced:
+If we don’t use an initializer list, the member variables are first default-initialized and then assigned, which leads to unnecessary extra operations — the initializer list avoids this by constructing the members directly with the desired value.
+
+In C++, the initializer list is used because:
+It runs before the constructor body
+It’s the only place where you can initialize base classes and member variables
+It ensures the base class is fully constructed before any derived-class-specific logic runs
+
+Eg: 
+Example1: //Without initializer list
+Default constructor 
+Assignment operator
+
+Example2: //With initializer list
+Parameterized constructor (Copy constructor)
+
+Note:
+Initializer lists don’t allow loops or multi-step logic.
+Only simple one-line expressions are allowed there.
+
+Why use it?
+1. **Cleaner Syntax**: It provides a concise way to initialize multiple members without needing to write separate assignment statements.
+2. **Performance**: It can be more efficient than assigning values in the constructor body, as it initializes members directly rather than assigning them after the object is created.
+3. **Const Members**: It allows you to initialize `const` members, which must be initialized at the time of object creation.
+
+| Type                               | Must Use Init List?  | Why                                   |
+| ---------------------------------- | ---------------------| ------------------------------------- |
+| `const` members                    | ✅ Yes               | Cannot be assigned after construction |
+| `T&` references                    | ✅ Yes               | Must be bound immediately             |
+| Base class with no default ctor    | ✅ Yes               | Must call constructor in init list    |
+| Member object with no default ctor | ✅ Yes               | Needs explicit initialization         |
+
+1) const members:
+   - Must be initialized in the initializer list because they cannot be assigned values after the object is created.
+   - Example: `const int x;` must be initialized like this: `MyClass(int val) : x(val) {}`
+2) Reference members:
+   - Must be initialized in the initializer list because references must be bound to an object at the time of construction.
+3) Base class with no default constructor:
+   - If a base class does not have a default constructor, you must call its constructor in the initializer list of the derived class.
+   Since there’s no Base() default constructor, C++ requires you to specify which constructor to use — and the only way to do that is in the initializer list of the derived class constructor.
+Note : 
+C++ will automatically create a default constructor — but only if you don’t define any constructor yourself.
+If you write any user defined constructor, C++ won’t provide a default one.
+C++ assumes you’re in full control once you define any constructor.
+
+If the base class has no default constructor, C++ doesn’t know how to construct it unless you explicitly tell it.
+You must call Base(42) in the initializer list because C++ builds the base class first — always — before running any derived class code.
+4) Member objects with no default constructor:
+   - If a member object does not have a default constructor, you must initialize it in the initializer list.
+   - Example: `MyClass(int val) : memberObj(val) {}`
+
+16) const int& getValue() const;
+In C++, `const int& getValue() const;` is a function declaration that indicates the following:
+1. **Return Type**: The function returns a reference to a constant integer (`const int&`). This means the function will return a reference to an integer that cannot be modified.
+Eg: object.getValue() = 10; // Error: Cannot modify a const reference
+
+2. const after the function name (getValue() const)
+The function is a **const member function**. This means the function does not modify any member variables of the class it belongs to.
+It means the function:
+Cannot modify any non-mutable members of the class.
+Can be called on const objects.
+
+17)namespace:
+In C++, a namespace is a declarative region that provides a scope to the identifiers (variables, functions, classes, etc.) inside it so they don't conflict with names in other parts of the program.
+namespace is in default public scope, meaning that all members of a namespace are accessible without any special access control.
+
+18) using:
+1) Using Directive – Import all names from a namespace. Eg: `using namespace std;`
+This allows you to use names from the `std` namespace without prefixing them with `std::`.
+2) Using Declaration – Import a specific name from a namespace Eg: `using std::cout;`
+3) Using Type Alias – Create a shorthand for a namespace or type 
+Eg: using int_list = std::vector<int>;
+This allows you to refer to `std::vector<int>` simply as `int_list`.
+
+4) Using in Inheritance – Expose base class members
+Eg: `using BaseClass::memberFunctionwithSameFunctionName;`
+When a derived class defines a function with the same name as a function in the base class (regardless of its signature), it hides all base class functions with that same name — regardless of parameters.
+
+Note:
+In C++, when a derived class defines a function with the same name as a base class function, the base class version gets hidden, even if the signatures are different.
+So this helps you:
+Bring the base class version into the derived class scope.
+Avoid function hiding
+
+5) Using in Templates – Specify template parameters
+Eg: `template<typename T> using vec = std::vector<T>;`
+This allows you to create a shorthand for `std::vector<T>` as `vec<T>`, making your code cleaner and easier to read.
+
+18)Template:
+A template is a blue print for creating a generic class or function that can work with any data type. 
+Templates are the foundation of generic programming, which involves to write a code in a way that is independent of any particular data type.
+
+In C++, typename is a keyword used in templates to indicate that a type, will be provided later when the template is instantiated
+Think of typename as
+“I am telling the compiler this symbol is going to represent a type.”
+
+Templates generate code only for the types you actually use.
+No extra memory or runtime cost — all done at compile time.
+Efficient — avoids unnecessary code generation or duplication.
+No code is created for unused template types.
+
+The compiler ensures that each template instance is generated only once - subsequent use of the same type will refer to the same instance
+
+class vs typename in Template Parameters
+1)Referring to a Nested Type in a Template
+A nested type is a type (like a class, struct, enum, or typedef) that is defined inside another class or struct.
+
+typename T 
+T is a placeholder type.
+Placeholder means it will be replaced with an actual type when the template is instantiated or during compilation
+
+Why do we need typename here?
+Because Container is a template parameter, and Container::value_type is a dependent name — the compiler can't know at this point whether value_type is a type or something else. You must clarify with typename.
+
+typename Containe::value x = 5;
+
+STL Containers Provide value_type
+All standard library containers (like std::vector, std::list, std::set, etc.) define a member type called value_type.
+
+Internally, it's something like:
+template <typename T>
+class vector {
+public:
+    using value_type = T;  // This is a type alias, not a keyword
+};
+
+ContainerProcessor<std::vector<int>> processor;
+typename Container::value_type: tells the compiler that value_type is a type inside the template parameter.
+ContainerProcessor<std::vector<int>>: this is where the template is instantiated for std::vector<int>
+
+1) Function Template:
+A function template allows you to create a function that can operate on different data types without rewriting the function for each type.
+
+2) Class Template:
+A class template allows you to define a class that can work with any data type, making it reusable and flexible.
+
+3) Template Specialization:
+Template specialization allows you to define a specific implementation of a template for a particular data type or set of types. This is useful when you need different behavior for certain types while still using the generic template for others.
+
+19) std::optional:
+`std::optional` is a feature in C++ that represents an optional value, meaning it can either contain a value or be empty (no value). It is part of the C++17 standard library and is used to handle cases where a value may or may not be present without resorting to pointers or special sentinel values.
+It is useful when you want to indicate that a variable may not have a value, such as when a function might fail to produce a result or when a value is not applicable.
+It is a safer alternative to using raw pointers or null values, as it explicitly indicates the possibility of absence.
+
+Eg:
+std::optional<int> maybeValue;  
+if (maybeValue.has_value()) {
+    std::cout << "Value is: " << *maybeValue << std::endl;
+} else {
+    std::cout << "No value present." << std::endl;
+}
+
+Syntax :
+optional<T> can be empty or hold a value.
+.has_value() → checks if value exists.
+.value() → gets the value (throws if empty).
+.value_or(default) → safe way to get a value or fallback. Eg: .value_or("default value").
+.reset() → clears the optional (makes it empty).
+
+It provides a way to express the absence of a value in a type-safe manner, avoiding issues like null pointer dereferencing.
+
+20) Virtual Functions:
+A virtual function is a member function in a base class that you expect to override in derived classes. It allows for dynamic (runtime) polymorphism, meaning the function that gets called is determined by the type of the object being pointed to, not the type of the pointer itself.
+
+a) vtable:  
+When a class has virtual functions, the compiler creates a special table called the vtable (virtual table) for that class. It stores the addresses of the virtual functions for a class. It's like a list (table) of function pointers.
+Created: By the compiler, during compile time.
+Stored: As a static table in memory (one per class with virtual functions).
+Used for: Runtime dispatch of virtual functions
+
+b) vptr:
+Each object of a class with virtual functions has a hidden pointer called vptr (virtual pointer).
+It points to the vtable of the class that the object belongs to.
+When: Automatically set up by the constructor, Used at runtime to resolve which function to call.
+Created by the compiler when your class contains at least one virtual function.
+vptr is declared at compile time, but it is set to point to the correct vtable at runtime when the object is created.
+
+When you call a virtual function on an object, the compiler uses the vptr to look up the correct function in the vtable and calls it. This allows for dynamic dispatch, meaning the correct function is called based on the actual type of the object at runtime, not just the type of the pointer.
+
+Why constructors cannot be virtual:
+Constructors cannot be virtual in C++ because:
+vptr is not fully set up when a constructor is called. (The vptr is initialized/set inside the constructor.)
+When an object is being constructed, the complier set up the vptr to point to the class's vtable.
+But that happens as part of the constructor — it is not fully established before the constructor begins.
+
+Why destructors can be virtual:
+Destructors can be virtual in C++ because:
+When a destructor is called, the vptr is already set up to point to the correct vtable for the derived class.
+This allows the destructor to call the correct derived class destructor, ensuring proper cleanup of resources.
+Like when you delete a base class pointer that points to a derived class object, the virtual destructor ensures that the derived class's destructor is called first, followed by the base class destructor.
+
+Consequences of not calling the derived destructor first 
+1. Resource leaks 
+2. Undefined behavior --> If the derived class accesses data in its destructor that relies on the base  — but the base was already destroyed leads to crash, segment faults.
+
+Why constructors cannot be static:
+Constructors cannot be static in C++ because:
+A constructor is meant to initialize an instance of a class, and static members belong to the class itself, not to any specific instance.
+Static functions cannot access instance members directly, as they do not have a `this` pointer.
+
+Why constructors does not return a value:
+Constructors do not return a value because their purpose is to initialize an object, not to produce a value like a regular function. They are called automatically when an object is created, and they set up the initial state of that object.
+
+You don’t need to call it manually like a regular function.
+
+21) override:
+The `override` keyword is used in C++ to indicate that a virtual function in a derived class is intended to override a virtual function in the base class. It helps catch errors at compile time if the function does not actually override any base class function.
+It ensures that the function signature matches the base class function exactly, preventing accidental mistakes like typos or mismatched parameters.
+
+22) Why Does the Copy Constructor Take a Reference:
+In C++, the copy constructor is responsible for creating a new object as a copy of an existing one. If the copy constructor were to take its argument by value, it would require making a copy of the object in order to pass it — but to make that copy, the compiler would need to call the copy constructor again.
+
+This creates an infinite recursive loop, where each call to the copy constructor requires another copy, which requires another constructor call, and so on. Eventually, this would lead to a stack overflow or a compiler error.
+
+To avoid this, the copy constructor takes its parameter by reference — specifically, const MyClass&. This allows the function to access the original object directly, without needing to copy it first, and ensures the original isn't accidentally modified during the copying process.
+
+23) Deep Copy vs Shallow Copy:
+A memory leak in C++ (or any language with manual memory management) happens when your program allocates memory but never frees it, causing that memory to be unusable and permanently reserved until the program ends.
+
+A shallow copy copies the values of member variables as they are, including pointers.
+If the object has a pointer to dynamically allocated memory, both the original and the copy will point to the same memory location. This can lead to unintended side effects like double deletion.
+
+A deep copy creates a new copy of the dynamically allocated memory. It allocates separate memory and copies the actual data, so the copied object is independent of the original.
+
+24) const vs constexpr :
+const :
+Declares a variable whose value cannot change after initialization.
+Can be runtime or compile-time initialized.
+
+constexpr :
+constexpr is a keyword in C++ that tells the compiler: "This value/function can be evaluated at compile time."
+It helps with optimization and ensures immutability like const, but with added compile-time power.
+Used to define compile-time constants.
+Can be used in contexts that require compile-time evaluation, like template parameters or array sizes.
+
+constexpr is used for functions used as a specifier that indicates the function can be evaluated at compile time if all its arguments are also known at compile time.
+
+consteval(C++20):
+Declares a function or variable that can be evaluated at compile time.
+Stricter than constexpr.
+Always evaluated at compile time — never allowed at runtime.
+
+constinit (C++20):
+Declares a variable that must be initialized at compile time, but is not necessarily constant.
+Helps avoid static initialization order bugs.
+Still allows mutation at runtime.
+
+constinit is perfect for globals or statics where:
+You want to guarantee safe initialization at compile time
+But still need to change the value later (e.g., counters, system flags)
+
+25) double vs float:
+| Feature            | float                     | double                    |
+| ------------------ | ------------------------- | ------------------------- |  
+| Size               | 4 bytes                   | 8 bytes                   |
+| Precision          | 7 decimal digits          | 15-16 decimal digits      |
+| Range              | ~1.2E-38 to 3.4E+38       | ~2.2E-308 to 1.7E+308     |
+| Memory Usage       | Less memory               | More memory               |
+| Performance        | Generally faster          | Generally slower          |
+| Use Cases          | Graphics, games, simple calculations | Scientific computing, financial applications |    
+| Default in C++     | No                        | Yes                       |
+
+Due to lower precision, float may round or truncate values that a double can hold exactly.
+
+26) typedef vs using:
+typedef is the traditional way to create type aliases in C and C++.
+using was introduced in C++11 and provides a cleaner, more powerful way to define aliases — especially for template types.
+
+// Using typedef (old style)
+typedef void (*Callback)(int, double);
+
+Eg: typedef void (*Callback)(int, double);
+
+Callback fp = myFunction; // Much cleaner
+
+
+// Using 'using' (modern and clear)
+using Callback = void(*)(int, double);
+
+// Only possible with 'using'
+template<typename T>
+using Vec = std::vector<T>;
+    
+Vec<int> v; // Same as std::vector<int>
+
+26) size_t vs unsigned int:
+`size_t` is an unsigned integer type used to represent the size of objects in memory.
+Defined in the `<cstddef>` header, it is the result of the `sizeof` operator and is guaranteed to be large enough to hold the size of any object.
+It is platform-dependent, meaning its size can vary based on the architecture (32-bit vs 64-bit).
+
+unsigned int is usually always 32 bits, even on 64-bit systems. That means using unsigned int can truncate or overflow when dealing with large memory sizes.
+
+Eg: 
+size_t len = sizeof(huge_array);  // ✅ Correct
+unsigned int len = sizeof(huge_array);  // ❌ Risk of overflow
+
+27) std::npos:
+`std::npos` is a constant in the C++ Standard Library that represents the largest possible value for a size type, typically used to indicate "not found" in string and container operations.
+It is defined in the `<string>` header and is used with functions like `std::string::find()` to indicate that a substring was not found.
+
+Eg: 
+std::string text = "hello";
+size_t pos = text.find("x");  // "x" is not in the string
+
+if (pos == std::string::npos) {
+    std::cout << "Not found!\n";
+}
+
+pos will be set to -1 as there is no "x" in the string.
+As size_t is an unsigned tpe, it wraps around to the maximum value that strings are never that long in real programs,so it's perfect for that.
+
+Wrap around means going beyond the max or below 0 in unsigned types, and the value loops around like a clock.
+
+28) Rule of Three:
+The Rule of Three in C++ states that if a class manages resources (like dynamic memory), you should explicitly define three special member functions:
+1. **Destructor**: Cleans up resources when the object goes out of scope or is deleted.
+2. **Copy Constructor**: Creates a new object as a copy of an existing one, ensuring proper resource management.
+3. **Copy Assignment Operator**: Assigns one object to another, ensuring resources are managed correctly during assignment.
+to avoid shallow copy issues
+If you define any of these, you should define all three to ensure proper resource management and avoid memory leaks or undefined behavior.
+
+29) Rule of Five:
+
+In C++, move semantics allow you to transfer ownership of resources (like memory, file handles, etc.) from one object to another without copying the resource. This is done using rvalue references (T&&), usually in a move constructor or move assignment operator.
+
+Lvalue (Locator Value) vs Rvalue (Read Value / Temporary):
+In C++, lvalues refer to objects that have a name and can be modified — they exist in a specific memory location. Rvalues are temporary values that don’t persist — like literals or the result of expressions.
+
+rvalues — temporary results of expressions, don't have a name
+
+An lvalue reference (T&) binds to lvalues, while an rvalue reference (T&&) is used to bind to rvalues, enabling move semantics, which help optimize performance by avoiding deep copies of temporary objects.
+
+std::move(b) --> It's just a cast. Converts lvalue b to rvalue reference so that the move constructor or move assignment operator can be called, transferring ownership of resources instead of copying them.
+Under the hood, It returns static_cast<MyClass&&>
+
+The Rule of Five in C++ extends the Rule of Three to include move semantics, which were introduced in C++11. It states that if a class manages resources, you should define five special member functions:
+1. **Destructor**: Cleans up resources when the object goes out of scope or is deleted.
+2. **Copy Constructor**: Creates a new object as a copy of an existing one, ensuring proper resource management.
+3. **Copy Assignment Operator**: Assigns one object to another, ensuring resources are managed correctly during assignment.
+4. **Move Constructor**: Transfers ownership of resources from a temporary object(rvalue) to a new object, avoiding deep copies and improving performance.
+5. **Move Assignment Operator**: Transfers ownership of resources from a temporary object to an existing object, allowing efficient resource management during assignment.
+This rule is important for classes that manage dynamic memory or other resources, as it ensures that both copy and move operations are handled correctly to avoid memory leaks, dangling pointers, or undefined behavior.
+
+30) Temporary Objects in C++:
+Temporary objects in C++ are short-lived objects created during expression evaluation, such as when passing arguments to functions or returning values from functions. They are created by the compiler to hold intermediate results and are destroyed at the end of the full expression in which they were created.
+Temporary objects are created in the following scenarios:
+1. When a function returns an object by value.
+2. When a temporary object is created as part of an expression, such as in arithmetic operations or function calls.
+3. When a temporary object is created to hold the result of a type conversion.
+Temporary objects are typically created on the stack, and their lifetime is limited to the full expression in which they are created. They are automatically destroyed when they go out of scope, which helps manage memory efficiently.
+
+31) Copy Elision:
+Copy elision is an optimization where the compiler eliminates unnecessary copy or move operations, especially when returning or passing objects by value.
+It avoids creating a temporary object and then copying/moving it — instead, it constructs the object directly in its final place.
+1)Return Value Optimization (RVO): RVO is a compiler optimization where a temporary object created as a function return value is constructed directly in the caller's memory, avoiding a copy or move constructor.
+2)Named Return Value Optimization (NRVO): Similar to RVO, but applies when the returned object is named (not a temporary). The compiler can elide the move/copy by constructing the object directly in the caller's memory.
+3)Temporary Object Elimination: When a temporary object is assigned or returned, the compiler can eliminate the intermediate temporary, constructing the final object directly in its destination
+
+32) Inline Functions:
+If a function is declared as inline, the complier places a copy of code of that function directly at the point of the call at compile time rather than performing a traditional function call(Control is transferred to the function, and then back to the caller).
+No function call overhead (no pushing to stack, return address, etc.).
+
+inline forces inlining	❌ No — it's only a suggestion to the compiler
+
+When to use inline functions:
+1. Small functions: Functions that are small and frequently called, like getters or setters.
+2. When you're defining functions in header files: Inline functions are often defined in header files to avoid multiple definitions errors.
+Tells the compiler:
+It's okay if this function is defined in multiple places — treat them as the same(one definition).
+Note:
+Too much inlining can cause code bloat, which may hurt performance or increase binary size.
+Code bloat means your binary (executable) becomes unnecessarily large due to repeated inlined code
+The compiler processes more code during optimization -  Longer compile times
+Eg:  multiply(i, i+1) in for loop
+
+32) Inline Functions vs Macros:
+Inline functions and macros are both used to replace code at compile time, but they have different characteristics
+| Feature                | Inline Functions                          | Macros                                      |
+| ---------------------- | ----------------------------------------- | ------------------------------------------- |
+| Type Safety            | Yes (type-checked)                        | No (no type checking)                       |
+| Scope                  | Scoped (local to the function or file)    | Global (visible everywhere)                 |
+| Debugging              | Easier to debug (line numbers preserved)  | Harder to debug (no line numbers)           |
+| Evaluation             | Evaluated once per call                   | Evaluated every time the macro is used      |
+| Functionality          | Can be overloaded, templated              | No overloading, no templates                |
+
+33) static keyword:
+The `static` keyword in C++ has different meanings depending on where it is used:
+1. **Static Local Variables**: When used inside a function, it declares a variable that retains its value between function calls.
+2. **Static Global Variables**: When used outside any function, it limits the variable's scope to the file in which it is declared and  retains its value throughout the program's lifetime.
+3. **Static Class Members**: When used in a class, it declares a member that is shared among all instances of the class, meaning it belongs to the class itself rather than any specific object.
+4. **Static Member Functions**: A static member function belongs to the class itself, not to any individual object.
+It can be called without creating an object, and it does not have access to this pointer.
+
+Definition:
+It is a member(variable or method) that is associated with the class rather than any specific instance of the class.
+It is shared among all instances of the class, and it is initialized only once, at the start of the program. You can access it using the class name, like `ClassName::staticMember`.
+
+Note: 
+- Static variables are initialized only once, at the start of the program, and retain their value respective to the scope they are defined in.
+- Static member variables must be defined outside the class definition if they are to be used, as they are not automatically instantiated for each object.
+    - Class declaration is just a blueprint, not the actual code that creates memory.
+    - Static member variables are stored in static/global memory segment, not in the stack or object memory.
+    - the compiler needs an explicit definition outside the class to allocate actual memory for them.
+- Static member functions can access static member variables because they belong to the class, not to any specific object.
+- static int count = 0; // ❌ Not allowed (definition) inside class 
+   - If you define it inside the class, then every .cpp file that includes the header will get its own copy of that static variable.
+   - This causes a "multiple definition" error when the program is linked.   
+
+34) 
+| Feature                   | **Reference (`&`)**                            | **Pointer (`*`)**                            |
+| ------------------------- | ---------------------------------------------  | -------------------------------------------- |
+| **Definition**            | An alias for another variable                  | Holds the memory address of another variable |
+| **Syntax**                | `int& ref = x;`                                | `int* ptr = &x;`                             |
+| **Null value?**           | ❌ No (must refer to something valid)          | ✅ Yes (can be `nullptr`)                   |
+| **Reassignment?**         | ❌ No (once set, always refers to same object) | ✅ Yes (can point to different objects)     |
+| **Dereferencing**         | Not needed — it acts like the original         | ✅ Yes: `*ptr` to access value               |
+| **Memory address access** | `&ref` gives the address of original           | `ptr` holds the address itself               |
+| **Use in functions**      | Pass-by-reference (like alias)                 | Pass-by-pointer (manual dereferencing)       |
+
+35) Types of "relationships" between classes(objects) 
+1. Association - General Relationship
+Association is a generic relationship where one class uses or is connected to another. There's no ownership.
+Both objects can exist independently of each other.
+
+“Uses-a” or “knows-a” relationship
+No ownership
+Lifespan is independent
+
+Eg: 
+A teacher and a student - a teacher can teach many students, and a student can be taught by many teachers.
+
+2. Aggregation - Whole-Part, Weak Ownership
+Aggregation is a special type of association where one class contains a reference to another, but the contained object can live independently of the container.
+
+“Has-a” relationship
+Weak ownership
+Lifespan is independent
+Implemented using pointers or references
+
+Eg:
+A Library has many Books, but a Book can exist without the Library
+If the Library object is destroyed, the Book objects still exist.
+
+A Team has Players, but Players can exist without the Team
+
+3. Composition - Whole-Part, Strong Ownership :
+Composition is a strong form of aggregation where one class owns another, and the lifecycle of the owned object is controlled by the owner.
+
+Owns-a” relationship
+Strong ownership
+Lifespan is dependent (child destroyed with parent)
+Implemented as member objects (by value)
+
+Eg:
+A House has Rooms, and if the house is destroyed, so are the rooms
+A Human has a Heart, and the heart can't exist without the human
+
+36) Time Complexity & Space Complexity:
+Time Complexity:
+The relation describing how run time grows as the input size increases.
+It is the measure of how the running time of an algorithm grows with respect to the input size n, not the actual clock time.
+It is usually expressed using Big O notation, which describes the upper bound of the algorithm's running time in the worst case.
+
+Space Complexity :
+It is the measure of how much memory an algorithm needs as the input size n increases.
+
+Time complexity = how fast it grows with input.
+Space complexity = how much memory it uses with input.
+
+37) Typecasting in C++:
+It is the process of converting a variable from one data type to another. C++ supports implicit (automatic) and explicit (manual) typecasting.
+
+1. **Static Cast (`static_cast<type>(expression)`)**:
+   - Used for compile-time type conversions.
+   - Safe for conversions between related types (e.g., int to float, base class to derived class).
+   - Cannot cast away `const` or `volatile` qualifiers.
+   - Example: `int i = static_cast<int>(3.14); // Converts double to int`
+2. **Dynamic Cast (`dynamic_cast<type>(expression)`)**:
+   - Used for safe downcasting in class hierarchies (from base to derived).
+   - Requires at least one virtual function in the base class because it relies on runtime type information (RTTI).
+   - Returns `nullptr` if the cast fails (for pointers) or throws `std::bad_cast` (for references).
+   - Example: 
+    class Entity {
+        public:
+            virtual ~Entity() {}  // Just destructor is enough  
+    };
+    vector<Entity*> entities = getAllEntities();
+    for (auto e : entities) {
+        if (Player* p = dynamic_cast<Player*>(e)) {
+            p->attack();  // Safe call for Player
+        }
+        else if (Enemy* en = dynamic_cast<Enemy*>(e)) {
+            en->flee();   // Safe call for Enemy
+        }
+    }
+3. **Const Cast (`const_cast<type>(expression)`)**:
+   - Used to add or remove `const` or `volatile` qualifiers.
+   Note: 
+   If the original object was const, don’t modify it after const_cast. If it was non-const, removing const is safe.
+   - Should be used with caution, as modifying a `const` object leads to undefined behavior.
+   - If an object is declared const, the compiler and runtime may place it in read-only memory, so writing to it could crash your program or corrupt data.
+   - Example: 
+    1) int x = 10;
+    const int* p = &x;
+
+    // Remove constness
+    int* q = const_cast<int*>(p);
+    *q = 20;  // OK, x is modified safely
+
+    2) const int y = 10;
+    const int* p = &y;
+
+    // Remove constness
+    int* q = const_cast<int*>(p);
+    *q = 20;  // Undefined behavior! y was originally const
+
+4. **Reinterpret Cast (`reinterpret_cast<type>(expression)`)**:
+   - Used for low-level reinterpreting of bit patterns.
+   - Can cast between unrelated types (e.g., pointer to int, int to pointer).
+   - Should be used sparingly, as it can lead to non-portable and unsafe code.
+   - Example: `int* p = reinterpret_cast<int*>(0x12345678); // Converts int to pointer
+
+38) OOPS :
+1) Object-Oriented Programming (OOP):
+A programming paradigm based on the concept of "objects", which can contain data and code to manipulate that data.
+Objects are real-world entities that encapsulate both state (attributes) and behavior (methods/functions).
+2) Class:
