@@ -244,268 +244,187 @@ int main() {
 //Reversed words: tac god tab
 
 10) Youtube Channel Collection using operator overloading:
-#include<iostream>
-#include<list>
-#include<sstream>
-using namespace std;
-
-struct YoutubeChannel {
-    string Name;
-    int SubscribersCount;
-
-    YoutubeChannel(string name, int subscriberCount) {
-        Name = name;
-        SubscribersCount = subscriberCount;
-    }
-
-    bool operator==(const YoutubeChannel& yt) const {
-        return this->Name == yt.Name;
-    }
-
-};
-
-struct Mycollection {
-    list<YoutubeChannel> myChannels;
-
-    void operator+=(YoutubeChannel& channel) {
-        myChannels.push_back(channel);
-    }
-
-    Mycollection& operator+=(const Mycollection& collection) {
-        for (const YoutubeChannel& channel : collection.myChannels) {
-            myChannels.push_back(channel);
-        }
-        return *this;
-    }
-
-    void operator-=(YoutubeChannel& channel) {
-        myChannels.remove(channel);
-    }
-
-};
-
-ostream& operator<<(ostream& out, YoutubeChannel& yt)
-{
-    out<<"YoutubeName : "<<yt.Name<<", Youtube SubscriberCount: "<<yt.SubscribersCount<<endl;
-    return out;
-}
-
-// Print the full collection
-ostream& operator<<(ostream& out, Mycollection& collection) {
-    for (YoutubeChannel& yt : collection.myChannels) {
-        out<<yt;
-    }
-    return out;
-}
-
-int main() {
-    YoutubeChannel P = YoutubeChannel("Peeyush", 10000);
-    YoutubeChannel Q = YoutubeChannel("Yaswanth", 60000);
-    Mycollection myCollection;
-    myCollection += P;
-    myCollection += Q;
-    cout<<myCollection;
-}
-
-// Output:
-// YoutubeName : Peeyush, Youtube SubscriberCount: 10000    
-// YoutubeName : Yaswanth, Youtube SubscriberCount: 60000       
-// Adding more channels
-
-11) Advanced Youtube Channel Collection:
 #include <iostream>
 #include <list>
-#include <sstream>
 #include <algorithm>
+#include <stdexcept>
 using namespace std;
 
-struct YoutubeChannel {
-    string Name;
-    int SubscribersCount;
+class YoutubeChannelCollection {
+private:
+    struct YoutubeChannel {
+        string Name;
+        int SubscribersCount;
 
-    YoutubeChannel(string name = "", int subscriberCount = 0)
-        : Name(name), SubscribersCount(subscriberCount) {}
+        YoutubeChannel(string name = "", int count = 0)
+            : Name(name), SubscribersCount(count) {}
 
-    bool operator==(const YoutubeChannel& yt) const {
-        return this->Name == yt.Name;
-    } 
+        bool operator==(const YoutubeChannel& yt) const {
+            return this->Name == yt.Name;
+        }
 
-    bool operator!=(const YoutubeChannel& yt) const {
-        return !(*this == yt);
+        bool operator!=(const YoutubeChannel& yt) const {
+            return !(*this == yt);
+        }
+
+        // Prefix increment: add 100 subscribers
+        YoutubeChannel& operator++() {
+            SubscribersCount += 100;
+            return *this;
+        }
+
+        // Postfix increment
+        YoutubeChannel operator++(int) {
+            YoutubeChannel temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        // Boolean conversion
+        operator bool() const {
+            return SubscribersCount > 0;
+        }
+
+        // Stream output
+        friend ostream& operator<<(ostream& out, const YoutubeChannel& yt) {
+            out << "YoutubeName: " << yt.Name
+                << ", Subscribers: " << yt.SubscribersCount << endl;
+            return out;
+        }
+
+        // Stream input
+        friend istream& operator>>(istream& in, YoutubeChannel& yt) {
+            cout << "Enter channel name: ";
+            getline(in, yt.Name);
+            cout << "Enter subscriber count: ";
+            in >> yt.SubscribersCount;
+            in.ignore();
+            return in;
+        }
+    };
+
+    list<YoutubeChannel> channels;
+
+public:
+    // Add channel
+    void operator+=(const string& name) {
+        channels.emplace_back(name, 0);
     }
-
-    // Prefix increment: ++channel (adds 100 subscribers)
-    YoutubeChannel& operator++() {
-        SubscribersCount += 100;
-        return *this;
-    }
-
-    // Postfix increment: channel++
-    YoutubeChannel operator++(int) {
-        YoutubeChannel temp = *this;
-        ++(*this);
-        return temp;
-    }
-
-    // Boolean conversion
-    operator bool() const {
-        return SubscribersCount > 0;
-    }
-
-    // Stream output
-    friend ostream& operator<<(ostream& out, const YoutubeChannel& yt) {
-        out << "YoutubeName: " << yt.Name
-            << ", Subscribers: " << yt.SubscribersCount << endl;
-        return out;
-    }
-
-    // Stream input
-    friend istream& operator>>(istream& in, YoutubeChannel& yt) {
-        cout << "Enter channel name: ";
-        getline(in, yt.Name);
-        cout << "Enter subscriber count: ";
-        in >> yt.SubscribersCount;
-        in.ignore(); // flush newline
-        return in;
-    }
-};
-
-struct Mycollection {
-    list<YoutubeChannel> myChannels;
 
     void operator+=(const YoutubeChannel& channel) {
-        myChannels.push_back(channel);
+        channels.push_back(channel);
     }
 
-    Mycollection& operator+=(const Mycollection& collection) {
-        for (const YoutubeChannel& yt : other.myChannels) {
-        // Optional: prevent duplicates
-        if (std::find(myChannels.begin(), myChannels.end(), yt) == myChannels.end()) {
-            myChannels.push_back(yt);
-            }
+    // Merge collections
+    YoutubeChannelCollection& operator+=(const YoutubeChannelCollection& other) {
+        for (const auto& ch : other.channels) {
+            if (find(channels.begin(), channels.end(), ch) == channels.end())
+                channels.push_back(ch);
         }
         return *this;
     }
 
-    void operator-=(const YoutubeChannel& channel) {
-        myChannels.remove(channel);
+    // Remove channel by name
+    void operator-=(const string& name) {
+        channels.remove_if([&](const YoutubeChannel& ch) { return ch.Name == name; });
     }
 
-    // Binary + operator: returns new merged collection
-    Mycollection operator+(const Mycollection& other) const {
-        Mycollection result = *this;
+    // Binary + merge
+    YoutubeChannelCollection operator+(const YoutubeChannelCollection& other) const {
+        YoutubeChannelCollection result = *this;
         result += other;
         return result;
     }
 
-    // Binary - operator: returns new collection with subtracted elements
-    Mycollection operator-(const Mycollection& other) const {
-        Mycollection result = *this;
-        for (const YoutubeChannel& channel : other.myChannels) {
-            result -= channel;
-        }
+    // Binary - subtract
+    YoutubeChannelCollection operator-(const YoutubeChannelCollection& other) const {
+        YoutubeChannelCollection result = *this;
+        for (const auto& ch : other.channels)
+            result -= ch.Name;
         return result;
     }
 
-    // Equality based on content
-    bool operator==(const Mycollection& other) const {
-        return myChannels == other.myChannels;
+    // Equality
+    bool operator==(const YoutubeChannelCollection& other) const {
+        return channels == other.channels;
     }
 
-    // Access via index (non-const)
+    // Index access
     YoutubeChannel& operator[](int index) {
-        auto it = myChannels.begin();
+        auto it = channels.begin();
         advance(it, index);
         return *it;
     }
 
-    // Access via index (const)
     const YoutubeChannel& operator[](int index) const {
-        auto it = myChannels.begin();
-        advance(it, index); //advance iterator is used to move the iterator to the specified index
-        if (it == myChannels.end()) {
-            throw out_of_range("Index out of range");
-        }
+        auto it = channels.begin();
+        advance(it, index);
+        if (it == channels.end()) throw out_of_range("Index out of range");
         return *it;
     }
 
-    // Function call operator: search by name
+    // Search by name
     YoutubeChannel* operator()(const string& name) {
-        for (YoutubeChannel& channel : myChannels) {
-            if (channel.Name == name)
-                return &channel;
+        for (auto& ch : channels) {
+            if (ch.Name == name)
+                return &ch;
         }
         return nullptr;
     }
 
-    // Logical NOT: true if collection is empty
+    // Logical NOT
     bool operator!() const {
-        return myChannels.empty();
+        return channels.empty();
     }
 
-    // Stream output for collection
-    friend ostream& operator<<(ostream& out, const Mycollection& collection) {
-        if (collection.myChannels.empty()) {
+    // Stream output
+    friend ostream& operator<<(ostream& out, const YoutubeChannelCollection& col) {
+        if (col.channels.empty())
             out << "Collection is empty.\n";
-        } else {
-            for (const auto& yt : collection.myChannels) {
-                out << yt;
-            }
-        }
+        else
+            for (const auto& ch : col.channels)
+                out << ch;
         return out;
     }
 };
 
 int main() {
-    YoutubeChannel a("AlphaTech", 1500);
-    YoutubeChannel b("BetaScience", 3000);
-    YoutubeChannel c("GammaGaming", 500);
+    YoutubeChannelCollection col1, col2;
 
-    Mycollection col1, col2;
-    col1 += a;
-    col1 += b;
-    col2 += c;
+    // Add channels
+    col1 += "AlphaTech";
+    col1 += "BetaScience";
+    col2 += "GammaGaming";
 
     cout << "Collection 1:\n" << col1;
     cout << "Collection 2:\n" << col2;
 
-    // Test +
-    Mycollection merged = col1 + col2;
-    cout << "Merged Collection:\n" << merged;
+    // Merge collections
+    auto merged = col1 + col2;
+    cout << "\nMerged Collection:\n" << merged;
 
-    // Test -
-    Mycollection removed = merged - col2;
-    cout << "After Subtraction:\n" << removed;
+    // Subtract collections
+    auto removed = merged - col2;
+    cout << "\nAfter Subtraction:\n" << removed;
 
-    // Test operator[]
-    cout << "First Channel in col1: " << col1[0];
+    // Index access and increment
+    ++col1[0];   // prefix increment
+    col1[1]++;   // postfix increment
+    cout << "\nAfter increment:\n" << col1;
 
-    // Test operator()
-    YoutubeChannel* found = merged("BetaScience");
-    if (found) {
-        cout << "Found: " << *found;
-    }
+    // Search by name
+    auto found = merged("BetaScience");
+    if (found)
+        cout << "\nFound: " << *found;
 
-    // Test logical NOT
-    if (!Mycollection()) {
-        cout << "Empty collection detected.\n";
-    }
-
-    // Test increment
-    ++col1[0];
-    col1[1]++;
-    cout << "After increment:\n" << col1;
-
-    // Test input operator
-    YoutubeChannel newChannel;
-    cin >> newChannel;
-    col1 += newChannel;
-    cout << "After input:\n" << col1;
+    // Logical NOT
+    if (!YoutubeChannelCollection())
+        cout << "\nEmpty collection detected.\n";
 
     return 0;
 }
 
-12) For Better Understanding:
+11) For Better Understanding:
 // Online C++ compiler to run C++ program online
 #include <iostream>
 using namespace std;
@@ -538,4 +457,137 @@ if (!lamp) {
 // So operator!() is called on the object lamp.
 
     return 0;
+}
+
+12) Move Semantics in C++:
+//Move Semantics
+#include<iostream>
+#include<string>
+using namespace std;
+
+class Movie {
+    public:
+    string Name;
+    string Genre;
+    float Rating;
+    int ActorsCounters;
+    string* Actors;
+
+    Movie(string name, string genre, float rating):Name(name), Genre(genre),Rating(rating),ActorsCounters(0),Actors(nullptr)
+    {
+        cout<<"Constructor is called"<<endl;
+    }
+
+    ~Movie() {
+        cout<<"Destructor is called"<<endl;
+        delete[] Actors;
+        Actors = nullptr;
+    }
+
+    Movie(const Movie& other) {
+        Name = other.Name;
+        Genre = other.Genre;
+        Rating = other.Rating;
+        ActorsCounters = other.ActorsCounters;
+        Actors = new string[ActorsCounters];
+        for(int i=0;i<ActorsCounters;i++) {
+            Actors[i] = other.Actors[i];
+        }   
+    }
+
+    Movie& operator=(const Movie& other) {
+        if(this != &other) {
+            delete[] Actors;
+            Name = other.Name;
+            Genre = other.Genre;
+            Rating = other.Rating;
+            ActorsCounters = other.ActorsCounters;
+            Actors = new string[ActorsCounters];
+            for(int i=0;i<ActorsCounters;i++) {
+                Actors[i] = other.Actors[i];
+            }   
+        }
+        return *this;
+    }
+
+    Movie (Movie&& other) noexcept {
+        Name = other.Name;
+        Genre = other.Genre;
+        Rating = other.Rating;
+        ActorsCounters = other.ActorsCounters;
+        Actors = other.Actors;
+        other.Actors = nullptr;
+        other.ActorsCounters = 0;
+        other.Rating = 0;
+
+        cout << "Move Constructor called..\n";
+
+    }
+
+    Movie& operator=(Movie&& other) {
+        if(this != &other) {
+            delete[] Actors;
+            Name = other.Name;
+            Genre = other.Genre;
+            Rating = other.Rating;
+            ActorsCounters = other.ActorsCounters;
+            Actors = other.Actors;
+            other.Actors = nullptr;
+            other.ActorsCounters = 0;
+            other.Rating = 0;
+            
+            cout << "Move Assignment Operator called..\n";
+
+        }
+        return *this;
+    }
+
+    void PrintInfo() const {
+        cout << "Name: " << Name << ", Genre: " << Genre << ", Rating: " << Rating << ", Actors: " << ActorsCounters << endl;
+        for (int i = 0; i < ActorsCounters; i++) {
+            cout << "  Actor " << i + 1 << ": " << Actors[i] << endl;
+        }
+        cout << endl;
+    }
+
+    void AddActor(const string Name) {
+        string *newActors = new string[ActorsCounters+1];
+        cout<<"ActorsCounters: "<<ActorsCounters<<endl;
+        for (int i = 0;i<ActorsCounters;++i) {
+            newActors[i] = Actors[i];
+        }
+        newActors[ActorsCounters] = Name;
+
+        delete[] Actors;
+        Actors = newActors;
+        ActorsCounters++;
+    }
+};
+
+int main() {
+    Movie movie1("Peeyush", "Action", 9.7);
+    movie1.AddActor("Yaswanth");
+    movie1.AddActor("Sai");
+
+    movie1.PrintInfo();
+
+    Movie movie2(movie1);  // Copy constructor
+    movie2.PrintInfo();
+
+    Movie movie3("Mission Impossible", "Adventure", 9.3);
+    movie3.PrintInfo();
+
+    movie3 = movie1;       // Copy assignment
+    movie3.PrintInfo();
+
+    Movie movie4 = std::move(movie1); // Move constructor
+    movie4.PrintInfo();
+
+    Movie movie5("Temp", "Drama", 8.0);
+    movie5 = std::move(movie2);       // Move assignment
+    movie5.PrintInfo();
+
+    // Optional: Print moved-from objects
+    movie1.PrintInfo(); // Moved-from state
+    movie2.PrintInfo(); // Moved-from state
 }
