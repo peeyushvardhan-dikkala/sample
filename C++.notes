@@ -209,7 +209,9 @@ Padding in C++ refers to the insertion of unused bytes between members of a stru
 
 Padding is necessary to maintain proper memory alignment for data members within a structure or class.
 
-Most modern CPUs require that data types be stored at memory addresses that are multiples of their size — for example, a 4-byte int should start at an address divisible by 4. If this alignment is not respected, the CPU may need extra cycles to access the data, or on some systems, it may result in a crash due to misaligned access.
+Most modern CPUs require that data types be stored at memory addresses that are multiples of their size — for example, a 4-byte int should start at an address divisible by 4. If this alignment is not respected, the CPU may need extra cycles to access the data can result in slower access times, or on some systems, it may result in a crash due to misaligned access.
+
+By carefully ordering members within a structure (placing larger types first), it is possible to reduce the amount of padding required, resulting in more efficient memory usage
 
 9) Imagine you are a librarian handling a list of books. You have a pointer (iterator) to the current book.
 Post Increment Operator(i++):
@@ -819,7 +821,196 @@ It is the process of converting a variable from one data type to another. C++ su
    - Example: `int* p = reinterpret_cast<int*>(0x12345678); // Converts int to pointer
 
 38) OOPS :
-1) Object-Oriented Programming (OOP):
-A programming paradigm based on the concept of "objects", which can contain data and code to manipulate that data.
+1) Object-Oriented_Programming(OOP):
+OOP's a programming paradigm that implements the concept of "objects", which can contain data and code to manipulate that data.
+
+2) Object: 
 Objects are real-world entities that encapsulate both state (attributes) and behavior (methods/functions).
-2) Class:
+An object is an instance of a class that contains data (attributes) and functions (methods) to operate on that data.
+Note:
+When you create a real object from that blueprint(class), that object is called an instance of the class
+Each object has its own copy of non-static data members.
+Objects can use member functions defined in the class.
+
+3) Class:
+A class is a blueprint or template for creating objects.
+It does not occupy memory itself. Memory is allocated only when an object is created.
+
+Memory Visualization:
+When you define a class with functions, the code of the function is **stored once in memory**, not inside each object.
+Objects only store data members.
+
+Functions are shared by all objects of the class.
+If functions were stored in each object, memory usage would explode when creating multiple objects.
+
+Static data members --> Stored once, shared by all objects
+Static member functions --> Stored once, callable without object 
+
+Note:
+Static Member Functions Can Be Called Without an Object
+Static member functions belong to the class itself, not to any specific object
+So, you can call a static function directly using the class name, without creating any object
+
+sizeof(class) = size of an object of that class
+Includes all non-static members + padding
+Does not include member functions or static members
+
+4) Abstraction:
+Abstraction is the process of hiding the internal implementation details of a class or function and showing only the essential features to the user.
+
+It focuses on what an object does, not how it does it.
+Achieved using abstract classes and interface in C++.
+
+What is an abstract class?
+An abstract class is a class that cannot be instantiated on its own and is designed to be a base class for other classes.
+They can only be used via pointers or references, enforcing that all derived classes provide concrete implementations.
+
+Acts as a blueprint for derived classes.
+Can contain:
+Pure virtual functions (must be overridden)
+Normal member functions (optional implementation)
+Data members
+
+Key Points:
+If a class has at least one pure virtual function, it becomes abstract.
+Objects of abstract classes cannot be created (because they are incomplete.)
+Accessed only through pointers or references to base class.
+Can contain both implemented and unimplemented methods i.e., can have both normal and pure virtual functions.
+You cannot create an object of an abstract class directly.
+
+What is a pure virtual function?
+A pure virtual function is a virtual function that does not have an implementation in the base class and forces derived classes to provide their own implementation of the function.
+It is declared by assigning 0 in its declaration.Declaring at least one pure virtual function makes the class abstract.
+
+What is a virtual function?
+A virtual function is a member function in a base class that you expect to override in derived classes.
+When a virtual function is called it depends upon the actual object type at runtime rateher than the declared type of pointer or reference at compile time.
+
+Interface:
+An interface is a class that has only pure virtual functions and no data members or implemented methods.
+
+Keypoints:
+All methods are pure virtual (no implementation) and no data members.
+No constructors or destructors (since no objects can be created).
+Used to define a contract that derived classes must follow.
+
+5) Encapsulation:
+Encapsulation is the process of wrapping data (variables) and functions (methods) together in a single unit, i.e., a class, and restricting direct access to some of the object’s components.
+
+Key points:
+Achieved using access specifiers: private, protected, public.
+Protects data integrity.
+Users can access data only through public methods (getters/setters methods)
+
+Protected:
+Members declared as protected are accessible inside the class and its derived classes, but not accessible outside the class hierarchy.
+
+6) Inheritance:
+It is a property by which one class (derived class) acquires the properties and behaviors of another class (base class).
+
+| Type                            | Description                                                 | Example                                           |
+| ------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
+| **1. Single Inheritance**       | When a class inherits from only one base class              | `A →B`                                           |
+| **2. Multiple Inheritance**     | When a class inherits from more than one base class.        | `A, B → C`                                        |
+| **3. Multilevel Inheritance**   | When a class derived from another derived class             | `A → B → C`                                       |
+| **4. Hierarchical Inheritance** | When multiple classes inherit from the same base class      | `A → B, C, D`                                     |
+| **5. Hybrid Inheritance**       | Combination of multiple types (e.g., multiple + multilevel) | Used in complex systems (e.g., `A→B, A→C, B,C→D`) |
+
+
+| Base class members    | Public inheritance   | Protected inheritance | Private inheritance |
+| --------------------- | -------------------- | --------------------- | ------------------- |
+| **public** members    | become **public**    | become **protected**  | become **private**  |
+| **protected** members | become **protected** | become **protected**  | become **private**  |
+| **private** members   | **not inherited**    | **not inherited**     | **not inherited**   |
+
+| Concept         | Relationship Type | Lifetime Dependency | Ownership | Example                | Real-world Meaning                          |
+| --------------- | ----------------- | ------------------- | --------- | ---------------------- | ------------------------------------------- |
+| **Association** | Uses-A            | Independent         | No        | `Teacher-Student`      | Work together, no dependency                |
+| **Aggregation** | Has-A (Weak)      | Independent         | Partial   | `Department-Professor` | Container uses others, but doesn’t own them |
+| **Composition** | Has-A (Strong)    | Dependent           | Full      | `Car-Engine`           | Part cannot exist without whole             |
+
+Association:
+Association is a general relationship between two classes where both can exist independently.
+
+Aggregation:
+Aggregation is a special form of association where one class contains a reference to another class, but the contained object can exist independently of the container.
+
+Composition:
+Composition is a strong form of association where one class owns another class completely.
+The lifetime of the contained object depends on the owner
+
+Virtual Inheritance:
+
+       A
+      / \
+     B   C
+      \ /
+       D
+
+A  - Base class
+B, C - Derived classes inheriting from A    
+D - Derived class inheriting from both B and C
+
+Diamond hierarchy (also known as the diamond problem) occurs when a class inherits from two classes that both inherit from a common base class.
+It leads to potential issues, particularly when a method or attribute from the base class is inherited multiple times.
+
+C++ uses virtual inheritance. It makes sure that the base class is only included once, no matter how many times it's inherited through the different paths in the hierarchy. This way, all derived classes share the same single instance of the base class, avoiding duplication.
+
+The compiler adds a hidden pointer called vbptr in every class that virtually inherits a base class. This pointer points to something called the Virtual Base Table (vbtable).
+All derived classes use this vbptr to access the shared base class. This ensures that there is only one instance of the base class, even though there are multiple paths to it.
+
+The constructor of the most derived class is responsible for setting the final values of inherited members, with the last called constructor overriding any previous changes.
+
+Different from vptr:
+The vbptr is an internal pointer that only gets added to derived classes (i.e., classes like B, C, and D) that virtually inherit from a base class (A in this case).
+B and C each have their own vbptr, but both of those vbptr pointers point to the same shared instance of A.
+
+The vptr, on the other hand, is added to every class that has virtual functions, regardless of whether it uses virtual inheritance or not.
+
+7) Polymorphism:
+
+Polymorphism is the ability of a function or method to behave differently based on the object that it is acting upon.
+There are two types of polymorphism in C++:
+1. Compile-time polymorphism (Static polymorphism)
+2. Run-time polymorphism (Dynamic polymorphism)
+
+1. Compile-time polymorphism:
+Achieved using function overloading and operator overloading.
+
+a. Function Overloading:
+This is when you define multiple functions with the same name but different parameters (either in number or type).
+1. Order of Priority in Function Overloading:
+
+When the compiler has to choose between multiple overloaded functions, it follows this order of priority:
+
+Number of Parameters:
+
+The compiler first checks the number of parameters passed to the function.
+
+If the number of arguments in the call exactly matches one of the overloaded versions, that function is chosen.
+
+Type of Parameters:
+
+If there are multiple overloads with the same number of parameters, the compiler looks at the data types of the arguments.
+
+It will select the function whose parameter types best match the types of the arguments you provided.
+
+Default Arguments:
+
+If you don’t provide a value for a parameter that has a default argument, the compiler will use the default value.
+
+If there is ambiguity, the compiler will give priority to functions that do not require implicit conversions (i.e., exact matches are preferred over implicit type conversions).
+
+Exact Match vs Implicit Conversion:
+
+If no exact match exists, the compiler will try to convert types (implicit conversion) to match the function signature.
+
+However, exact matches are always prioritized.
+
+Default Arguments Are Always Assigned from Right to Left
+You can’t skip a parameter in the middle. Once you skip one, all the parameters to the right must also be skipped or will take default values.
+In C++, the parameters in a function are ordered. The rightmost parameters (those at the end) are optional and can be skipped because of default arguments. The compiler can use the default values for any arguments that aren't provided.
+
+
+b. Operator Overloading:
+You can also overload operators to define how operators (like +, -, etc.) work with user-defined types(classes).
