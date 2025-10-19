@@ -1,0 +1,218 @@
+//1. Reverse the string
+/* #include <iostream>
+#include <string>
+using namespace std;
+int main()
+{
+    string s = "Peeyush";
+    int i = 0, j = s.size() - 1;
+    while (i < j)
+        swap(s[i++], s[j--]);
+    cout << s;
+} */
+
+//2. Remove Spaces or Special Characters
+/* #include <iostream>
+#include <string>
+#include <cctype>
+using namespace std;
+
+int main() {
+    string s = "P-e e_yu@sh!";
+    string res;
+    for (char ch : s)
+        if (isalpha(ch)) res += ch;
+    
+    for (char ch : s) {
+        int ascii = (int)ch; // convert character to its ASCII value
+
+        // Check if ASCII is in A–Z (65–90) or a–z (97–122)
+        if ((ascii >= 65 && ascii <= 90) || (ascii >= 97 && ascii <= 122))
+            res += ch;
+    }
+    cout << "Cleaned: " << res;
+} */
+
+//3. Remove Duplicates from String
+/* #include <iostream>
+#include <string>
+#include <unordered_set>
+using namespace std;
+
+int main() {
+    string s = "programming";
+    string res;
+    unordered_set<char> seen;
+
+    for (char ch : s)
+        if (!seen.count(ch)) {
+            res += ch;
+            seen.insert(ch);
+        }
+
+    cout << "Without duplicates: " << res;
+} */
+
+//4. Frequency Count
+/* #include <iostream>
+#include <unordered_map>
+#include <string>
+using namespace std;
+
+int main() {
+    string s = "banana";
+    unordered_map<char,int> fre;
+    for(char ch:s)
+        fre[ch]++;
+    for(auto &p:fre) 
+        cout<<p.first<<" "<<p.second<<endl;
+} */
+
+//5. Check if String is Palindrome
+/* #include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string s = "madam";
+    bool isPalindrome = true;
+    int i=0, j=s.size()-1;
+    while(i<j) {
+        if(tolower(s[i]) != tolower(s[j])) {
+            isPalindrome=false;
+            break;
+        }
+        i++;
+        j--;
+    }
+    cout<<(isPalindrome?"Palindrome":"Not Palindrome");
+} */
+
+//
+/* #include <iostream>
+using namespace std;
+
+int main() {
+    char ch = '9';
+    int num = ch - '0';  // '7' - '0' = 55 - 48 = 7 // char to int
+    cout<<num;
+    
+    int number = 5;
+    char ch1 = number + '0'; // number + '0' = 5 + 48 = 53 → ASCII code 53 = '5' // int to char
+    cout<<endl<<ch1;
+}
+ */
+
+//6. Binary ↔ Decimal conversion 
+/* #include <iostream>
+using namespace std;
+int main() {
+    int n = 8;
+    string bin = "";
+    int num = n;
+    if(n == 0) bin = "0";
+    while (num > 0) {\
+        bin = char((num % 2) + '0')+ bin;
+        num /= 2;
+    }
+    cout << "Binary of " << n << " is " << bin;
+
+    int decimal = 0;
+    for(char ch: bin) {
+        decimal = decimal*2+(ch-'0');
+    }
+    cout<<endl<<"Decimal of "<<bin<< " is " << decimal<<endl;
+} */
+
+//7. Efficient String Reversal
+/* #include <iostream>
+using namespace std;
+
+int main() {
+    string s = "We will run";  // Input string
+    string word = "", result = "";  // Temporary variables to store current word and final result
+
+    // Traverse the string in reverse order
+    for (int i = s.size() - 1; i >= 0; i--) {
+        if (s[i] != ' ') {
+            word = s[i] + word;  // Build the word in reverse order
+        } else {
+            if (!word.empty()) {
+                // Only add a space if result already has a word (i.e., between words)
+                if (!result.empty()) {
+                    result += " ";  // Add space between words
+                }
+                result += word;  // Append the current word to the result
+                word = "";  // Reset word for the next one
+            }
+        }
+    }
+
+    // After the loop, handle the last word if any
+    if (!word.empty()) {
+        if (!result.empty()) {
+            result += " ";  // Add space between words if result already has words
+        }
+        result += word;  // Append the last word (without adding any extra space after it)
+    }
+
+    cout << result;  // Output the final result
+}
+ */
+
+//8. Find Contiguous Subarray in Array
+/* #include <iostream>
+using namespace std;
+int main() {
+  int arr[] = {1, 2, 3, 4, 5, 6};  // Main array
+  int sub[] = {4, 5, 6};            // Subarray to check
+  int m = 6;  // Size of the main array
+  int n = 3;  // Size of the subarray
+  bool found = false;
+
+  // Outer loop condition changed to i <= m - n to ensure correct matching
+  for (int i = 0; i <= m - n; i++) {
+    bool match = true;
+    
+    // Inner loop to compare the elements of arr[] and sub[]
+    for (int j = 0; j < n; j++) {
+      if (arr[i + j] != sub[j]) {
+        match = false;
+        break;
+      }
+    }
+    
+    // If a match is found, set found to true and break out of the outer loop
+    if (match) {
+      found = true;
+      break;
+    }
+  }
+
+  // Output the result based on whether the subarray was found
+  cout << (found ? "Subset is present" : "Subset is not present") << endl;
+}
+*/
+
+//9) Reverse words in a sentence:
+/* #include <iostream>
+#include <sstream> //stringstream
+#include <algorithm>
+using namespace std;
+
+int main() {
+    string sentence = "cat dog bat";
+    stringstream ss(sentence);
+    string word, result = "";
+
+    // Extract each word from the stringstream until a space is encountered
+    while (getline(ss, word, ' ')) {   
+        reverse(word.begin(), word.end());   // Reverse each word
+        if (!result.empty()) result += " ";  // Add space between words, if not empty
+        result += word;
+    }
+
+    cout << "Reversed words: " << result << endl;
+    return 0;
+}
+//Reversed words: tac god tab */
