@@ -295,59 +295,7 @@ Use while when the condition must be true first, like checking a file is open be
 | **Void Pointer**     | A **generic pointer** that can point to any data type (but can't be dereferenced directly). |
 | **Wild Pointer**     | A pointer that has been declared but **not initialized** (points to random memory).         |
 
-15) Initialize list:
-In C++, an initializer list is a way to initialize objects, especially useful for classes and structs. It allows you to set values for member variables directly in the constructor's parameter list.
 
-Number of operations will be reduced:
-If we don’t use an initializer list, the member variables are first default-initialized and then assigned, which leads to unnecessary extra operations — the initializer list avoids this by constructing the members directly with the desired value.
-
-In C++, the initializer list is used because:
-It runs before the constructor body
-It’s the only place where you can initialize base classes and member variables
-It ensures the base class is fully constructed before any derived-class-specific logic runs
-
-Eg: 
-Example1: //Without initializer list
-Default constructor 
-Assignment operator
-
-Example2: //With initializer list
-Parameterized constructor (Copy constructor)
-
-Note:
-Initializer lists don’t allow loops or multi-step logic.
-Only simple one-line expressions are allowed there.
-
-Why use it?
-1. **Cleaner Syntax**: It provides a concise way to initialize multiple members without needing to write separate assignment statements.
-2. **Performance**: It can be more efficient than assigning values in the constructor body, as it initializes members directly rather than assigning them after the object is created.
-3. **Const Members**: It allows you to initialize `const` members, which must be initialized at the time of object creation.
-
-| Type                               | Must Use Init List?  | Why                                   |
-| ---------------------------------- | ---------------------| ------------------------------------- |
-| `const` members                    | ✅ Yes               | Cannot be assigned after construction |
-| `T&` references                    | ✅ Yes               | Must be bound immediately             |
-| Base class with no default ctor    | ✅ Yes               | Must call constructor in init list    |
-| Member object with no default ctor | ✅ Yes               | Needs explicit initialization         |
-
-1) const members:
-   - Must be initialized in the initializer list because they cannot be assigned values after the object is created.
-   - Example: `const int x;` must be initialized like this: `MyClass(int val) : x(val) {}`
-2) Reference members:
-   - Must be initialized in the initializer list because references must be bound to an object at the time of construction.
-3) Base class with no default constructor:
-   - If a base class does not have a default constructor, you must call its constructor in the initializer list of the derived class.
-   Since there’s no Base() default constructor, C++ requires you to specify which constructor to use — and the only way to do that is in the initializer list of the derived class constructor.
-Note : 
-C++ will automatically create a default constructor — but only if you don’t define any constructor yourself.
-If you write any user defined constructor, C++ won’t provide a default one.
-C++ assumes you’re in full control once you define any constructor.
-
-If the base class has no default constructor, C++ doesn’t know how to construct it unless you explicitly tell it.
-You must call Base(42) in the initializer list because C++ builds the base class first — always — before running any derived class code.
-4) Member objects with no default constructor:
-   - If a member object does not have a default constructor, you must initialize it in the initializer list.
-   - Example: `MyClass(int val) : memberObj(val) {}`
 
 16) const int& getValue() const;
 In C++, `const int& getValue() const;` is a function declaration that indicates the following:
@@ -855,6 +803,155 @@ sizeof(class) = size of an object of that class
 Includes all non-static members + padding
 Does not include member functions or static members
 
+4) Constructor:
+A constructor is a special member function of a class that is automatically called when an object of that class is created.
+It is used to initialize the object's data members if needed to make sure the object starts in a valid state.
+It does not have a return type because its purpose is to initialize the object (that has already been created in memory), not to return a value. It won't return anything even void. Returning it would be redundant, and unsafe in many cases because the object is already created.
+
+It's returned automatically by the compiler/runtime when you use new or create it on the stack.
+
+Types of Constructors:
+1. Default Constructor: A constructor that takes no parameters or has default values for all parameters used to create an object with default values.
+2. Parameterized Constructor: A constructor that takes parameters to initialize an object with specific values at the time of creation.
+3. Copy Constructor: A constructor that creates a new object as a copy of an existing object failing to do so can lead to shallow copy issues.
+Deep Copy vs Shallow Copy:
+A memory leak in C++ (or any language with manual memory management) happens when your program allocates memory but never frees it, causing that memory to be unusable and permanently reserved until the program ends.
+
+A shallow copy copies the values of member variables as they are, including pointers.
+If the object has a pointer to dynamically allocated memory, both the original and the copy will point to the same memory location. This can lead to unintended side effects like double deletion.
+
+A deep copy creates a new copy of the dynamically allocated memory. It allocates separate memory and copies the actual data, so the copied object is independent of the original.
+
+Why Does the Copy Constructor Take a Reference:
+In C++, the copy constructor is responsible for creating a new object as a copy of an existing one. If the copy constructor were to take its argument by value, it would require making a copy of the object in order to pass it — but to make that copy, the compiler would need to call the copy constructor again.
+
+This creates an infinite recursive loop, where each call to the copy constructor requires another copy, which requires another constructor call, and so on. Eventually, this would lead to a stack overflow or a compiler error.
+
+To avoid this, the copy constructor takes its parameter by reference — specifically, const MyClass&. This allows the function to access the original object directly, without needing to copy it first, and ensures the original isn't accidentally modified during the copying process.
+
+4. Move Constructor:
+A move constructor is a special constructor that transfers ownership of resources from a temporary (rvalue) object to a new object, avoiding deep copies and thus improving performance.
+
+When you copy an object (using the copy constructor), a deep copy is made.
+That means — the entire resource (like a big array or vector) is duplicated.
+
+Instead of copying the data, the move constructor transfers the resource ownership — i.e., it just moves the pointer to the new object!
+
+A move constructor is called when a temporary object (rvalue) is used to initialize another object.
+rvalue (read value) T&& :
+object without a name (temporary object, e.g., returned from a function, std::move() result or literal (like 42, 3.14)). 
+lvalue (locator value) T& :
+object with a name and can be modified (like a variable). they exist in a specific memory location
+
+Commonly triggered when:
+Returning a local object from a function.
+Initializing with a temporary.
+Using std::move().
+
+Syntax:
+ClassName obj1;               // Calls default constructor
+ClassName obj2(10,20);        // Calls parameterized constructor
+ClassName obj3 = obj2;        // Calls copy constructor
+
+ClassName obj2 = std::move(obj1); // Calls move constructor 
+or
+ClassName obj3 = ClassName(); // Temporary object, calls move constructor
+ClassName(ClassName&& other) noexcept {
+    // Transfer ownership of resources from 'other' to 'this'
+    this->data = other.data; // Shallow copy of pointer
+    other.data = nullptr;    // Leave 'other' in a safe state
+}
+
+Here ClassName() creates a temporary object. It exists only until the end of the full expression and has no variable name.You can't assign to it ClassName() = obj1; // ❌ Error
+
+Initialize list:
+An initializer list is a part of the constructor syntax that allows you to initialize base classes and member variables directly before the constructor body runs.
+
+Number of operations will be reduced:
+If we don't use an initializer list, the member variables are first default-initialized and then assigned, which leads to unnecessary extra operations — the initializer list avoids this by constructing the members directly with the desired value.
+
+In C++, the initializer list is used because:
+It runs before the constructor body
+It's the only place where you can initialize base classes and member variables
+It ensures the base class is fully constructed before any derived-class-specific logic runs
+
+Fully constructed means the object's memory is allocated, all its members are initialized, and its constructor has executed, making it ready for safe use
+
+Eg: 
+Example1: //Without initializer list
+Default constructor --> By default, it calls the default constructor (if available) to ensure the member exists in a valid state. Valid state means the member has been allocated in memory and properly initialized and is ready for use.
+Assignment operator
+
+Example2: //With initializer list
+Parameterized constructor (Copy constructor) --> We are telling the compiler to directly initialize the member with the provided value during construction.
+
+Note:
+Initializer lists don't allow loops or multi-step logic.
+Only simple one-line expressions are allowed there.
+
+| Type                               | Must Use Init List?  | Why                                   |
+| ---------------------------------- | ---------------------| ------------------------------------- |
+| `const` members                    | ✅ Yes               | Cannot be assigned after construction  |
+| `T&` references                    | ✅ Yes               | Must be bound immediately             |
+| Base class with no default ctor    | ✅ Yes               | Must call constructor in init list    |
+| Member object with no default ctor | ✅ Yes               | Needs explicit initialization         |
+
+Members cannot be initialized in the constructor body because by that time they already exist in memory. Const and reference members must be initialized in the initializer list since they cannot be assigned later.
+1) const members:
+   - Const members must be initialized in the initializer list because their value is fixed at object creation and cannot be assigned in the constructor body.
+   - Example: `const int x;` must be initialized like this: `MyClass(int val) : x(val) {}`
+2) Reference members:
+   - Must be initialized in the initializer list because references must be bound to an object at the moment it's created — once set, it always refers to the same object.
+3) Base class with no default constructor:
+   - If a base class does not have a default constructor, you must call its constructor in the initializer list of the derived class.
+
+   When creating a derived object, C++ constructs the base part first. If the base class has no default constructor — and you've defined a user-defined constructor, the compiler assumes you're handling all initialization yourself — so it won't generate a default constructor automatically. Therefore, the derived class must explicitly call a specific base constructor in its initializer list, because base and member initialization happen before the constructor body runs to ensure that all parts of the object are in a valid, usable state.
+    - Example: `Derived(int val) : Base(val) {}`
+4) Member objects with no default constructor:
+   - If a member object does not have a default constructor, you must initialize it in the initializer list because it cannot be default-constructed. Since you defined a user-defined constructor, the compiler assumes you're handling all initialization yourself. Therefore, you must explicitly call a specific member constructor in its initializer list to ensure it is properly constructed before the constructor body runs.
+   - Example: `MyClass(int val) : memberObj(val) {}`
+
+5) Destructor:
+A destructor is a special member function of a class that is automatically called when an object of that class goes out of scope or is explicitly deleted.
+It doesn't have no parameters, and no return type.
+
+When an object's lifetime ends, the compiler knows exactly how to destroy it — there's no need for multiple destructors with parameters or overloads.
+
+It is used to release resources — memory, file handles, network connections, etc.
+
+Types of Destructors:
+1. Default Destructor: Automatically provided by the compiler if no destructor is defined. It performs default cleanup of member variables.
+2. Custom Destructor: A user-defined destructor that performs specific cleanup tasks, such as releasing dynamically allocated memory or closing file handles.
+3. Virtual Destructor: We need a virtual destructor to ensure the proper cleanup when a base class pointer points to a derived class object, deleting the object through the base pointer will correctly call both destructors — first the derived class destructor, then the base class destructor.
+
+Internally:
+A virtual destructor uses the object's vptr to look up the vtable at runtime, ensuring the destructor of the actual derived object is called first, followed by the base destructor, enabling proper cleanup.
+4. Pure Virtual Destructor: A pure virtual destructor is a destructor declared with the `= 0` syntax, making the class abstract. It forces derived classes to implement their own destructors while still providing a base destructor implementation.
+
+When deleting a derived object through a base pointer, the destructor sequence is always:
+Derived destructor (Derived destructor calls Base::~Base() automatically.)→ Base destructor
+Without a base destructor body, the program would have undefined behavior or linker errors.
+
+If the base class is abstract, so the compiler doesn’t know its layout or what resources it manages, and cannot generate a default destructor — the programmer must provide one. Derived classes are concrete, so the compiler knows their layout and resources and can generate default destructors. Concrete means fully defined and instantiable
+
+Syntax:
+~ClassName() {
+    // Cleanup code here
+}
+
+For virtual destructor:
+virtual ~BaseClass() {
+    // Base class cleanup
+}
+
+For pure virtual destructor:
+virtual ~BaseClass() = 0; // Declaration
+BaseClass::~BaseClass() {
+    // Base class cleanup implementation
+}
+
+
+
 4) Abstraction:
 Abstraction is the process of hiding the internal implementation details of a class or function and showing only the essential features to the user.
 
@@ -1008,9 +1105,27 @@ If no exact match exists, the compiler will try to convert types (implicit conve
 However, exact matches are always prioritized.
 
 Default Arguments Are Always Assigned from Right to Left
-You can’t skip a parameter in the middle. Once you skip one, all the parameters to the right must also be skipped or will take default values.
+You can't skip a parameter in the middle. Once you skip one, all the parameters to the right must also be skipped or will take default values.
 In C++, the parameters in a function are ordered. The rightmost parameters (those at the end) are optional and can be skipped because of default arguments. The compiler can use the default values for any arguments that aren't provided.
-
 
 b. Operator Overloading:
 You can also overload operators to define how operators (like +, -, etc.) work with user-defined types(classes).
+
+39) Smart Pointers:
+1) std::unique_ptr
+2) std::shared_ptr
+3) std::weak_ptr
+
+1) std::unique_ptr:
+A `std::unique_ptr` is a smart pointer in C++ that manages a dynamically allocated object and ensures that there is only one owner of that object at any given time. It automatically deletes the managed object when the `unique_ptr` goes out of scope, preventing memory leaks.
+
+Usage:
+#include <memory>       
+std::unique_ptr<MyClass> ptr1(new MyClass()); // Create a unique_ptr
+or
+auto ptr1 = std::make_unique<MyClass>(); // Preferred way to create a unique_ptr
+
+2) std::shared_ptr:
+A `std::shared_ptr` is a smart pointer in C++ that allows multiple pointers to share ownership of a dynamically allocated object. It uses reference counting to keep track of how many `shared_ptr` instances point to the same object. When the last `shared_ptr` pointing to the object is destroyed or reset, the managed object is automatically deleted.
+
+
