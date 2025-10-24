@@ -864,11 +864,72 @@ ClassName(ClassName&& other) noexcept {
 
 Here ClassName() creates a temporary object. It exists only until the end of the full expression and has no variable name.You can't assign to it ClassName() = obj1; // ❌ Error
 
+5. Explicit Constructor:
+An explicit constructor is a constructor that prevents implicit conversions i.e., stops the compiler from automatically converting one type to another when passing or assigning values to objects of that class. Forcing safe and intentional conversions only.
+The compiler can implicitly convert a matching value (like int) into an object by calling that constructor behind the scenes.
+
+It is declared using the `explicit` keyword before the constructor definition.  
+Explicit is mainly used for single-argument constructors to avoid unintended implicit conversions. For multiple arguments, implicit conversions are unlikely because the compiler cannot map multiple parameters from a single value.
+
+It can lead to undefined behavior if the class manages resources and the implicit conversion results in multiple objects sharing the same resource.
+Eg:
+class Meter {
+    int value;
+public:
+    Meter(int v) : value(v) {}
+    //explict Meter(int v) : value(v) {}
+    Meter operator+(const Meter& m) { return Meter(value + m.value); }
+    void show() { std::cout << value << " m\n"; }
+};
+
+int main() {
+    Meter m1(5);
+    Meter m2 = m1 + 10;  // ❌ Implicitly converts 10 -> Meter(10)
+    Meter m3 = m1 + Meter(15); // ✅ Explicitly creates Meter object
+    m2.show();
+}
+
+Constructor chaining:
+Constructor chaining is the process where one constructor calls another constructor in the same class or in the base class to ensure proper initialization of an object.
+It helps avoid code duplication and ensures that all necessary initialization steps are performed.
+It can occur in two ways:
+1. Within the same class (using delegating constructors).
+2. Between base and derived classes (base class constructor called before derived class constructor).
+
+6. Delegating Constructor:
+A delegating constructor is a constructor that calls another constructor of the same class to perform part of the initialization.
+It helps avoid code duplication by reusing existing constructor logic within the same class.
+
+Use cases:
+When multiple constructors share common initialization code. 
+
+Eg:
+class Box {
+    int length, breadth, height;
+public:
+    // Main constructor (parameterized)
+    Box(int l, int b, int h) : length(l), breadth(b), height(h) {
+        cout << "Box(int,int,int) called: "
+             << "L=" << length << ", B=" << breadth << ", H=" << height << endl;
+    }
+
+    // Delegating constructor (calls main constructor)
+    Box() : Box(1, 1, 1) {   // default box of size 1x1x1
+        cout << "Box() called (delegates to Box(int,int,int))\n";
+    }
+
+    // Another delegating constructor
+    Box(int size) : Box(size, size, size) {  // cube box
+        cout << "Box(int) called (delegates to Box(int,int,int))\n";
+    }
+};
+
+
 Initialize list:
 An initializer list is a part of the constructor syntax that allows you to initialize base classes and member variables directly before the constructor body runs.
 
 Number of operations will be reduced:
-If we don't use an initializer list, the member variables are first default-initialized and then assigned, which leads to unnecessary extra operations — the initializer list avoids this by constructing the members directly with the desired value.
+If we don't use an initializer list, the member variables are first default-initialized and then assigned, which leads to unnecessary extra operations — the initializer list avoids this by constructing the members directly with the desired value. 
 
 In C++, the initializer list is used because:
 It runs before the constructor body
@@ -889,12 +950,12 @@ Note:
 Initializer lists don't allow loops or multi-step logic.
 Only simple one-line expressions are allowed there.
 
-| Type                               | Must Use Init List?  | Why                                   |
-| ---------------------------------- | ---------------------| ------------------------------------- |
+| Type                               | Must Use Init List?  | Why                                    |
+| ---------------------------------- | ---------------------| ---------------------------------------|
 | `const` members                    | ✅ Yes               | Cannot be assigned after construction  |
-| `T&` references                    | ✅ Yes               | Must be bound immediately             |
-| Base class with no default ctor    | ✅ Yes               | Must call constructor in init list    |
-| Member object with no default ctor | ✅ Yes               | Needs explicit initialization         |
+| `T&` references                    | ✅ Yes               | Must be bound immediately              |
+| Base class with no default ctor    | ✅ Yes               | Must call constructor in init list     |
+| Member object with no default ctor | ✅ Yes               | Needs explicit initialization          |
 
 Members cannot be initialized in the constructor body because by that time they already exist in memory. Const and reference members must be initialized in the initializer list since they cannot be assigned later.
 1) const members:
@@ -949,8 +1010,6 @@ virtual ~BaseClass() = 0; // Declaration
 BaseClass::~BaseClass() {
     // Base class cleanup implementation
 }
-
-
 
 4) Abstraction:
 Abstraction is the process of hiding the internal implementation details of a class or function and showing only the essential features to the user.
@@ -1080,28 +1139,26 @@ This is when you define multiple functions with the same name but different para
 
 When the compiler has to choose between multiple overloaded functions, it follows this order of priority:
 
-Number of Parameters:
-
+1) Number of Parameters:
 The compiler first checks the number of parameters passed to the function.
-
 If the number of arguments in the call exactly matches one of the overloaded versions, that function is chosen.
 
-Type of Parameters:
-
+2) Type of Parameters:
 If there are multiple overloads with the same number of parameters, the compiler looks at the data types of the arguments.
-
 It will select the function whose parameter types best match the types of the arguments you provided.
+The order of preference (from best to least preferred) is:
+Exact match (no conversion)
+Promotion (e.g., char → int, float → double)
+Standard conversion (e.g., int → double, Derived* → Base*)
+User-defined conversion (via constructors or operator T())
+Ellipsis (...)
 
-Default Arguments:
-
-If you don’t provide a value for a parameter that has a default argument, the compiler will use the default value.
-
+3) Default Arguments:
+If you don't provide a value for a parameter that has a default argument, the compiler will use the default value.
 If there is ambiguity, the compiler will give priority to functions that do not require implicit conversions (i.e., exact matches are preferred over implicit type conversions).
 
 Exact Match vs Implicit Conversion:
-
 If no exact match exists, the compiler will try to convert types (implicit conversion) to match the function signature.
-
 However, exact matches are always prioritized.
 
 Default Arguments Are Always Assigned from Right to Left
