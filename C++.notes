@@ -1168,6 +1168,12 @@ In C++, the parameters in a function are ordered. The rightmost parameters (thos
 b. Operator Overloading:
 You can also overload operators to define how operators (like +, -, etc.) work with user-defined types(classes).
 
+Does virtual functions can be inline ?
+Inline suggests to the compiler that the function's code should be inserted directly at each point the function is called, rather than performing a regular function call. This can improve performance for small, frequently used functions
+If the time taken to switch from the caller function to the called function (function call overhead) is greater than the time taken to execute the function itself, then it's better to use inline.
+
+Yes, virtual functions can be inline, but due to dynamic dispatch, they are only inlined when the compiler knows the exact type of the object at compile time. If called through a base class pointer or reference, inlining is not possible.
+
 39) Smart Pointers:
 1) std::unique_ptr
 2) std::shared_ptr
@@ -1184,5 +1190,6 @@ auto ptr1 = std::make_unique<MyClass>(); // Preferred way to create a unique_ptr
 
 2) std::shared_ptr:
 A `std::shared_ptr` is a smart pointer in C++ that allows multiple pointers to share ownership of a dynamically allocated object. It uses reference counting to keep track of how many `shared_ptr` instances point to the same object. When the last `shared_ptr` pointing to the object is destroyed or reset, the managed object is automatically deleted.
+
 
 
