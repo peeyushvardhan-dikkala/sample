@@ -1,14 +1,26 @@
+# .clang-format
 BasedOnStyle: LLVM
+
+# Indentation
 IndentWidth: 4
 UseTab: Never
 
-PointerAlignment: Left  # aligns & and * to the type, not variable
+# Pointer and reference alignment
+PointerAlignment: Left  # UniquePtr& operator=
 
+# Brace wrapping
 BraceWrapping:
-  AfterControlStatement: false
-  AfterFunction: false
+  AfterControlStatement: false   # else stays on same line
+  AfterFunction: false           # function opening brace stays on same line
   AfterClass: false
   AfterNamespace: false
   AfterStruct: false
   AfterEnum: false
-  BeforeElse: false
+  BeforeElse: false              # else stays on same line
+
+# Ensure consistent spacing
+Cpp11BracedListStyle: true
+
+
+# clang-format -i -lines=start:end your_file.cpp 
+# For full file: clang-format -i your_file.cpp
