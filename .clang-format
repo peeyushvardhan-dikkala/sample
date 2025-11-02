@@ -41,6 +41,7 @@ Cpp11BracedListStyle: true
 #   ren ".clang-format.txt" ".clang-format"
 #
 # VS Code settings (if you want to hardcode style):
+# Ctrl + Shift + P → C/C++: Edit Configurations (UI)
 #   "[cpp]": {
 #       "editor.defaultFormatter": "ms-vscode.cpptools",
 #       "editor.formatOnSave": true
