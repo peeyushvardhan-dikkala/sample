@@ -49,7 +49,6 @@ Cpp11BracedListStyle: true
 #   "C_Cpp.clang_format_style": "file"
 #
 # Or single-line hardcoded style in settings.json:
-#   "C_Cpp.clang_format_style": "{ \"BasedOnStyle\": \"LLVM\", \"IndentWidth\": 4, \"UseTab\": \"Never\", \"BreakBeforeBraces\": \"Attach\" }"
-#
+#   "C_Cpp.clang_format_style": "{ \"BasedOnStyle\": \"LLVM\", \"IndentWidth\": 4, \"UseTab\": \"Never\", \"BreakBeforeBraces\": \"Attach\", \"PointerAlignment\": \"Left\" }"
 # VS Code formatting shortcut: Shift + Alt + F
 # Best practice: keep .clang-format in project root for consistent team formatting
