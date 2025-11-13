@@ -109,7 +109,7 @@ What compilers and linkers do
 
 C++ is extremely fast — often faster than Java, Python, or JavaScript — because:
 It compiles to machine code
-There’s no garbage collector slowing things down
+There's no garbage collector slowing things down
 You optimize your own memory
 
 Machine code is platform-specific: An .exe compiled on Windows won't run on Linux unless recompiled.
@@ -162,16 +162,70 @@ Comments in C++ are meant to explain the code as well as to make it more readabl
 // Single lines Use Ctrl+/
 /* Multiline Comment */ 
 
-5)C++ Data types:
+5) Variables in C++:
+A variable is a named memory location used to store data that can be changed during program execution.
+
+Rules for naming variables:
+1. Must begin with a letter (A-Z, a-z) or an underscore (_).
+2. Can contain letters, digits (0-9), and underscores.
+3. Cannot be a reserved keyword, special keyword in C++ (like int, return, if, etc.).
+4. Variable names are case-sensitive (e.g., myVar and MyVar are different).
+
+Depending 
+
+| **Type**                   | **Declared**                   | **Scope**               | **Lifetime**                   | **Memory Area**                                    |
+| -------------------------- | ------------------------------ | ----------------------- | ------------------------------ | -------------------------------------------------- |
+| **Local Variable**         | Inside a function/block        | Within that block       | Created & destroyed with block | **Stack**                                          |
+| **Global Variable**        | Outside all functions          | Whole program           | Entire program                 | **.data** (initialized) / **.bss** (uninitialized) |
+| **Static Local Variable**  | Inside function with `static`  | Only that function      | Whole program, retains value   | **.data / .bss**                                   |
+| **Instance Variable**      | Inside class (no `static`)     | Per object              | As long as object exists       | **Object's memory** (stack/heap)                   |
+| **Static Member Variable** | Inside class with `static`     | Shared by all objects   | Entire program                 | **.data / .bss**                                   |
+| **Global Static Variable** | Outside function with `static` | File (translation unit) | Entire program                 | **.data / .bss**                                   |
+
+Storage Classes:
+Storage classes in C++ define the scope (visibility) and lifetime of variables and functions within a program. They determine how and where the variables are stored in memory, as well as their accessibility.
+A storage class in C++ defines four main properties of a variable:
+Scope → Where the variable is accessible
+Lifetime → How long it exists in memory
+Default value
+Memory location
+
+| **Storage Class** | **Keyword** | **Scope**  | **Lifetime** | **Memory Area** | **Default Value** |
+| ----------------- | ----------- | ---------- | ------------ | --------------- | ----------------- |
+| **Automatic**     | `auto`      | Local      | Block        | Stack           | Garbage           |
+| **Register**      | `register`  | Local      | Block        | CPU Register    | Garbage           |
+| **Static**        | `static`    | Local/File | Program      | .data / .bss    | 0                 |
+| **External**      | `extern`    | Global     | Program      | .data / .bss    | 0                 |
+| **Mutable**       | `mutable`   | Class      | Object       | Object memory   | Garbage           |
+`mutable` keyword:
+const object is an object that cannot be modified after its creation. However, there are scenarios where you might want to allow certain member variables of a const object to be modified. 
+Eg: Application settings loaded at startup. You don't want the settings to be accidentally modified during runtime. We can make accessCount as mutuable to check how many times settings were accessed, even in a const object.
+
+Allows a non-static data member of a class to be modified even in a const object or inside a const member function.
+
+C++ Data types:
 Data types specify the type of data that a variable can store. Whenever a variable is defined in C++, the compiler allocates some memory for that variable based on the data.
 
-1) Built-in (Primitive) Data Types
-2) Derived Data Types --> Pointers, Arrays, References, Functions – int func(int a)
+1) Built-in (Primitive) Data Type
+    a) Integral Types --> bool, char, wchar_t, short, int, long, long long
+    b) Floating Point Types --> float, double, long double
+    c) Void Type --> void
+2) Derived Data Types --> Pointers, Arrays, References, Functions - int func(int a)
 3) User-defined Data Types --> struct, class, union, enum, typedef, using
-4) Standard Library Types --> std::string, std::vector, std::array,std::map, std::unordered_map, std::pair, std::tuple
-                              std::variant, std::optional
-5) Void Type --> Represents no type, used in functions that return nothing.
-6) Modern CPUs are designed to read memory in fixed-size chunks, often called words. The size of these chunks depends on the CPU architecture:
+
+Modifiers:
+Modifiers are keywords used with data types to alter the size, range, or sign of the variables.
+| **Modifier** | **Meaning**                                                  |
+| ------------ | ------------------------------------------------------------ |
+| `short`      | Reduces the size of an integer type                          |
+| `long`       | Increases the size of an integer or double type              |
+| `signed`     | Allows both positive and negative values                     |
+| `unsigned`   | Allows only non-negative values (doubles the positive range) |
+
+Modifiers can be applied to: int, char, double (only with long)
+They cannot be used with float, bool, or user-defined types.
+
+4) Modern CPUs are designed to read memory in fixed-size chunks, often called words. The size of these chunks depends on the CPU architecture:
 | CPU Architecture | Word Size | Typical Chunk           |
 | ---------------- | --------- | ----------------------- |
 | 32-bit           | 4 bytes   | Reads 4 bytes at a time |
@@ -181,7 +235,7 @@ Data types specify the type of data that a variable can store. Whenever a variab
 | ------------- | -------------- | -------------------------------------- |
 | `bool`        | 1 byte         | Boolean value (`true` or `false`)      |
 | `char`        | 1 byte         | Single character (ASCII)               |
-| `wchar_t`     | 2 or 4 bytes   | Wide character (Unicode)               |
+| `wchar_t`     | 2 or 4 bytes   | Wide character (Unicode) Eg: `L'A'`  |             
 | `short`       | 2 bytes        | Short integer                          |
 | `int`         | 4 bytes        | Standard integer                       |
 | `float`       | 4 bytes        | Single-precision floating-point        |
@@ -215,10 +269,10 @@ By carefully ordering members within a structure (placing larger types first), i
 
 9) Imagine you are a librarian handling a list of books. You have a pointer (iterator) to the current book.
 Post Increment Operator(i++):
-Give me the book you’re currently pointing at, then move to the next book.
+Give me the book you're currently pointing at, then move to the next book.
 
 To do this:
-You photocopy the current book’s page (make a copy).
+You photocopy the current book's page (make a copy).
 You move to the next book.
 You hand me the copy (the page before moving).
 📦 Extra step: You had to make a copy.
@@ -227,7 +281,7 @@ Pre Increment Operator(++i ):
 First move to the next book, then give me that book.
 
 You just walk to the next book.
-You give me the book you’re now pointing to.
+You give me the book you're now pointing to.
 ✅ No need to copy anything.
 
 Why we need copy ?
@@ -237,7 +291,7 @@ Whereas ++i does not need a copy because it returns the new value after incremen
 Real-Life Analogy: Elevator Button Example
 Imagine you're on floor 5, and you press a button to go up 1 floor. But someone asks:
 “Tell me which floor you were on before you pressed the button.”
-You can’t just point to the elevator — it’s already moved. You’d need to write down your floor (make a copy) before moving, so the other person has the correct info.
+You can't just point to the elevator — it's already moved. You'd need to write down your floor (make a copy) before moving, so the other person has the correct info.
 
 // Post-increment
 MyType MyType::operator++(int) {
@@ -272,7 +326,7 @@ Avoids name conflicts (no Male/Female pollution in global namespace)
 Safer comparisons (gender == Gender::Male)
 
 12) Call by value vs Call by reference: 
-In call by value, a copy of the variable is passed — changes don’t affect the original.
+In call by value, a copy of the variable is passed — changes don't affect the original.
 Use call by value when the function just reads or logs data.
 
 In call by reference, a reference (alias) is passed — so changes directly affect the original variable.(an alias for the original variable.)
@@ -294,8 +348,6 @@ Use while when the condition must be true first, like checking a file is open be
 | **Dangling Pointer** | A pointer pointing to memory that has already been **freed or deleted**.                    |
 | **Void Pointer**     | A **generic pointer** that can point to any data type (but can't be dereferenced directly). |
 | **Wild Pointer**     | A pointer that has been declared but **not initialized** (points to random memory).         |
-
-
 
 16) const int& getValue() const;
 In C++, `const int& getValue() const;` is a function declaration that indicates the following:
@@ -328,9 +380,9 @@ Note:
 In C++, when a derived class defines a function with the same name as a base class function, the base class version gets hidden, even if the signatures are different.
 So this helps you:
 Bring the base class version into the derived class scope.
-Avoid function hiding
+Avoid function hiding
 
-5) Using in Templates – Specify template parameters
+5) Using in Templates - Specify template parameters
 Eg: `template<typename T> using vec = std::vector<T>;`
 This allows you to create a shorthand for `std::vector<T>` as `vec<T>`, making your code cleaner and easier to read.
 
@@ -338,24 +390,24 @@ This allows you to create a shorthand for `std::vector<T>` as `vec<T>`, making y
 A template is a blue print for creating a generic class or function that can work with any data type. 
 Templates are the foundation of generic programming, which involves to write a code in a way that is independent of any particular data type.
 
-In C++, typename is a keyword used in templates to indicate that a type, will be provided later when the template is instantiated
+In C++, typename is a keyword used in templates to indicate that a type, will be provided later when the template is instantiated
 Think of typename as
-“I am telling the compiler this symbol is going to represent a type.”
+“I am telling the compiler this symbol is going to represent a type.”
 
-Templates generate code only for the types you actually use.
+typename T 
+T is a placeholder type.
+Placeholder means it will be replaced with an actual type when the template is instantiated or during compilation
+
 No extra memory or runtime cost — all done at compile time.
-Efficient — avoids unnecessary code generation or duplication.
 No code is created for unused template types.
 
 The compiler ensures that each template instance is generated only once - subsequent use of the same type will refer to the same instance
 
 class vs typename in Template Parameters
+In template parameters, both `class` and `typename` can be used interchangeably to define type parameters. There is no functional difference between the two in this context.
+typename has an additional role when you're dealing with dependent names (like nested types inside template classes).
 1)Referring to a Nested Type in a Template
 A nested type is a type (like a class, struct, enum, or typedef) that is defined inside another class or struct.
-
-typename T 
-T is a placeholder type.
-Placeholder means it will be replaced with an actual type when the template is instantiated or during compilation
 
 Why do we need typename here?
 Because Container is a template parameter, and Container::value_type is a dependent name — the compiler can't know at this point whether value_type is a type or something else. You must clarify with typename.
@@ -372,10 +424,6 @@ public:
     using value_type = T;  // This is a type alias, not a keyword
 };
 
-ContainerProcessor<std::vector<int>> processor;
-typename Container::value_type: tells the compiler that value_type is a type inside the template parameter.
-ContainerProcessor<std::vector<int>>: this is where the template is instantiated for std::vector<int>
-
 1) Function Template:
 A function template allows you to create a function that can operate on different data types without rewriting the function for each type.
 
@@ -384,6 +432,66 @@ A class template allows you to define a class that can work with any data type, 
 
 3) Template Specialization:
 Template specialization allows you to define a specific implementation of a template for a particular data type or set of types. This is useful when you need different behavior for certain types while still using the generic template for others.
+
+Syntax:
+template <>
+class ClassName<SpecializedType> {
+    // Specialized implementation
+};
+
+Eg:
+#include <iostream>
+#include <string>
+#include <vector>
+
+// Template class definition
+template <typename T>
+class Printer {
+public:
+    void print(const T& data) {
+        std::cout << "Generic print: " << data << std::endl;
+    }
+};
+
+// Template class specialization for `std::string`
+template <>
+class Printer<std::string> {
+public:
+    void print(const std::string& data) {
+        std::cout << "Specialized print for string: " << data << std::endl;
+    }
+};
+
+// Template function definition
+template <typename T>
+void print_value(const T& value) {
+    std::cout << "Generic print_value: " << value << std::endl;
+}
+
+// Template function specialization for `int`
+template <>
+void print_value<int>(const int& value) {
+    std::cout << "Specialized print_value for int: " << value << std::endl;
+}
+
+int main() {
+    // Using the generic Printer class
+    Printer<int> intPrinter; // Generic version
+    intPrinter.print(42);
+
+    Printer<double> doublePrinter;
+    doublePrinter.print(3.14);
+
+    Printer<std::string> stringPrinter; 
+    stringPrinter.print("Hello, world!");
+
+    // Using the generic template function
+    print_value(100);  // Calls the specialized version for int
+    print_value(3.1415);  // Calls the generic version for double
+    print_value("Hello, template!");  // Calls the generic version for string
+
+    return 0;
+}
 
 19) std::optional:
 `std::optional` is a feature in C++ that represents an optional value, meaning it can either contain a value or be empty (no value). It is part of the C++17 standard library and is used to handle cases where a value may or may not be present without resorting to pointers or special sentinel values.
@@ -406,50 +514,6 @@ optional<T> can be empty or hold a value.
 .reset() → clears the optional (makes it empty).
 
 It provides a way to express the absence of a value in a type-safe manner, avoiding issues like null pointer dereferencing.
-
-20) Virtual Functions:
-A virtual function is a member function in a base class that you expect to override in derived classes. It allows for dynamic (runtime) polymorphism, meaning the function that gets called is determined by the type of the object being pointed to, not the type of the pointer itself.
-
-a) vtable:  
-When a class has virtual functions, the compiler creates a special table called the vtable (virtual table) for that class. It stores the addresses of the virtual functions for a class. It's like a list (table) of function pointers.
-Created: By the compiler, during compile time.
-Stored: As a static table in memory (one per class with virtual functions).
-Used for: Runtime dispatch of virtual functions
-
-b) vptr:
-Each object of a class with virtual functions has a hidden pointer called vptr (virtual pointer).
-It points to the vtable of the class that the object belongs to.
-When: Automatically set up by the constructor, Used at runtime to resolve which function to call.
-Created by the compiler when your class contains at least one virtual function.
-vptr is declared at compile time, but it is set to point to the correct vtable at runtime when the object is created.
-
-When you call a virtual function on an object, the compiler uses the vptr to look up the correct function in the vtable and calls it. This allows for dynamic dispatch, meaning the correct function is called based on the actual type of the object at runtime, not just the type of the pointer.
-
-Why constructors cannot be virtual:
-Constructors cannot be virtual in C++ because:
-vptr is not fully set up when a constructor is called. (The vptr is initialized/set inside the constructor.)
-When an object is being constructed, the complier set up the vptr to point to the class's vtable.
-But that happens as part of the constructor — it is not fully established before the constructor begins.
-
-Why destructors can be virtual:
-Destructors can be virtual in C++ because:
-When a destructor is called, the vptr is already set up to point to the correct vtable for the derived class.
-This allows the destructor to call the correct derived class destructor, ensuring proper cleanup of resources.
-Like when you delete a base class pointer that points to a derived class object, the virtual destructor ensures that the derived class's destructor is called first, followed by the base class destructor.
-
-Consequences of not calling the derived destructor first 
-1. Resource leaks 
-2. Undefined behavior --> If the derived class accesses data in its destructor that relies on the base  — but the base was already destroyed leads to crash, segment faults.
-
-Why constructors cannot be static:
-Constructors cannot be static in C++ because:
-A constructor is meant to initialize an instance of a class, and static members belong to the class itself, not to any specific instance.
-Static functions cannot access instance members directly, as they do not have a `this` pointer.
-
-Why constructors does not return a value:
-Constructors do not return a value because their purpose is to initialize an object, not to produce a value like a regular function. They are called automatically when an object is created, and they set up the initial state of that object.
-
-You don’t need to call it manually like a regular function.
 
 21) override:
 The `override` keyword is used in C++ to indicate that a virtual function in a derived class is intended to override a virtual function in the base class. It helps catch errors at compile time if the function does not actually override any base class function.
@@ -869,7 +933,7 @@ An explicit constructor is a constructor that prevents implicit conversions i.e.
 The compiler can implicitly convert a matching value (like int) into an object by calling that constructor behind the scenes.
 
 It is declared using the `explicit` keyword before the constructor definition.  
-Explicit is mainly used for single-argument constructors to avoid unintended implicit conversions. For multiple arguments, implicit conversions are unlikely because the compiler cannot map multiple parameters from a single value.
+Explicit is mainly used for single-argument constructors to avoid unintended implicit conversions. For multiple arguments, implicit conversions are unlikely because the compiler cannot map multiple parameters from a single value. 
 
 It can lead to undefined behavior if the class manages resources and the implicit conversion results in multiple objects sharing the same resource.
 Eg:
@@ -924,6 +988,15 @@ public:
     }
 };
 
+Why constructors cannot be static:
+Constructors cannot be static in C++ because:
+A constructor is meant to initialize an instance of a class, and static members belong to the class itself, not to any specific instance.
+Static functions cannot access instance members directly, as they do not have a `this` pointer.
+
+Why constructors does not return a value:
+Constructors do not return a value because their purpose is to initialize an object, not to produce a value like a regular function. They are called automatically when an object is created, and they set up the initial state of that object.
+
+You don’t need to call it manually like a regular function.
 
 Initialize list:
 An initializer list is a part of the constructor syntax that allows you to initialize base classes and member variables directly before the constructor body runs.
@@ -993,7 +1066,7 @@ When deleting a derived object through a base pointer, the destructor sequence i
 Derived destructor (Derived destructor calls Base::~Base() automatically.)→ Base destructor
 Without a base destructor body, the program would have undefined behavior or linker errors.
 
-If the base class is abstract, so the compiler doesn’t know its layout or what resources it manages, and cannot generate a default destructor — the programmer must provide one. Derived classes are concrete, so the compiler knows their layout and resources and can generate default destructors. Concrete means fully defined and instantiable
+If the base class is abstract, so the compiler doesn't know its layout or what resources it manages, and cannot generate a default destructor — the programmer must provide one. Derived classes are concrete, so the compiler knows their layout and resources and can generate default destructors. Concrete means fully defined and instantiable
 
 Syntax:
 ~ClassName() {
@@ -1018,10 +1091,13 @@ It focuses on what an object does, not how it does it.
 Achieved using abstract classes and interface in C++.
 
 What is an abstract class?
-An abstract class is a class that cannot be instantiated on its own and is designed to be a base class for other classes.
-They can only be used via pointers or references, enforcing that all derived classes provide concrete implementations.
+An abstract class is a class that cannot be instantiated on its own. It is designed to act as a base class and usually contains at least one pure virtual function.
+It is used to provide a common interface for all derived classes.
+Keypoints:
+You cannot create objects of an abstract class.
+You can create pointers or references to it.
+Derived classes must override all pure virtual functions to become concrete
 
-Acts as a blueprint for derived classes.
 Can contain:
 Pure virtual functions (must be overridden)
 Normal member functions (optional implementation)
@@ -1130,15 +1206,21 @@ There are two types of polymorphism in C++:
 1. Compile-time polymorphism (Static polymorphism)
 2. Run-time polymorphism (Dynamic polymorphism)
 
+1) Compile-time :
+The phase when the source code is translated into machine code (executable) by the compiler. Everything checked or decided before the program runs is compile-time.
+
+2) Run-time :
+The phase when the program is executing (running). Decisions made while the program is running, based on user input or other dynamic factors, are run-time.
+
 1. Compile-time polymorphism:
 Achieved using function overloading and operator overloading.
+It allows multiple functions or operators to have the same name but behave differently based on the arguments passed to them.
 
 a. Function Overloading:
 This is when you define multiple functions with the same name but different parameters (either in number or type).
 1. Order of Priority in Function Overloading:
 
 When the compiler has to choose between multiple overloaded functions, it follows this order of priority:
-
 1) Number of Parameters:
 The compiler first checks the number of parameters passed to the function.
 If the number of arguments in the call exactly matches one of the overloaded versions, that function is chosen.
@@ -1148,10 +1230,10 @@ If there are multiple overloads with the same number of parameters, the compiler
 It will select the function whose parameter types best match the types of the arguments you provided.
 The order of preference (from best to least preferred) is:
 Exact match (no conversion)
-Promotion (e.g., char → int, float → double)
-Standard conversion (e.g., int → double, Derived* → Base*)
-User-defined conversion (via constructors or operator T())
-Ellipsis (...)
+Promotion (e.g., char → int, float → double, short → int) // Converts a smaller type to a larger one within the same category without loss of information
+Standard conversion (e.g., int → double, Derived* → Base*) // Conversions defined by the language itself, but not just size promotion.
+User-defined conversion (via constructors or operator T()) // Conversions defined by the constructor or conversion operator of a class.
+Ellipsis (...) // Least preferred, used when no other match is found. 
 
 3) Default Arguments:
 If you don't provide a value for a parameter that has a default argument, the compiler will use the default value.
@@ -1166,13 +1248,62 @@ You can't skip a parameter in the middle. Once you skip one, all the parameters 
 In C++, the parameters in a function are ordered. The rightmost parameters (those at the end) are optional and can be skipped because of default arguments. The compiler can use the default values for any arguments that aren't provided.
 
 b. Operator Overloading:
-You can also overload operators to define how operators (like +, -, etc.) work with user-defined types(classes).
+Operator overloading allows you to define custom behavior for operators (like +, -, *, etc.) when they are used with user-defined types (classes).
 
-Does virtual functions can be inline ?
-Inline suggests to the compiler that the function's code should be inserted directly at each point the function is called, rather than performing a regular function call. This can improve performance for small, frequently used functions
-If the time taken to switch from the caller function to the called function (function call overhead) is greater than the time taken to execute the function itself, then it's better to use inline.
+We cannot overload below operators because they have special meanings in C++:
+1. Scope resolution operator (::)
+2. Member access operator (.)
+3. Ternary conditional operator (?:)
+4. sizeof operator 
 
-Yes, virtual functions can be inline, but due to dynamic dispatch, they are only inlined when the compiler knows the exact type of the object at compile time. If called through a base class pointer or reference, inlining is not possible.
+operator+ :x
+creates a new temporary object (an rvalue) that doesn't persist after the expression ends.
+Returning it by reference would refer to that destroyed temporary, causing undefined behavior.
+Since you can't bind a non-const lvalue reference to an rvalue, the correct and safe approach is to return it by value.
+In contrast, operator= :
+modifies the current object (an lvalue), which already exists in memory.
+Returning *this by lvalue reference is both valid and efficient, because it refers to the same persistent object and enables chained assignments like a = b = c without creating unnecessary temporary copies.
+
+Why can't we bind non-const lvalue references to temporaries (rvalues)?
+In C++, lvalue references (T&) are meant to refer to objects that have a persistent memory location (lvalues). Temporaries (rvalues) are short-lived objects that are created during expression evaluation and are destroyed at the end of the full expression, so binding a non-const lvalue reference to a temporary would lead to dangling references and undefined behavior.
+
+2. Run-time polymorphism:
+Achieved using virtual functions and inheritance.
+It allows a function to behave differently based on the actual object type at runtime, rather than the type of the pointer or reference.
+
+Virtual Functions:
+A virtual function is a member function in a base class that you expect to override in derived classes. It allows for dynamic (runtime) polymorphism, meaning the function that gets called is determined by the type of the object being pointed to, not the type of the pointer itself.
+
+a) vtable:  
+When a class has virtual functions, the compiler creates a special table called the vtable (virtual table) for that class. It stores the addresses of the virtual functions for a class. It's like a list (table) of function pointers.
+Created: By the compiler, during compile time.
+Stored: As a static table in memory (one per class with virtual functions).
+Used for: Runtime dispatch of virtual functions
+
+b) vptr:
+Each object of a class with virtual functions has a hidden pointer called vptr (virtual pointer).
+It points to the vtable of the class that the object belongs to.
+When: Automatically set up by the constructor, Used at runtime to resolve which function to call.
+Created by the compiler when your class contains at least one virtual function.
+vptr is declared at compile time, but it is set to point to the correct vtable at runtime when the object is created.
+
+When you call a virtual function on an object, the compiler uses the vptr to look up the correct function in the vtable and calls it. This allows for dynamic dispatch, meaning the correct function is called based on the actual type of the object at runtime, not just the type of the pointer.
+
+Why constructors cannot be virtual:
+Constructors cannot be virtual in C++ because:
+vptr is not fully set up when a constructor is called. (The vptr is initialized/set inside the constructor.)
+When an object is being constructed, the complier set up the vptr to point to the class's vtable.
+But that happens as part of the constructor — it is not fully established before the constructor begins.
+
+Why destructors can be virtual:
+Destructors can be virtual in C++ because:
+When a destructor is called, the vptr is already set up to point to the correct vtable for the derived class.
+This allows the destructor to call the correct derived class destructor, ensuring proper cleanup of resources.
+Like when you delete a base class pointer that points to a derived class object, the virtual destructor ensures that the derived class's destructor is called first, followed by the base class destructor.
+
+Consequences of not calling the derived destructor first 
+1. Resource leaks 
+2. Undefined behavior --> If the derived class accesses data in its destructor that relies on the base  — but the base was already destroyed leads to crash, segment faults.
 
 39) Smart Pointers:
 1) std::unique_ptr
@@ -1191,5 +1322,364 @@ auto ptr1 = std::make_unique<MyClass>(); // Preferred way to create a unique_ptr
 2) std::shared_ptr:
 A `std::shared_ptr` is a smart pointer in C++ that allows multiple pointers to share ownership of a dynamically allocated object. It uses reference counting to keep track of how many `shared_ptr` instances point to the same object. When the last `shared_ptr` pointing to the object is destroyed or reset, the managed object is automatically deleted.
 
+make_shared is preferred because:
+1. Efficiency: Allocates memory for both the control block and the object in a single allocation, reducing overhead.
+2. Exception Safety: Ensures that if an exception is thrown during object construction, no memory is leaked because the allocation of the control block and the object is atomic, so either both succeed or neither does.
+auto sptr = std::make_shared<MyClass>(constructor_args);
+
+Eg: 
+void risky(std::shared_ptr<MyClass> p, int x);
+risky(std::shared_ptr<MyClass>(new MyClass()), doSomething());
+
+new MyClass() is executed first — it allocates a raw pointer on the heap.
+Then doSomething() is called to get the second argument (x).
+If doSomething() throws an exception, the line is interrupted before the shared_ptr is constructed which handles the raw pointer.
+As a result, the raw pointer returned by new MyClass() is never managed by any shared_ptr, causing a memory leak.
+
+std::make_shared<MyClass>() wraps both the allocation and the shared_ptr creation inside one expression, so no raw pointer ever exists temporarily outside of a shared_ptr.
+Even if doSomething() throws, everything is cleaned up automatically.
+
+Exception not to use make_shared:
+When you need a custom deleter for the managed object, you cannot use `std::make_shared` because it does not allow specifying a custom deleter. In such cases, you must create the `shared_ptr` using its constructor that accepts a raw pointer and a deleter function.
+
+Control block:
+The control block is a small structure that manages the reference count. 
+It keeps track of how many `shared_ptr` instances and 'weak_ptr' instances point to the same object and ensures proper deletion when the last reference is gone.
+Control block contains:
+1. Strong reference count: Number of `shared_ptr` instances pointing to the object.
+2. Weak reference count: Number of `weak_ptr` instances pointing to the object.
+3. Deleter function: Function to delete the managed object when the last `shared_ptr` is destroyed.
+4. Pointer to the managed object.
+
+The control block remains alive as long as any weak_ptr exists, allowing weak pointers to safely check object validity or attempt to create a shared_ptr; without it, functions like weak_ptr.expired() or weak_ptr.lock() would access invalid memory once the object is destroyed.
+
+weak_ptr.expired() → checks strong_count inside the control block(i.e strong_count == 0) to see if the managed object has been deleted.
+weak_ptr.lock() → creates a new shared_ptr only if strong_count > 0, safely incrementing it.
+
+You create a shared_ptr → strong_count = 1, weak_count = 0
+Copy a shared_ptr → strong_count++
+Destroy a shared_ptr → strong_count--
+When strong_count reaches 0 → managed object is deleted
+When you create a weak_ptr from a shared_ptr → weak_count++
+Destroy a weak_ptr → weak_count--
+When both strong_count and weak_count reach 0 → control block is deleted
+
+3) std::weak_ptr:
+A `std::weak_ptr` is a smart pointer in C++ that provides a non-owning reference to an object managed by a `std::shared_ptr`. It allows you to observe or access the object without affecting its lifetime, preventing circular references that can lead to memory leaks.
+Other use cases:
+1. Cache Implementation: weak_ptr can be used in caching mechanisms where you want to hold references to objects without preventing their deallocation when they are no longer needed elsewhere.
+2. Observer Pattern: weak_ptr can be used to implement the observer pattern, where observers hold weak references to subjects to avoid circular dependencies.
+
+#include <memory>
+std::shared_ptr<MyClass> sptr = std::make_shared<MyClass>();
+std::weak_ptr<MyClass> wptr = sptr; // Create a weak_ptr from shared_ptr
+
+class A { public: shared_ptr<B> bptr; };
+class B { public: shared_ptr<A> aptr; };
+
+int main()
+{
+    auto a = make_shared<A>();
+    auto b = make_shared<B>();
+
+    a->bptr = b;
+    b->aptr = a;
+
+} // main ends
+
+When main() ends (only shared_ptr version — circular dependency case):
+b goes out of scope → shared_ptr<B> destructor runs → B's strong count goes from 2 → 1 (because A.bptr still holds one strong reference to B).
+a goes out of scope → shared_ptr<A> destructor runs → A's strong count goes from 2 → 1 (because B.aptr still holds one strong reference to A).
+Now, when A is supposed to be destroyed, its strong count is not 0 — because B.aptr still points to A. So A is not destroyed yet.
+Similarly, B is not destroyed either, because A.bptr still points to B.
+As a result, both A and B keep each other alive — neither's strong count ever reaches 0.
+
+When main() ends (weak_ptr version — no circular dependency):
+b goes out of scope → shared_ptr<B> destructor runs → B strong count goes from 2 → 1 (because A.bptr still holds one strong ref to B).
+a goes out of scope → shared_ptr<A> destructor runs → A strong count goes from 1 → 0 → A is destroyed.
+when A is destroyed → its member bptr (shared_ptr<B>) is destroyed → bptr destructor executes --> decreases B strong count from 1 → 0.
+since B strong count became 0 → B is destroyed.
+
+
+40) Static Members:
+What is static data member?
+A static data member is a variable that is shared among all instances of a class. It belongs to the class itself rather than to any specific object of the class. This means that there is only one copy of the static data member, regardless of how many objects of the class are created.
+
+All static members are initialized to zero by default if not explicitly initialized.
+
+By declaration inside the class, we are just informing the compiler about its existence and type, but not allocating any storage for it.
+By defining it outside we are telling the compiler to allocate storage for that static member variable only once, at the global scope. 
+
+If you define it inside the class, the compiler would have to allocate storage every time an object is created, leading to multiple copies of the same variable. If a static member is defined in a header file class included by multiple files, the linker sees multiple definitions → ODR violation → linker error.
+
+The One Definition Rule (ODR) states that in a C++ program, each variable, function, class, or template must have exactly one definition across the entire program, though it may have multiple declarations.
+
+We can define [static members] inside the class only :
+if they are integral const (pre-C++17), or if we use inline (C++17 and later). Inline will allow the definition to be present in multiple translation units without violating ODR, because the compiler/linker will ensure that only one instance exists.
+
+Integral constants are compile-time numbers embedded into instructions. They live in the .text segment if unused for their address, and only become real memory objects if their address is needed.
+
+inline ensures that even if included in multiple .cpp files, the linker merges them into one object.
+
+Static member functions:
+A static member function is a function that belongs to the class itself rather than to any specific object. 
+We can call static member functions without creating an instance of the class and accessed using the class name and the scope resolution operator (::).
+
+A static member function can only access static data members and other static member functions of the class. It cannot access non-static members because it does not have a `this` pointer, which refers to a specific object instance.
+
+You could call a static member function using an object of the class, but it's not recommended because it can be misleading. It suggests that the function is tied to that specific object, which is not the case.
+
+41) Friend Functions and Classes:
+A friend function is a non-member function that has access to private and protected members of a class. It is declared using the `friend` keyword inside the class definition.
+
+Used when an external function needs to work closely with a class.
+Eg: operator overloading functions for << and >> operators.
+
+A friend class is a class that has access to the private and protected members of another class.
+
+class Engine; 
+class Car {
+    friend class Engine; // Engine is a friend class of Car
+private:
+    int horsepower;
+};
+class Engine {
+public:
+    void displayHorsepower(Car& car) {
+        cout << "Horsepower: " << car.horsepower << endl; // Accessing private member of Car
+    }
+};
+int main() {
+    Car myCar;
+    Engine myEngine;
+    myEngine.displayHorsepower(myCar); // Valid: Engine can access Car's private members
+    return 0;
+}
+
+42) Lambda Function::
+A lambda function is an anonymous (unnamed) function that can be defined and used inline — often inside another function.
+inline means defined at the point of use, not separately named and defined elsewhere.
+
+It's mainly used for short, simple operations without needing a separate function definition.
+Introduced in C++11.
+All parts are optional except the capture list and function body.
+Basic syntax:
+[capture list](parameters) -> return_type {
+    // function body
+};
+
+
+| Capture Type             | Syntax | Meaning                                                 |
+| ------------------------ | ------ | ------------------------------------------------------- |
+| Capture by Value         | `[x]`  | Copies variable `x` inside the lambda                   |
+| Capture by Reference     | `[&x]` | Refers to actual variable `x` (changes affect original) |
+| Capture All by Value     | `[=]`  | Copies all external variables used in the lambda        |
+| Capture All by Reference | `[&]`  | Refers to all external variables used in the lambda     |
+
+Eg:
+int x = 10, y = 20;
+
+auto sum1 = [=]() { return x + y; };    // capture by value
+auto sum2 = [&]() { return ++x + y; };  // capture by reference (x changes)
+
+cout << sum1() << endl;  // 30
+cout << sum2() << endl;  // 31, and x becomes 11
+
+cout << [](int a, int b) { return a + b; }(5, 3); << endl; // 8
+// With return type
+auto getIndex = [](char c) -> int {
+    if (isalpha(c)) return c - 'a';       // 0–25 for letters
+    else if (isdigit(c)) return 26 + (c - '0'); // 26–35 for digits
+    else return -1; // ignore others
+};
+
+// Without parameters
+auto greet = [] { cout << "Hello Lambda!"; };
+greet(); // Outputs: Hello Lambda!
+
+43) Exception Handling:
+Exception handling in C++ is a mechanism that allows you to handle runtime errors gracefully without crashing the program. It uses three main keywords: `try`, `catch`, and `throw`.
+1. try block: Contains the code that may throw an exception.
+2. throw statement: Used to signal that an exception has occurred.
+3. catch block: Contains the code that handles the exception.
+
+Use <exception> header for standard exceptions. It provides the base std::exception class, which doesn't give much detail about the nature of the error.
+
+<stdexcept> provides more specialized exceptions, like std::invalid_argument, std::out_of_range, std::logic_error, and std::runtime_error. These exceptions allow you to handle different error conditions more specifically.
+
+We can catch exception specializations like std::runtime_error before catching the general std::exception to provide more specific error handling.
+
+e.what() returns a C-style string (const char*) that describes the error. It is a virtual function defined in the std::exception class and overridden in derived exception classes to provide specific error messages.
+
+We need to use reference(&) in catch blocks to avoid object slicing. Ensures polymorphism works, so derived class exceptions are caught correctly.
+
+Object slicing occurs when an object of a derived class is assigned to a base class object. The derived class-specific attributes and behaviors are "sliced off," leaving only the base class part. This can lead to loss of information and unexpected behavior, especially when dealing with exceptions. This is avoided by catching exceptions by reference because it preserves the actual object type.
+
+#include <stdexcept>  // For specific runtime_error exceptions
+#include <iostream>
+#include <exception>  // For std::exception
+
+void testFunction() {
+    // Throwing a runtime error: something went wrong at runtime
+    throw std::runtime_error("A runtime error occurred!");
+}
+
+class MyCustomException : public std::exception {
+public:
+    const char* what() const noexcept override {
+        return "My custom exception occurred!";
+    }
+};
+
+void testCustomException() {
+    throw MyCustomException();
+}
+
+int main() {
+    try {
+        testFunction();  // Calling the function that throws a runtime error
+        testCustomException(); // Calling the function that throws a custom exception
+    } catch (const std::runtime_error& e) {
+        // Catching the runtime error specifically
+        std::cout << "Caught runtime error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        // Catching other general exceptions if needed
+        std::cout << "Caught some other exception: " << e.what() << std::endl;
+    } catch (...) {
+        // Catching any other exceptions not previously caught
+        std::cout << "Caught an unknown exception!" << std::endl;
+    }
+
+    return 0;
+}
+
+44) using:
+The `using` keyword in C++ serves multiple purposes, primarily for type aliasing and namespace management.
+1. Type Alias:
+The `using` keyword can create type aliases, which are alternative names for existing types. This can make code more readable and easier to maintain.
+using IntPtr = int*; // Alias for int pointer
+Earlier we haves used typedef for type aliasing:
+typedef int* IntPtr; // Alias for int pointer
+Both are equivalent, but `using` is often preferred for its clarity, especially with complex types like templates. Because it can automatically deduce template parameters but for typedefs, you have to specify them explicitly.
+template <typename T>
+using Vec = std::vector<T>; // Alias for vector of type T
+
+For typedef:
+typedef std::vector<int> IntVector; // Alias for vector of integers
+
+2. Namespace Management:
+The `using` keyword can bring specific names from a namespace into the current scope, so you can use it without having to prefix it with the namespace name.
+using std::cout;
+It is either selectively imports specific names from a namespace into the current scope or brings all names from a namespace into the current scope.
+
+3. Using Declarations in Classes:
+When a derived class defines a function with the same name as one in the base class, it hides all overloads of that function from the base class (even if the parameters differ) because name lookup stops at the derived class.
+The `using` keyword can be used in derived classes to bring base class members into the derived class scope, allowing access to overloaded functions from the base class.
+class Base {
+public:
+    void display(int x) {
+        std::cout << "Base display: " << x << std::endl;
+    }
+};
+class Derived : public Base {
+public:
+    using Base::display; // Bring Base class display into Derived class scope
+    void display(std::string str) {
+        std::cout << "Derived display: " << str << std::endl;
+    }
+};
+
+4. Enum Import:
+C++20 allows using enum to bring enumerators into scope.
+enum class Color { Red, Green, Blue };
+using enum Color; // now we can use Red, Green, Blue directly
+Color c = Red;
+
+45) namespace:
+In C++, namespace is a way to group related code together and avoid name collisions. It provides a scope for identifiers (like variables, functions, classes) to prevent naming conflicts, especially in large projects or when using multiple libraries.
+
+Scope means where a name(variable, function, class etc.) is visible and accessible.
+
+You can avoid namespace prefix everytime by using, using namespace <namespace_name> 
+
+But be careful, using namespace std; in headers or large projects because it brings all names from std into global scope can lead to name conflicts and ambiguities.
+Eg: Your user defined count function may conflict with std::count
+
+Instead, prefer explicit usage (std::cout) or selective using declarations (using std::cout)
+
+The scope resolution operator(::) is used to tell the complier which namespace's version you want to use.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+C++ makes a special exception for this case:
+You can bind a "const &" to a temporary (rvalue) which means you cannot modify the temporary through that reference.
+
+For non const references, you cannot bind them to temporaries (rvalues) because non-const references imply that you might modify the object they refer to. Since temporaries are meant to be short-lived and are often stored in read-only memory, allowing modification through a non-const reference would lead to undefined behavior.
+Modifying a temporary that's about to disappear would be nonsense.
+
+How std::move works internally:
+Consider the following example:
+      lvalue 'a'
+          |
+          v
+   std::move(a) called
+          |
+          v
+  Template deduction:
+  T&& t, a is lvalue
+  => T = UniquePtr&
+  => T&& = UniquePtr&  (reference collapsing)
+          |
+          v
+ std::remove_reference<T>::type
+  => remove & → UniquePtr
+          |
+          v
+ static_cast<UniquePtr&&>(t)
+          |
+          v
+      rvalue reference (UniquePtr&&)
+      It will call the move constructor 
+          |
+          v
+   Move constructor called
+          |
+          v
+Ownership transferred:
+ a.ptr = nullptr
+ b.ptr = resource
 
 
