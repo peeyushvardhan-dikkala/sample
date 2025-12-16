@@ -55,7 +55,7 @@ Low Address
 |   (Code Segment)       |
 +-------------------------+
 
-a) Stack:
+    a) Stack:
 Stack is where local variables and function calls are stored. It grows downwards in memory.
 The stack area traditionally adjoined the heap area, but modern systems may have them separated.
 When the stack runs out of space, it can lead to a stack overflow.
@@ -163,7 +163,7 @@ Comments in C++ are meant to explain the code as well as to make it more readabl
 /* Multiline Comment */ 
 
 5) Variables in C++:
-A variable is a named memory location used to store data that can be changed during program execution.
+A variable is a name given to a memory location. It is used to store data that can be changed during program execution.
 
 Rules for naming variables:
 1. Must begin with a letter (A-Z, a-z) or an underscore (_).
@@ -171,16 +171,36 @@ Rules for naming variables:
 3. Cannot be a reserved keyword, special keyword in C++ (like int, return, if, etc.).
 4. Variable names are case-sensitive (e.g., myVar and MyVar are different).
 
-Depending 
+Scope controls where a variable can be accessed; lifetime controls how long it exists in memory.
+
+Depending on where and how they are declared, variables can have different scopes, lifetimes, and memory areas.
 
 | **Type**                   | **Declared**                   | **Scope**               | **Lifetime**                   | **Memory Area**                                    |
 | -------------------------- | ------------------------------ | ----------------------- | ------------------------------ | -------------------------------------------------- |
 | **Local Variable**         | Inside a function/block        | Within that block       | Created & destroyed with block | **Stack**                                          |
 | **Global Variable**        | Outside all functions          | Whole program           | Entire program                 | **.data** (initialized) / **.bss** (uninitialized) |
+
+Static Variables:
 | **Static Local Variable**  | Inside function with `static`  | Only that function      | Whole program, retains value   | **.data / .bss**                                   |
+| **Static Global Variable** | Outside function with `static` | File (translation unit) | Entire program                 | **.data / .bss**                                   |
+
+External Variables:
+extern does not allocate memory.
+It only tells compiler: “value is defined somewhere else.”
+| **External Variable**      | Outside function with `extern` | Whole program           | Entire program                 | **.data / .bss**                                   |
+
+Register Variables:
+Hint to compiler to store variable in CPU register for speed.
+Modern compilers ignore this; it's just a suggestion.
+You cannot take address of register variable because it may not have a memory address.
+
+| **Register Variable**      | Inside function with `register`| Only that function      | Created & destroyed with block | **CPU Registers** (if available)                   |
+
+Class Member Variables:
 | **Instance Variable**      | Inside class (no `static`)     | Per object              | As long as object exists       | **Object's memory** (stack/heap)                   |
 | **Static Member Variable** | Inside class with `static`     | Shared by all objects   | Entire program                 | **.data / .bss**                                   |
-| **Global Static Variable** | Outside function with `static` | File (translation unit) | Entire program                 | **.data / .bss**                                   |
+| **Local Variables **       | Inside member function         | Only that function      | Created & destroyed with block | **Stack**                                          |
+(Inside member functions)
 
 Storage Classes:
 Storage classes in C++ define the scope (visibility) and lifetime of variables and functions within a program. They determine how and where the variables are stored in memory, as well as their accessibility.
@@ -196,12 +216,62 @@ Memory location
 | **Register**      | `register`  | Local      | Block        | CPU Register    | Garbage           |
 | **Static**        | `static`    | Local/File | Program      | .data / .bss    | 0                 |
 | **External**      | `extern`    | Global     | Program      | .data / .bss    | 0                 |
-| **Mutable**       | `mutable`   | Class      | Object       | Object memory   | Garbage           |
-`mutable` keyword:
+
+Type Qualifiers:
+Type qualifiers in C++ are keywords that modify the behavior of variables, objects, or functions. They do NOT change the type itself but change the properties or rules applied to it.
+
+1) const
+2) volatile
+3) mutable
+4) restrict / restrict (compiler-specific)
+5) constexpr / consteval / constinit (C++11 and later)
+
+1) const keyword:
+It is read only qualifier means the value cannot be changed after initialization.
+2) volatile keyword:
+It tells the compiler that a variable's value may change unexpectedly(hardware, interrupts, threads), Don't optimize it.
+3) mutable keyword:
 const object is an object that cannot be modified after its creation. However, there are scenarios where you might want to allow certain member variables of a const object to be modified. 
 Eg: Application settings loaded at startup. You don't want the settings to be accidentally modified during runtime. We can make accessCount as mutuable to check how many times settings were accessed, even in a const object.
 
 Allows a non-static data member of a class to be modified even in a const object or inside a const member function.
+
+4) restrict keyword:
+It is a pointer qualifier that indicates this pointer is the only pointer that will access this memory location.
+Because there is no other pointer using the same memory, the compiler can make optimizations based on this guarantee.
+
+5) constexpr :
+constexpr is a keyword in C++ that tells the compiler: "This value/function can be evaluated at compile time."
+It helps with optimization and ensures immutability like const, but with added compile-time power.
+Used to define compile-time constants.
+Can be used in contexts that require compile-time evaluation, like template parameters or array sizes.
+
+constexpr is used for functions used as a specifier that indicates the function can be evaluated at compile time if all its arguments are also known at compile time.
+
+consteval(C++20):
+The values must be evaluated at compile time.
+Applied only to functions.
+If not possible → compile-time error.
+
+consteval int cube(int n) {
+    return n * n * n;
+}
+
+int x = cube(3);   // OK → compile-time evaluation
+int n;
+std::cin >> n;
+// int y = cube(n);  // ❌ ERROR: cannot call consteval at runtime
+
+constinit(C++20):
+The variable must be initialized at compile time.
+It is used for global/static variables ensures that a variable is initialized at compile time, but unlike `consteval`, it does not require the value to be a compile-time constant.
+
+constinit int a = 10;   // must be initialized at compile time
+a = 20;                 // ✔ allowed, not const
+
+constinit static int x = 5;   // OK
+// constinit int y;           // ❌ ERROR: not initialized
+
 
 C++ Data types:
 Data types specify the type of data that a variable can store. Whenever a variable is defined in C++, the compiler allocates some memory for that variable based on the data.
@@ -534,32 +604,7 @@ If the object has a pointer to dynamically allocated memory, both the original a
 
 A deep copy creates a new copy of the dynamically allocated memory. It allocates separate memory and copies the actual data, so the copied object is independent of the original.
 
-24) const vs constexpr :
-const :
-Declares a variable whose value cannot change after initialization.
-Can be runtime or compile-time initialized.
-
-constexpr :
-constexpr is a keyword in C++ that tells the compiler: "This value/function can be evaluated at compile time."
-It helps with optimization and ensures immutability like const, but with added compile-time power.
-Used to define compile-time constants.
-Can be used in contexts that require compile-time evaluation, like template parameters or array sizes.
-
-constexpr is used for functions used as a specifier that indicates the function can be evaluated at compile time if all its arguments are also known at compile time.
-
-consteval(C++20):
-Declares a function or variable that can be evaluated at compile time.
-Stricter than constexpr.
-Always evaluated at compile time — never allowed at runtime.
-
-constinit (C++20):
-Declares a variable that must be initialized at compile time, but is not necessarily constant.
-Helps avoid static initialization order bugs.
-Still allows mutation at runtime.
-
-constinit is perfect for globals or statics where:
-You want to guarantee safe initialization at compile time
-But still need to change the value later (e.g., counters, system flags)
+24)
 
 25) double vs float:
 | Feature            | float                     | double                    |
@@ -578,13 +623,11 @@ Due to lower precision, float may round or truncate values that a double can hol
 typedef is the traditional way to create type aliases in C and C++.
 using was introduced in C++11 and provides a cleaner, more powerful way to define aliases — especially for template types.
 
+Eg: 
 // Using typedef (old style)
 typedef void (*Callback)(int, double);
 
-Eg: typedef void (*Callback)(int, double);
-
 Callback fp = myFunction; // Much cleaner
-
 
 // Using 'using' (modern and clear)
 using Callback = void(*)(int, double);
@@ -846,7 +889,7 @@ Objects can use member functions defined in the class.
 
 3) Class:
 A class is a blueprint or template for creating objects.
-It does not occupy memory itself. Memory is allocated only when an object is created.
+It does not occupy memory itself. Memory is allocated only when an object is created. class will occupy memory only when an object of that class is instantiated. If you check sizeof(className), it will give you the size of an object of that class, not the class itself.
 
 Memory Visualization:
 When you define a class with functions, the code of the function is **stored once in memory**, not inside each object.
@@ -865,7 +908,7 @@ So, you can call a static function directly using the class name, without creati
 
 sizeof(class) = size of an object of that class
 Includes all non-static members + padding
-Does not include member functions or static members
+Does not include member functions or static members they are included in shared memory i.e., text segment
 
 4) Constructor:
 A constructor is a special member function of a class that is automatically called when an object of that class is created.
@@ -884,7 +927,12 @@ A memory leak in C++ (or any language with manual memory management) happens whe
 A shallow copy copies the values of member variables as they are, including pointers.
 If the object has a pointer to dynamically allocated memory, both the original and the copy will point to the same memory location. This can lead to unintended side effects like double deletion.
 
-A deep copy creates a new copy of the dynamically allocated memory. It allocates separate memory and copies the actual data, so the copied object is independent of the original.
+    A deep copy creates a new copy of the dynamically allocated memory. It allocates separate memory and copies the actual data, so the copied object is independent of the original.
+    Syntax:
+    ClassName(const ClassName& other) {
+    // Copy data members from 'other' to 'this'
+    this->data = other.data; // Deep copy if needed
+}
 
 Why Does the Copy Constructor Take a Reference:
 In C++, the copy constructor is responsible for creating a new object as a copy of an existing one. If the copy constructor were to take its argument by value, it would require making a copy of the object in order to pass it — but to make that copy, the compiler would need to call the copy constructor again.
@@ -1056,7 +1104,8 @@ It is used to release resources — memory, file handles, network connections, e
 Types of Destructors:
 1. Default Destructor: Automatically provided by the compiler if no destructor is defined. It performs default cleanup of member variables.
 2. Custom Destructor: A user-defined destructor that performs specific cleanup tasks, such as releasing dynamically allocated memory or closing file handles.
-3. Virtual Destructor: We need a virtual destructor to ensure the proper cleanup when a base class pointer points to a derived class object, deleting the object through the base pointer will correctly call both destructors — first the derived class destructor, then the base class destructor.
+3. Virtual Destructor: It is a destructor used to ensure proper cleanup of derived class objects when deleted through a base class pointer.
+It guarantees that the derived class destructor is called first, followed by the base class destructor, preventing resource leaks in polymorphic scenarios.
 
 Internally:
 A virtual destructor uses the object's vptr to look up the vtable at runtime, ensuring the destructor of the actual derived object is called first, followed by the base destructor, enabling proper cleanup.
@@ -1364,15 +1413,39 @@ When you create a weak_ptr from a shared_ptr → weak_count++
 Destroy a weak_ptr → weak_count--
 When both strong_count and weak_count reach 0 → control block is deleted
 
+std::shared_ptr<MyClass> p1 = std::make_shared<MyClass>();
+
+std::shared_ptr<MyClass> p2 = p1;
+std::shared_ptr<MyClass> p3 = p2;
+std::shared_ptr<MyClass> p4 = p3;
+std::shared_ptr<MyClass> p5 = p1;
+
+When will be managed object will be destroyed.
+The managed object (MyClass instance) is deleted only when the last std::shared_ptr owning it is destroyed or reset, i.e. when reference count becomes 0.
+
+They all go out of scope at the end of main().
+The compiler destroys them in reverse order of creation (p5, then p4, then p3, then p2, then p1).
+Each destruction decreases the reference count by 1.
+
+If destruction happened in the same order as creation, later variables that depend on earlier ones could access already-destroyed objects, causing serious runtime bugs.
+
 3) std::weak_ptr:
 A `std::weak_ptr` is a smart pointer in C++ that provides a non-owning reference to an object managed by a `std::shared_ptr`. It allows you to observe or access the object without affecting its lifetime, preventing circular references that can lead to memory leaks.
-Other use cases:
-1. Cache Implementation: weak_ptr can be used in caching mechanisms where you want to hold references to objects without preventing their deallocation when they are no longer needed elsewhere.
-2. Observer Pattern: weak_ptr can be used to implement the observer pattern, where observers hold weak references to subjects to avoid circular dependencies.
+
+Breaking circular references: In cases where two or more shared_ptrs refer to each other, using std::weak_ptr for one of the references prevents a memory leak.
+
+Can be converted to shared_ptr: You can convert a std::weak_ptr to a std::shared_ptr by calling the lock() function. This creates a temporary shared_ptr if the object still exists, or returns an empty shared_ptr if the object has already been destroyed.
 
 #include <memory>
 std::shared_ptr<MyClass> sptr = std::make_shared<MyClass>();
 std::weak_ptr<MyClass> wptr = sptr; // Create a weak_ptr from shared_ptr
+
+if (auto lockedNode = wptr.lock()) {
+    std::cout << "Node1 is still alive: " << lockedNode->data << std::endl;
+} else {
+    std::cout << "Node1 has been destroyed." << std::endl;
+}
+
 
 class A { public: shared_ptr<B> bptr; };
 class B { public: shared_ptr<A> aptr; };
@@ -1573,7 +1646,7 @@ using std::cout;
 It is either selectively imports specific names from a namespace into the current scope or brings all names from a namespace into the current scope.
 
 3. Using Declarations in Classes:
-When a derived class defines a function with the same name as one in the base class, it hides all overloads of that function from the base class (even if the parameters differ) because name lookup stops at the derived class.
+When a derived class defines a function with the same name as one in the base class, it hides all overloads of that function from the base class (even if the parameters differ) because name lookup stops at the derived class level because
 The `using` keyword can be used in derived classes to bring base class members into the derived class scope, allowing access to overloaded functions from the base class.
 class Base {
 public:
@@ -1591,9 +1664,9 @@ public:
 
 4. Enum Import:
 C++20 allows using enum to bring enumerators into scope.
-enum class Color { Red, Green, Blue };
-using enum Color; // now we can use Red, Green, Blue directly
-Color c = Red;
+    enum class Color { Red, Green, Blue };
+    using enum Color; // now we can use Red, Green, Blue directly
+    Color c = Red;
 
 45) namespace:
 In C++, namespace is a way to group related code together and avoid name collisions. It provides a scope for identifiers (like variables, functions, classes) to prevent naming conflicts, especially in large projects or when using multiple libraries.
@@ -1609,36 +1682,421 @@ Instead, prefer explicit usage (std::cout) or selective using declarations (usin
 
 The scope resolution operator(::) is used to tell the complier which namespace's version you want to use.
 
+46) Standard Template Library (STL):
+STL (Standard Template Library) in C++ is a set of template classes and functions that provides ready-made data structures (containers), algorithms, and iterators.
+It allows developers to write efficient and clean code without implementing these structures from scratch.
+1. Containers: 
+A container in STL is a class template that stores and manages a collection of elements in a specific data structure according to the requirements.
+Containers are objects that hold data in a structured way (like arrays, lists, sets, maps) in the STL.
+Types of containers:
+a) Sequence Containers: Store elements in a linear order.
+Examples: std::vector, std::list, std::deque, std::array, std::forward_list
+b) Container Adapters: Provide a specific interface for certain data structures. They are built on top of other sequence containers and restrict access to certain operati  ns to provide a specific behavior.
+Examples: std::stack, std::queue, std::priority_queue
+c) Associative Containers: Store elements in such a way that they are always kept in sorted order using a balanced tree structure.  All are implemented using Red-Black trees → O(log N) time complexity for search, insert, delete.
+Examples: std::set, std::map, std::multiset, std::multimap
+d) Unordered Associative Containers: Store elements in an unordered manner using hash tables for fast access.  O(1) average time complexity for search, insert, delete.
+Examples: std::unordered_set, std::unordered_map, std::unordered_multiset, std::unordered_multimap
+
+2. Algorithms:
+Algorithms in STL are a collection of functions that operate on containers to perform various operations like searching, sorting, and manipulating data.
+Examples: std::sort, std::find, std::accumulate, std::copy, std::transform
+Types of Algorithms:
+a) Non-modifying algorithms: Do not change the contents of the container (e.g., std::find, std::count).
+b) Modifying algorithms: Change the contents of the container (e.g., std::fill, std::reverse).
+c) Sorting algorithms: Specifically designed to sort elements in a container (e.g., std::sort, std::stable_sort).
+d) Numeric algorithms: Perform mathematical operations on numeric data (e.g., std::accumulate, std::inner_product).
+e) Searching algorithms: Find elements in a container (e.g., std::binary_search, std::find_if).
+
+3. Iterators:
+Iterators in STL are objects that provide a way to access and traverse the elements of a container. They act as a bridge between algorithms and containers, allowing algorithms to work with different types of containers in a uniform way.
+Types of Iterators:
+a) Input Iterators: Can read data from a container (one-way). Eg: istream_iterator
+b) Output Iterators: Can write data to a container (one-way). Eg: ostream_iterator
+c) Forward Iterators: Can read/write data and move forward through a container (one-way
+d) Bidirectional Iterators: Can read/write data and move both forward and backward through a container (two-way).
+e) Random Access Iterators: Can read/write data and move freely to any position in a container (like pointers).
+
+4. Functors:
+Functors (function objects) in STL are objects that can be treated as functions. They are created by overloading the operator() in a class.
+Functors can maintain state and can be passed as arguments to algorithms, allowing for more flexible and customizable behavior.
+
+a) Sequence Containers:
+1) std::vector:
+A dynamic array that can resize itself automatically when elements are added or removed. Elements are stored in contiguous memory locations, allowing for efficient access using indices. 
+Support random access iterators means you can access elements directly using their index.
+
+Ideal for scenarios where frequent access to elements by index is required.
+
+Commonly used member functions of std::vector:
+a) push_back(): Adds an element to the end of the vector.
+b) pop_back(): Removes the last element from the vector. Calling pop_back() on an empty vector is illegal.
+c) size(): Returns the number of elements in the vector.
+d) capacity(): Returns the total number of elements that can be held in currently allocated storage.
+e) front() and back(): Access the first and last elements of the vector.
+f) at(index): Access element at specified index with bounds checking.
+g) clear(): Removes all elements from the vector.
+h) erase(): Removes elements from a specified position or range.
+i) insert(): Inserts elements at a specified position.
+v.insert(position_iterator, value); // v.insert(v.begin() + 2, 3);  // Insert 3 at index 2
+v.insert(position_iterator, n, value); // v.insert(v.begin(), 2, 0);  // Insert 0 two times at the beginning
+v.insert(position_iterator, first_iterator, last_iterator); // v.insert(v.end(), v2.begin(), v2.end());
+
+Time Complexity for std::vector:
+Access: O(1)
+Insertion at end: Amortized O(1)
+Insertion/Deletion: O(N) (due to shifting elements)
+
+2) std::list:
+A list is a sequential container implemented as a doubly linked list.
+A double linked list consists of nodes where each node contains data and two pointers: one pointing to the next node and another pointing to the previous node.
+It allows efficient insertion and deletion of elements at any position in the list.
+Elements are not stored in contiguous memory locations.
+
+Supports bidirectional iterators means you can traverse the list in both directions (forward and backward).
+
+Ideal for scenarios where frequent insertions and deletions are required.
 
 
+Commonly used member functions of std::list:
+a) push_back() and push_front(): Adds an element to the end or beginning of the list.
+b) pop_back() and pop_front(): Removes the last or first element from the list.
+c) insert(): Inserts an element at a specified position.
+d) erase(): Removes an element from a specified position.
+e) front() and back(): Access the first and last elements of the list.
+f) empty(): Checks if the list is empty.
+Time Complexity for std::list:
+Access: O(N) (no random access)
+Insertion/Deletion: O(1) (given an iterator to the position)
+
+3) std::deque:
+
+A deque is a dynamic container that allows fast insertion and deletion at both ends
+A double-ended queue that allows efficient insertion and deletion of elements from both ends (front and back) and provides random access to elements. Elements are stored in multiple fixed-size blocks rather than a single contiguous block, providing fast insertion and deletion at both ends while still allowing constant-time random access to elements.
+
+Unlike a vector, which uses a single contiguous block, a deque stores elements in multiple small blocks. This allows fast insertion and deletion at both ends without copying all elements. Since ff capacity is exceeded, the entire array must be copied to a new larger block → expensive for vectors.
+
+By using multiple blocks, a deque avoids shifting all elements for front/back operations and only allocates/deallocates small blocks as needed, making front/back insertion and deletion O(1).
+
+Ideal for scenarios where frequent insertions and deletions are required at both ends of the container and random access is also needed.
+Commonly used member functions of std::deque:
+a) push_back() and push_front(): Adds an element to the end or beginning of the deque.
+b) pop_back() and pop_front(): Removes the last or first element from the deque.
+c) at(index): Access element at specified index with bounds checking.
+d) insert(): Inserts an element at a specified position.
+e) erase(): Removes an element from a specified position.
+f) front() and back(): Access the first and last elements of the deque.
+Time Complexity for std::deque:
+Access: O(1)
+Insertion/Deletion at both ends: O(1)
+
+Diff between vector and deque:
+| Feature               | std::vector                      | std::deque                                   |
+|-----------------------|----------------------------------|-----------------------------------           |    
+| Memory Structure      | Contiguous memory                | Dynamic array of fixed-size arrays           |
+| Insertion/Deletion    | Efficient at end (amortized O(1))| Efficient at both ends (O(1))                |
+| Random Access         | Yes (O(1))                       | Yes (O(1))                                   |
+| Memory Reallocation   | May require reallocation         | Less frequent reallocation                   |
+| Cache Locality        | Better due to contiguous storage | Slightly worse due to non-contiguous storage |
+
+4) forward_list:
+A forward_list is a sequential container implemented as a singly linked list.
+A singly linked list consists of nodes where each node contains data and a pointer to the next node in the sequence, providing very fast
+insertion and deletion of elements at the front and after any given position, while using minimal memory overhead.
+
+Ideal for scenarios where memory efficiency is crucial and frequent insertions and deletions are required at the front or after specific positions in the list.
+Commonly used member functions of std::forward_list:
+a) push_front(): Adds an element to the beginning of the list.
+b) pop_front(): Removes the first element from the list.
+c) insert_after(): Inserts an element after a specified position.
+d) erase_after(): Removes an element after a specified position.    
+e) front(): Access the first element of the list.
+f) l1.splice_after(pos, l2, first_iterator, last_iterator): Transfers elements from l2 to l1 after position pos.
+g) merge(): Merges two sorted forward_lists into one sorted list.
+h) sort(): Sorts the elements in the forward_list.
+
+Time Complexity for std::forward_list:
+Access: O(N) (no random access)
+Insertion/Deletion: O(1) (given an iterator to the position)
+
+5) std::array:
+A std::array is a fixed-size container that encapsulates fixed-size arrays. It provides a safer and more convenient alternative to traditional C-style arrays because it offers member functions for easier manipulation and access of elements.
+
+The size of a std::array must be known at compile time and cannot be changed at runtime
+
+Ideal for scenarios where the size of the array is known at compile time and does not need to change.
+
+Commonly used member functions of std::array:
+a) at(index): Access element at specified index with bounds checking.   
+b) size(): Returns the number of elements in the array. // Cannot be array decayed to pointer   
+c) front() and back(): Access the first and last elements of the array.
+d) fill(value): Fills the array with the specified value.
+e) swap(other_array): Swaps the contents of two arrays.
+f) data(): Returns a pointer to the underlying array.
+
+Array decay is the implicit conversion of a C-style array to a pointer to its first element. This happens in most expressions, such as when an array is passed to a function.
+When an array decays, it loses its size information.
+Only a pointer to the first element remains (T*).
+This is why sizeof(array) inside a function often gives the size of a pointer, not the array.
+
+Time Complexity for std::array:
+Access: O(1)
+Insertion/Deletion: O(N) (due to shifting elements)
+
+b) Container Adapters:
+A container adapter is a type of class template that provides a specific interface for an underlying container, often modifying or restricting its behavior to fit certain patterns.
+They are built on top of other sequence containers and restrict access to certain operations to provide a specific behavior.
+
+1) std::stack:
+A stack allows you to add and remove elements in a "last in, first out" (LIFO) order.
+Key Operations:
+push(): Adds an element to the top of the stack.
+pop(): Removes the element from the top of the stack.
+top(): Returns the top element of the stack.
+empty(): Returns whether the stack is empty.
+size(): Returns the number of elements in the stack.
+
+2) std::queue:
+A queue allows you to add and remove elements in a "first in, first out" (FIFO) order.
+Key Operations:
+push(): Adds an element to the back of the queue.
+pop(): Removes the element from the front of the queue.
+front(): Returns the front element of the queue.
+back(): Returns the last element of the queue.
+empty(): Returns whether the queue is empty.
+size(): Returns the number of elements in the queue.
+
+3) std::priority_queue:
+A priority queue stores elements in a way that the highest (or lowest) priority element is always accessible at the top. By default, it stores elements in descending order (highest first).
+
+Key Operations:
+push(): Adds an element to the priority queue.
+pop(): Removes the highest priority element from the queue.
+top(): Returns the highest priority element of the queue.
+empty(): Returns whether the priority queue is empty.
+size(): Returns the number of elements in the priority queue.
+
+| Adapter               | Default Container | Allowed Containers                                        |
+| --------------------- | ----------------- | --------------------------------------------------------- |
+| `std::stack`          | `std::deque<T>`   | `std::vector<T>`, `std::deque<T>`, `std::list<T>`         |
+| `std::queue`          | `std::deque<T>`   | `std::deque<T>`, `std::list<T>`                           |
+| `std::priority_queue` | `std::vector<T>`  | Any random-access container (usually `vector` or `deque`) |
+
+std::stack and std::queue do not provide iterators to traverse their elements because they are designed to restrict access to only the top (for stack) or front/back (for queue) elements, adhering to their LIFO and FIFO principles respectively. Allowing iteration would violate these principles by exposing all elements. 
+
+Ideal for scenarios where you need to manage data in a specific order (LIFO for stack, FIFO for queue) without exposing the underlying structure.
+
+container_adapter_name<element_type, underlying_container_type> adapter_name;
+Eg: 
+std::stack<int, std::vector<int>> myStack; // Stack using vector as underlying container
+
+Using compartor with priority_queue:
+std::priority_queue<int, std::vector<int>, std::greater<int>> minHeap; // Min-heap
 
 
+c) Associative Containers:
+Associative containers are a type of container classes that store elements in a way that allows fast retrieval based on keys. They automatically maintain the order of elements based on the keys.
 
+They are typically implemented using balanced binary search trees (like Red-Black trees) to ensure that elements are always sorted based on their keys.
 
+1) std::set:
+A set is a collection of unique elements stored in a sorted order.
+Elements are typically sorted using the < operator or a custom comparator.
 
+struct Descending {
+    bool operator()(int a, int b) const {
+        return a > b; // reverse order
+    }
+};
 
+std::set<int, Descending> s = {1, 2, 3};
 
+Time Complexity for std::set:
+Search: O(log N)
+Insertion: O(log N)
+Deletion: O(log N)
 
+2) std::map:
+A map is a collection of key-value pairs, where each key is unique and maps to a specific value in a sorted order.
 
+struct Descending {
+    bool operator()(int a, int b) const {
+        return a > b; // reverse order
+    }
+};
+std::map<int, std::string, Descending> m;
 
+Time Complexity for std::map:
+Search: O(log N)    
+Insertion: O(log N)
+Deletion: O(log N)
 
+3) std::multiset:
+A multiset is similar to a set, but it allows multiple occurrences of the same element.
 
+Time Complexity for std::multiset:
+Search: O(log N)    
+Insertion: O(log N)
+Deletion: O(log N)
 
+4) std::multimap:
+A multimap is similar to a map, but it allows multiple key-value pairs with the same key.
 
+In a normal map, each key must be unique — inserting another pair with the same key replaces the old value.
 
+Time Complexity for std::multimap:
+Search: O(log N)
+Insertion: O(log N)
+Deletion: O(log N)
 
+d) Unordered Associative Containers:
 
+Unordered associative containers store elements in an unordered manner using hash tables for fast access. They provide average O(1) time complexity for search, insert, and delete operations.
+1) std::unordered_set:
+A unordered_set is a collection of unique elements stored in an unordered manner using hash tables.
 
+Time Complexity for std::unordered_set:
+Search: O(1) average
+Insertion: O(1) average
+Deletion: O(1) average
+2) std::unordered_map:
+An unordered_map is a collection of key-value pairs stored in an unordered manner using hash tables.
 
+Time Complexity for std::unordered_map:
+Search: O(1) average
+Insertion: O(1) average
+Deletion: O(1) average
+3) std::unordered_multiset:
+An unordered_multiset is similar to an unordered_set, but it allows multiple occurrences of the same element.
 
+Time Complexity for std::unordered_multiset:
+Search: O(1) average
+Insertion: O(1) average
+Deletion: O(1) average
+4) std::unordered_multimap:
+An unordered_multimap is similar to an unordered_map, but it allows multiple key-value pairs with the same key.
 
+Time Complexity for std::unordered_multimap:
+Search: O(1) average
+Insertion: O(1) average
+Deletion: O(1) average
 
+2) Algorithms:
+Algorithms in STL are a collection of functions that operate on containers to perform various operations like searching, sorting, and manipulating data.
+Examples: std::sort, std::find, std::accumulate, std::copy, std::transform
 
+a) Non-modifying algorithms: Do not change the contents of the container (e.g., std::all_of, std::count).
+Eg: 
+int c = count(v.begin(), v.end(), 5); // counts occurrences of 5 in vector v
 
+bool ok = all_of(v.begin(), v.end(), [](int x){ return x > 0; }); // checks if all elements are positive
 
+for_each(v.begin(), v.end(), [](int &x){ cout << x << " "; }); // prints all elements in vector v
 
+b) Modifying algorithms: Change the contents of the container (e.g., std::fill, std::reverse).
+Eg:
+fill(v.begin(), v.end(), 0); // fills all elements in vector v with 0
+reverse(v.begin(), v.end()); // reverses the order of elements in vector v
+replace(v.begin(), v.end(), 3, 99); // replace 3 → 99
+c) Sorting algorithms: Specifically designed to sort elements in a container (e.g., std::sort, std::stable_sort).
+Eg:
+sort(v.begin(), v.end()); // sorts vector v in ascending order
+(1, 2, 3a, 3b)  ← order of a then b is kept
+std::stable_sort(v.begin(), v.end());
+std::partial_sort(v.begin(), v.begin() + k, v.end()); // sorts first k elements in vector v
+d) Numeric algorithms: Perform mathematical operations on numeric data (e.g., std::accumulate, std::inner_product).
+Eg:
+int sum = accumulate(v.begin(), v.end(), 0); // calculates the sum of all elements in vector v
+std::string s = "hello";
+std::string out(s.size());
 
+std::transform(s.begin(), s.end(), out.begin(), ::toupper);
+// converts all characters in string s to uppercase and stores in out
+each(v.begin(), v.end(), [](int &x){ x *= 2; }); // doubles each element in vector v
 
+vector<int> v2 = {1, 2, 3, 4};
+vector<int> diff(v.size());
+adjacent_difference(v.begin(), v.end(), diff.begin()); // computes the difference between adjacent elements in vector v and stores in diff
+
+e) Searching algorithms: Find elements in a container (e.g., std::binary_search, std::find_if).
+Eg:
+bool found = binary_search(v.begin(), v.end(), 5); // checks if 5 is present in sorted vector v
+
+auto it = find(v.begin(), v.end(), 4);
+if(it != v.end()) cout << "Found";    // checks if 4 is present in vector v
+
+auto it = find_if(v.begin(), v.end(), [](int x){ return x > 10; }); // finds first element greater than 10 in vector v
+3) Iterators:
+Iterators are objects that act like pointers. They are used to traverse containers (vector, list, map, set, etc.).
+
+Think of iterators as a “generalized pointer” that works with any STL container.
+
+Why do we need Iterators?
+Because each STL container has a different internal structure, but iterators give a common interface to access them.So same code works for vector, list, set, map.
+
+So you don't need to know how a container is implemented.
+
+| Iterator Type | Operations Allowed                          | Example Containers          |
+| ------------- | ------------------------------------------- | --------------------------- |
+| Input         | read, forward only                          | istream_iterator            |
+| Output        | write, forward only                         | ostream_iterator            |
+| Forward       | read/write, forward only                    | forward_list, unordered_*   |
+| Bidirectional | read/write, forward/backward                | list, set, map              |
+| Random Access | read/write, forward/backward, jump `+,-,[]` | vector, deque, array        |
+
+Reads values from input streams (keyboard, file).
+std::istream_iterator<int> in(std::cin);
+std::istream_iterator<int> end;
+std::vector<int> v(in, end); // reads input into vector
+
+end is a default-constructed iterator representing the end of the stream.
+
+//Writes values to output streams (console, file).
+std::ostream_iterator<int> out(std::cout, " ");
+std::copy(v.begin(), v.end(), out);
+
+std::copy(source_begin, source_end, destination);
+std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
+
+Creates an output iterator that calls push_back() on a container.
+Useful when destination container is empty or doesn't have pre-allocated space.
+Appends elements at the end of the container.
+Useful for containers like std::vector, std::list, std::deque if we don't know the final size in advance.
+
+std::copy(a.begin(), a.end(), std::back_inserter(b));
+
+4) Functors:
+A functor (function object) is any object that can be called like a function. This is done by overloading the operator() in a class.
+You can create instances of the class and use them like functions.
+It can safely store state (data members) and can be passed as arguments to algorithms, allowing for more flexible and customizable behavior.
+
+Eg:
+
+struct Add {
+    int operator()(int a, int b) const {
+        return a + b;
+    }
+};  
+Add add;
+int result = add(3, 5); // Calls Add::operator()(3, 5)
+
+#include <vector>
+#include <algorithm>
+#include <iostream>
+
+class Square {
+public:
+    void operator()(int &x) { x = x * x; }
+};
+
+int main() {
+    std::vector<int> v = {1, 2, 3, 4};
+
+    std::for_each(v.begin(), v.end(), Square());
+
+    for (int x : v)
+        std::cout << x << " ";  // 1 4 9 16
+}
 
 
 
