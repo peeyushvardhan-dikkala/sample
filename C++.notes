@@ -217,7 +217,8 @@ Memory location
 | **Static**        | `static`    | Local/File | Program      | .data / .bss    | 0                 |
 | **External**      | `extern`    | Global     | Program      | .data / .bss    | 0                 |
 
-Type Qualifiers:
+
+
 Type qualifiers in C++ are keywords that modify the behavior of variables, objects, or functions. They do NOT change the type itself but change the properties or rules applied to it.
 
 1) const
@@ -240,6 +241,9 @@ Allows a non-static data member of a class to be modified even in a const object
 It is a pointer qualifier that indicates this pointer is the only pointer that will access this memory location.
 Because there is no other pointer using the same memory, the compiler can make optimizations based on this guarantee.
 
+Eg:
+
+
 5) constexpr :
 constexpr is a keyword in C++ that tells the compiler: "This value/function can be evaluated at compile time."
 It helps with optimization and ensures immutability like const, but with added compile-time power.
@@ -247,6 +251,8 @@ Used to define compile-time constants.
 Can be used in contexts that require compile-time evaluation, like template parameters or array sizes.
 
 constexpr is used for functions used as a specifier that indicates the function can be evaluated at compile time if all its arguments are also known at compile time.
+Eg:
+
 
 consteval(C++20):
 The values must be evaluated at compile time.
@@ -256,11 +262,12 @@ If not possible → compile-time error.
 consteval int cube(int n) {
     return n * n * n;
 }
-
-int x = cube(3);   // OK → compile-time evaluation
-int n;
-std::cin >> n;
-// int y = cube(n);  // ❌ ERROR: cannot call consteval at runtime
+int main() {
+    constexpr int val = cube(3); // OK: evaluated at compile time
+    // int runtimeVal = 4;
+    // int val2 = cube(runtimeVal); // ❌ ERROR: runtimeVal not known at compile time
+    return 0;
+}
 
 constinit(C++20):
 The variable must be initialized at compile time.
@@ -487,6 +494,8 @@ typename Containe::value x = 5;
 STL Containers Provide value_type
 All standard library containers (like std::vector, std::list, std::set, etc.) define a member type called value_type.
 
+dependent name means a name that depends on a template parameter. The compiler can't determine what it refers to until the template is instantiated with a specific type.
+
 Internally, it's something like:
 template <typename T>
 class vector {
@@ -497,10 +506,63 @@ public:
 1) Function Template:
 A function template allows you to create a function that can operate on different data types without rewriting the function for each type.
 
+Syntax:
+template <typename T>
+T add(T a, T b) {
+    return a + b;
+}   
 2) Class Template:
 A class template allows you to define a class that can work with any data type, making it reusable and flexible.
 
-3) Template Specialization:
+Syntax:
+template <typename T>
+class ClassName {
+    T data;
+public:
+    ClassName(T d) : data(d) {}
+    void display() {
+        std::cout << data << std::endl;
+    }
+};
+
+3) Template Partial Specialization:
+Template partial specialization allows you to define a specific implementation of a template for a subset of template parameter, while the primary (generic) template handles all other cases.
+Syntax:
+template <typename T1, typename T2>
+class ClassName<SpecializedType1, T2> {
+    // Partial specialized implementation
+};
+
+Eg:
+#include <iostream>
+#include <string>
+#include <vector>
+// Template class definition
+template <typename T1, typename T2>
+class Pair {
+public:
+    T1 first;
+    T2 second;
+    Pair(T1 f, T2 s) : first(f), second(s) {}
+    void display() {
+        std::cout << "First: " << first << ", Second: " << second << std::endl;
+    }
+
+};
+// Template class partial specialization for `std::string` as the first type
+template <typename T2>
+class Pair<std::string, T2> {
+public:
+    std::string first;
+    T2 second;
+    Pair(std::string f, T2 s) : first(f), second(s) {}
+    void display() {
+        std::cout << "String First: " << first << ", Second: " << second << std::endl;
+    }
+};
+
+
+4) Template Specialization:
 Template specialization allows you to define a specific implementation of a template for a particular data type or set of types. This is useful when you need different behavior for certain types while still using the generic template for others.
 
 Syntax:
@@ -639,8 +701,8 @@ using Vec = std::vector<T>;
 Vec<int> v; // Same as std::vector<int>
 
 26) size_t vs unsigned int:
-`size_t` is an unsigned integer type used to represent the size of objects in memory.
-Defined in the `<cstddef>` header, it is the result of the `sizeof` operator and is guaranteed to be large enough to hold the size of any object.
+`size_t` is an unsigned integer type used to represent the size of objects(in bytes) and is the type returned by the `sizeof` operator.
+Defined in the `<cstddef>` header, is guaranteed to be large enough to hold the size of any object.
 It is platform-dependent, meaning its size can vary based on the architecture (32-bit vs 64-bit).
 
 unsigned int is usually always 32 bits, even on 64-bit systems. That means using unsigned int can truncate or overflow when dealing with large memory sizes.
@@ -674,6 +736,34 @@ The Rule of Three in C++ states that if a class manages resources (like dynamic 
 to avoid shallow copy issues
 If you define any of these, you should define all three to ensure proper resource management and avoid memory leaks or undefined behavior.
 
+Copy-and-swap idiom is a technique used to implement the copy assignment operator in a safe, simple, and exception-safe way.
+In copy-and-swap, the assignment operator takes its argument by value, then swaps the internals of the current object with the copy. internals means the member variables that hold the object's data, especially those managing dynamic resources like memory (e.g., pointers to heap-allocated memory). The temporary object automatically cleans up the old resources when it goes out of scope.
+
+
+
+Self-assignment safe: swapping an object with itself does nothing harmful.
+Exception safe: if the copy fails (e.g., new throws), the original object is untouched.
+No manual delete[] needed: the temporary object cleans up automatically.
+
+In traditional assignment, a = a; can crash if you delete memory before copying.
+With copy-and-swap, self-assignment is safe without extra checks, because the assignment operates on a copy and then swaps internals. The original object's memory is never accessed after deletion
+
+Eg: 
+traditional assignment operator
+
+Car& Car::operator=(const Car& other) {
+    if (this != &other) { // self-assignment check
+        delete \data; // free existing resource
+        data = new int(*other.data); // allocate new memory might throw bad_alloc
+    }
+    return *this;
+}
+
+Car& Car::operator=(Car other) { // pass by value
+    swap(data, other.data); // swap internals
+    return *this;       // return current object
+}
+
 29) Rule of Five:
 
 In C++, move semantics allow you to transfer ownership of resources (like memory, file handles, etc.) from one object to another without copying the resource. This is done using rvalue references (T&&), usually in a move constructor or move assignment operator.
@@ -706,17 +796,53 @@ Temporary objects are typically created on the stack, and their lifetime is limi
 
 31) Copy Elision:
 Copy elision is an optimization where the compiler eliminates unnecessary copy or move operations, especially when returning or passing objects by value.
-It avoids creating a temporary object and then copying/moving it — instead, it constructs the object directly in its final place.
+It avoids creating a temporary object and then copying/moving it — instead, it constructs the object directly in the caller’s memory.
 1)Return Value Optimization (RVO): RVO is a compiler optimization where a temporary object created as a function return value is constructed directly in the caller's memory, avoiding a copy or move constructor.
-2)Named Return Value Optimization (NRVO): Similar to RVO, but applies when the returned object is named (not a temporary). The compiler can elide the move/copy by constructing the object directly in the caller's memory.
-3)Temporary Object Elimination: When a temporary object is assigned or returned, the compiler can eliminate the intermediate temporary, constructing the final object directly in its destination
+2)Named Return Value Optimization (NRVO): Similar to RVO, but applies when the retur    ned object is named (not a temporary). The compiler can elide the move/copy by constructing the object directly in the caller's memory.
+
 
 32) Inline Functions:
-If a function is declared as inline, the complier places a copy of code of that function directly at the point of the call at compile time rather than performing a traditional function call(Control is transferred to the function, and then back to the caller).
+
+An inline function is a function whose call is replaced by a copy of its code at compile time, reducing the overhead of the function call.
+
+A traditional function call(Control is transferred to the function, and then back to the caller).
+
 No function call overhead (no pushing to stack, return address, etc.).
 
-inline forces inlining	❌ No — it's only a suggestion to the compiler
+The compiler may ignore the inline hint for very large functions. So it's not guaranteed that every inline function will be expanded inline.
+int add(int a, int b) { return a + b; }
+int main() { int x = add(3, 4); }
+When add(3,4) is called, the CPU does:
 
+Push arguments onto the stack
+
+Put a = 3 and b = 4 in memory (stack) so add can use them.
+
+Store return address
+
+Remember where to continue in main after add finishes.
+
+Jump to function code
+
+CPU goes to the instructions inside add.
+
+Execute function instructions
+
+Perform a + b and calculate the result.
+
+Pop arguments and return address from stack
+
+Clean up the stack after the function finishes.
+
+Resume execution in caller
+
+CPU goes back to main and continues after the function call.
+
+dd executes return a + b
+
+Computes 3 + 4 = 7
+
+Returns 7 in a CPU register (commonly EAX/RAX).
 When to use inline functions:
 1. Small functions: Functions that are small and frequently called, like getters or setters.
 2. When you're defining functions in header files: Inline functions are often defined in header files to avoid multiple definitions errors.
@@ -827,7 +953,7 @@ It is the process of converting a variable from one data type to another. C++ su
 
 1. **Static Cast (`static_cast<type>(expression)`)**:
    - Used for compile-time type conversions.
-   - Safe for conversions between related types (e.g., int to float, base class to derived class).
+   - Safe for conversions between related types (e.g., int to float, derived to base).
    - Cannot cast away `const` or `volatile` qualifiers.
    - Example: `int i = static_cast<int>(3.14); // Converts double to int`
 2. **Dynamic Cast (`dynamic_cast<type>(expression)`)**:
@@ -848,10 +974,10 @@ It is the process of converting a variable from one data type to another. C++ su
             en->flee();   // Safe call for Enemy
         }
     }
-3. **Const Cast (`const_cast<type>(expression)`)**:
+3. *    **:
    - Used to add or remove `const` or `volatile` qualifiers.
    Note: 
-   If the original object was const, don’t modify it after const_cast. If it was non-const, removing const is safe.
+   If the original object was const, don't modify it after const_cast. If it was non-const, removing const is safe.
    - Should be used with caution, as modifying a `const` object leads to undefined behavior.
    - If an object is declared const, the compiler and runtime may place it in read-only memory, so writing to it could crash your program or corrupt data.
    - Example: 
@@ -1002,7 +1128,7 @@ int main() {
 }
 
 Constructor chaining:
-Constructor chaining is the process where one constructor calls another constructor in the same class or in the base class to ensure proper initialization of an object.
+Constructor chaining is the process where one constructor calls another constructor in the same class or in the base class to perform initialization.
 It helps avoid code duplication and ensures that all necessary initialization steps are performed.
 It can occur in two ways:
 1. Within the same class (using delegating constructors).
@@ -1059,7 +1185,7 @@ It ensures the base class is fully constructed before any derived-class-specific
 
 Fully constructed means the object's memory is allocated, all its members are initialized, and its constructor has executed, making it ready for safe use
 
-Eg: 
+Eg:     
 Example1: //Without initializer list
 Default constructor --> By default, it calls the default constructor (if available) to ensure the member exists in a valid state. Valid state means the member has been allocated in memory and properly initialized and is ready for use.
 Assignment operator
@@ -1084,6 +1210,7 @@ Members cannot be initialized in the constructor body because by that time they 
    - Example: `const int x;` must be initialized like this: `MyClass(int val) : x(val) {}`
 2) Reference members:
    - Must be initialized in the initializer list because references must be bound to an object at the moment it's created — once set, it always refers to the same object.
+    - Example: `int& ref;` must be initialized like this: `MyClass(int& r) : ref(r) {}`
 3) Base class with no default constructor:
    - If a base class does not have a default constructor, you must call its constructor in the initializer list of the derived class.
 
@@ -1097,6 +1224,7 @@ Members cannot be initialized in the constructor body because by that time they 
 A destructor is a special member function of a class that is automatically called when an object of that class goes out of scope or is explicitly deleted.
 It doesn't have no parameters, and no return type.
 
+Why destroyer has no parameters:
 When an object's lifetime ends, the compiler knows exactly how to destroy it — there's no need for multiple destructors with parameters or overloads.
 
 It is used to release resources — memory, file handles, network connections, etc.
@@ -1115,7 +1243,7 @@ When deleting a derived object through a base pointer, the destructor sequence i
 Derived destructor (Derived destructor calls Base::~Base() automatically.)→ Base destructor
 Without a base destructor body, the program would have undefined behavior or linker errors.
 
-If the base class is abstract, so the compiler doesn't know its layout or what resources it manages, and cannot generate a default destructor — the programmer must provide one. Derived classes are concrete, so the compiler knows their layout and resources and can generate default destructors. Concrete means fully defined and instantiable
+If the base class is abstract, the compiler doesn't know its layout or what resources it manages, and cannot generate a default destructor — the programmer must provide one. Derived classes are concrete, so the compiler knows their layout and resources and can generate default destructors. Concrete means fully defined and instantiable
 
 Syntax:
 ~ClassName() {
@@ -1172,11 +1300,10 @@ An interface is a class that has only pure virtual functions and no data members
 
 Keypoints:
 All methods are pure virtual (no implementation) and no data members.
-No constructors or destructors (since no objects can be created).
 Used to define a contract that derived classes must follow.
 
 5) Encapsulation:
-Encapsulation is the process of wrapping data (variables) and functions (methods) together in a single unit, i.e., a class, and restricting direct access to some of the object’s components.
+Encapsulation is the process of wrapping data (variables) and the methods (functions) that operate on that data into a single unit (class) and restricting direct access to the data.
 
 Key points:
 Achieved using access specifiers: private, protected, public.
@@ -1185,6 +1312,10 @@ Users can access data only through public methods (getters/setters methods)
 
 Protected:
 Members declared as protected are accessible inside the class and its derived classes, but not accessible outside the class hierarchy.
+
+Members declared as private are accessible only within the class itself. They cannot be accessed directly from outside the class or by derived classes.
+
+Members declared as public are accessible from anywhere in the program, including outside the class.
 
 6) Inheritance:
 It is a property by which one class (derived class) acquires the properties and behaviors of another class (base class).
@@ -1207,7 +1338,7 @@ It is a property by which one class (derived class) acquires the properties and 
 | Concept         | Relationship Type | Lifetime Dependency | Ownership | Example                | Real-world Meaning                          |
 | --------------- | ----------------- | ------------------- | --------- | ---------------------- | ------------------------------------------- |
 | **Association** | Uses-A            | Independent         | No        | `Teacher-Student`      | Work together, no dependency                |
-| **Aggregation** | Has-A (Weak)      | Independent         | Partial   | `Department-Professor` | Container uses others, but doesn’t own them |
+| **Aggregation** | Has-A (Weak)      | Independent         | Partial   | `Department-Professor` | Container uses others, but doesn't own them |
 | **Composition** | Has-A (Strong)    | Dependent           | Full      | `Car-Engine`           | Part cannot exist without whole             |
 
 Association:
@@ -1235,12 +1366,41 @@ D - Derived class inheriting from both B and C
 Diamond hierarchy (also known as the diamond problem) occurs when a class inherits from two classes that both inherit from a common base class.
 It leads to potential issues, particularly when a method or attribute from the base class is inherited multiple times.
 
-C++ uses virtual inheritance. It makes sure that the base class is only included once, no matter how many times it's inherited through the different paths in the hierarchy. This way, all derived classes share the same single instance of the base class, avoiding duplication.
+C++ uses virtual inheritance. It ensures all derived classes share a single common base class object, instead of each one creating its own copy.
 
 The compiler adds a hidden pointer called vbptr in every class that virtually inherits a base class. This pointer points to something called the Virtual Base Table (vbtable).
+vbtable contains the offsets to access the shared base class subobject.
+offset is the distance (in bytes) from the start of the derived class object to the location of the shared base class subobject within it.
+
 All derived classes use this vbptr to access the shared base class. This ensures that there is only one instance of the base class, even though there are multiple paths to it.
 
 The constructor of the most derived class is responsible for setting the final values of inherited members, with the last called constructor overriding any previous changes.
+
+
+class A {
+public:
+    int x;
+};
+
+class B : virtual public A { };
+class C : virtual public A { };
+
+class D : public B, public C { };
+In this example, both B and C virtually inherit from A. When D is created, it contains only one instance of A, shared by both B and C.
+Compile-Time Knowledge
+
+The compiler knows the layout of all classes during compilation.
+For virtual inheritance, the compiler does not place A inside B or C. It only adds a vbptr in B and C to point to the shared A instance.
+
+The most derived class (D) is responsible for:
+Allocating space for shared A in its object layout.
+Setting VBPtr in B and C to point to VBTable
+VBTable contains offsets to access shared A from B and C.
+
+Run-Time Behavior
+
+When an object of D is created, the constructor of D initializes the shared A instance.
+When B or C access members of A, they use their vbptr to find the shared A instance via the VBTable.
 
 Different from vptr:
 The vbptr is an internal pointer that only gets added to derived classes (i.e., classes like B, C, and D) that virtually inherit from a base class (A in this case).
@@ -1266,8 +1426,11 @@ Achieved using function overloading and operator overloading.
 It allows multiple functions or operators to have the same name but behave differently based on the arguments passed to them.
 
 a. Function Overloading:
-This is when you define multiple functions with the same name but different parameters (either in number or type).
-1. Order of Priority in Function Overloading:
+It allows multiple functions to have the same function name but different parameter lists (different number, type, or order of parameters).
+It depends on:
+Number of parameters
+Type of parameters
+Order of parameters
 
 When the compiler has to choose between multiple overloaded functions, it follows this order of priority:
 1) Number of Parameters:
@@ -1284,9 +1447,7 @@ Standard conversion (e.g., int → double, Derived* → Base*) // Conversions de
 User-defined conversion (via constructors or operator T()) // Conversions defined by the constructor or conversion operator of a class.
 Ellipsis (...) // Least preferred, used when no other match is found. 
 
-3) Default Arguments:
-If you don't provide a value for a parameter that has a default argument, the compiler will use the default value.
-If there is ambiguity, the compiler will give priority to functions that do not require implicit conversions (i.e., exact matches are preferred over implicit type conversions).
+
 
 Exact Match vs Implicit Conversion:
 If no exact match exists, the compiler will try to convert types (implicit conversion) to match the function signature.
@@ -1296,8 +1457,11 @@ Default Arguments Are Always Assigned from Right to Left
 You can't skip a parameter in the middle. Once you skip one, all the parameters to the right must also be skipped or will take default values.
 In C++, the parameters in a function are ordered. The rightmost parameters (those at the end) are optional and can be skipped because of default arguments. The compiler can use the default values for any arguments that aren't provided.
 
+Eg: 
+void func(int a, int b = 20, int c = 30);
+
 b. Operator Overloading:
-Operator overloading allows you to define custom behavior for operators (like +, -, *, etc.) when they are used with user-defined types (classes).
+Operator overloading allows you to redefine the behavior for operators (like +, -, *, etc.) when they are used with user-defined types (classes).
 
 We cannot overload below operators because they have special meanings in C++:
 1. Scope resolution operator (::)
@@ -1346,15 +1510,16 @@ But that happens as part of the constructor — it is not fully established befo
 
 Why destructors can be virtual:
 Destructors can be virtual in C++ because:
-When a destructor is called, the vptr is already set up to point to the correct vtable for the derived class.
+When a destructor is called, the vptr is already set up 
 This allows the destructor to call the correct derived class destructor, ensuring proper cleanup of resources.
 Like when you delete a base class pointer that points to a derived class object, the virtual destructor ensures that the derived class's destructor is called first, followed by the base class destructor.
 
 Consequences of not calling the derived destructor first 
-1. Resource leaks 
+1. Memory leaks
 2. Undefined behavior --> If the derived class accesses data in its destructor that relies on the base  — but the base was already destroyed leads to crash, segment faults.
 
 39) Smart Pointers:
+
 1) std::unique_ptr
 2) std::shared_ptr
 3) std::weak_ptr
@@ -1398,9 +1563,15 @@ Control block contains:
 1. Strong reference count: Number of `shared_ptr` instances pointing to the object.
 2. Weak reference count: Number of `weak_ptr` instances pointing to the object.
 3. Deleter function: Function to delete the managed object when the last `shared_ptr` is destroyed.
-4. Pointer to the managed object.
+5. allocater function (optional): 
+An allocator is an object that defines how memory is allocated and deallocated for the managed object and the control block.
+Custom allocator for the managed object. For example, when using `std::allocate_shared' we can provide a custom allocator for the managed object.
+std::shared_ptr<MyClass> sptr = std::allocate_shared<MyClass>(myAllocator, constructor_args);
+myAllocator is a custom allocator that defines how memory for MyClass should be allocated and deallocated.
 
-The control block remains alive as long as any weak_ptr exists, allowing weak pointers to safely check object validity or attempt to create a shared_ptr; without it, functions like weak_ptr.expired() or weak_ptr.lock() would access invalid memory once the object is destroyed.
+
+
+
 
 weak_ptr.expired() → checks strong_count inside the control block(i.e strong_count == 0) to see if the managed object has been deleted.
 weak_ptr.lock() → creates a new shared_ptr only if strong_count > 0, safely incrementing it.
@@ -1413,15 +1584,9 @@ When you create a weak_ptr from a shared_ptr → weak_count++
 Destroy a weak_ptr → weak_count--
 When both strong_count and weak_count reach 0 → control block is deleted
 
-std::shared_ptr<MyClass> p1 = std::make_shared<MyClass>();
 
-std::shared_ptr<MyClass> p2 = p1;
-std::shared_ptr<MyClass> p3 = p2;
-std::shared_ptr<MyClass> p4 = p3;
-std::shared_ptr<MyClass> p5 = p1;
 
-When will be managed object will be destroyed.
-The managed object (MyClass instance) is deleted only when the last std::shared_ptr owning it is destroyed or reset, i.e. when reference count becomes 0.
+The managed object (MyClass instance) is deleted only when the last std::shared_ptr owning it is destroyed or reset, i.e. when reference count becomes 0. i.e., strong_count reaches 0.
 
 They all go out of scope at the end of main().
 The compiler destroys them in reverse order of creation (p5, then p4, then p3, then p2, then p1).
@@ -1470,15 +1635,14 @@ As a result, both A and B keep each other alive — neither's strong count ever 
 When main() ends (weak_ptr version — no circular dependency):
 b goes out of scope → shared_ptr<B> destructor runs → B strong count goes from 2 → 1 (because A.bptr still holds one strong ref to B).
 a goes out of scope → shared_ptr<A> destructor runs → A strong count goes from 1 → 0 → A is destroyed.
+As A strong count is 1 because B.aptr is a weak_ptr — it does not contribute to the strong count.
 when A is destroyed → its member bptr (shared_ptr<B>) is destroyed → bptr destructor executes --> decreases B strong count from 1 → 0.
 since B strong count became 0 → B is destroyed.
 
 
 40) Static Members:
 What is static data member?
-A static data member is a variable that is shared among all instances of a class. It belongs to the class itself rather than to any specific object of the class. This means that there is only one copy of the static data member, regardless of how many objects of the class are created.
-
-All static members are initialized to zero by default if not explicitly initialized.
+A static data member is a variable shared by all objects of a class. It belongs to the class, not to individual objects, so only one copy exists regardless of how many objects are created. If not explicitly initialized, it is initialized to zero by default.
 
 By declaration inside the class, we are just informing the compiler about its existence and type, but not allocating any storage for it.
 By defining it outside we are telling the compiler to allocate storage for that static member variable only once, at the global scope. 
@@ -1492,19 +1656,32 @@ if they are integral const (pre-C++17), or if we use inline (C++17 and later). I
 
 Integral constants are compile-time numbers embedded into instructions. They live in the .text segment if unused for their address, and only become real memory objects if their address is needed.
 
-inline ensures that even if included in multiple .cpp files, the linker merges them into one object.
+Inline static variables allow the same definition in multiple translation units, and the linker guarantees that there is exactly one shared variable across the entire program.
 
 Static member functions:
 A static member function is a function that belongs to the class itself rather than to any specific object. 
 We can call static member functions without creating an instance of the class and accessed using the class name and the scope resolution operator (::).
 
-A static member function can only access static data members and other static member functions of the class. It cannot access non-static members because it does not have a `this` pointer, which refers to a specific object instance.
+A static member function can only access static data members and other static member functions of the class because it does not have access to the `this` pointer, which refers to a specific object instance.
 
 You could call a static member function using an object of the class, but it's not recommended because it can be misleading. It suggests that the function is tied to that specific object, which is not the case.
 
 41) Friend Functions and Classes:
 A friend function is a non-member function that has access to private and protected members of a class. It is declared using the `friend` keyword inside the class definition.
 
+Eg:
+#include <iostream>
+using namespace std;
+class MyClass {
+    friend void displayPrivate(MyClass& obj); // Declare friend function
+private:
+    int privateData;
+public:
+    MyClass(int val) : privateData(val) {}
+};
+void displayPrivate(MyClass& obj) {
+    cout << "Private Data: " << obj.privateData << endl; // Accessing private member
+}
 Used when an external function needs to work closely with a class.
 Eg: operator overloading functions for << and >> operators.
 
@@ -1586,7 +1763,8 @@ e.what() returns a C-style string (const char*) that describes the error. It is 
 
 We need to use reference(&) in catch blocks to avoid object slicing. Ensures polymorphism works, so derived class exceptions are caught correctly.
 
-Object slicing occurs when an object of a derived class is assigned to a base class object. The derived class-specific attributes and behaviors are "sliced off," leaving only the base class part. This can lead to loss of information and unexpected behavior, especially when dealing with exceptions. This is avoided by catching exceptions by reference because it preserves the actual object type.
+
+
 
 #include <stdexcept>  // For specific runtime_error exceptions
 #include <iostream>
@@ -1699,7 +1877,7 @@ d) Unordered Associative Containers: Store elements in an unordered manner using
 Examples: std::unordered_set, std::unordered_map, std::unordered_multiset, std::unordered_multimap
 
 2. Algorithms:
-Algorithms in STL are a collection of functions that operate on containers to perform various operations like searching, sorting, and manipulating data.
+Algorithms in STL are a collection of functions that operate on containers to perform various operations like searching, sorting 
 Examples: std::sort, std::find, std::accumulate, std::copy, std::transform
 Types of Algorithms:
 a) Non-modifying algorithms: Do not change the contents of the container (e.g., std::find, std::count).
@@ -1709,13 +1887,19 @@ d) Numeric algorithms: Perform mathematical operations on numeric data (e.g., st
 e) Searching algorithms: Find elements in a container (e.g., std::binary_search, std::find_if).
 
 3. Iterators:
-Iterators in STL are objects that provide a way to access and traverse the elements of a container. They act as a bridge between algorithms and containers, allowing algorithms to work with different types of containers in a uniform way.
+Iterators in STL are objects that allows you to access and traverse the elements of a container, without knowing the underlying container implementation. 
+
+Why Iterators are Important
+Algorithm compatibility: STL algorithms work with any container via iterators.
+Abstraction: You don’t need to know container implementation.
+Flexibility: The same algorithm works on vector, list, set, map, etc.
+
 Types of Iterators:
 a) Input Iterators: Can read data from a container (one-way). Eg: istream_iterator
 b) Output Iterators: Can write data to a container (one-way). Eg: ostream_iterator
-c) Forward Iterators: Can read/write data and move forward through a container (one-way
-d) Bidirectional Iterators: Can read/write data and move both forward and backward through a container (two-way).
-e) Random Access Iterators: Can read/write data and move freely to any position in a container (like pointers).
+c) Forward Iterators: Can read/write data and move forward through a container (one-way) (Eg: std::forward_list iterator).
+d) Bidirectional Iterators: Can read/write data and move both forward and backward through a container (two-way). Eg: std::list iterator.
+e) Random Access Iterators: Can read/write data and move freely to any position in a container (like pointers). Eg: std::vector iterator, std::deque iterator.
 
 4. Functors:
 Functors (function objects) in STL are objects that can be treated as functions. They are created by overloading the operator() in a class.
@@ -1726,7 +1910,9 @@ a) Sequence Containers:
 A dynamic array that can resize itself automatically when elements are added or removed. Elements are stored in contiguous memory locations, allowing for efficient access using indices. 
 Support random access iterators means you can access elements directly using their index.
 
-Ideal for scenarios where frequent access to elements by index is required.
+Ideal for scenarios when elements are not known in advance or when the number of elements can change frequently.
+Adding or removing elements at the end is efficient, but inserting or deleting elements in the middle or beginning requires shifting elements, which can be costly.
+    Costly: Adding/removing in the middle or beginning → O(n)
 
 Commonly used member functions of std::vector:
 a) push_back(): Adds an element to the end of the vector.
@@ -1737,6 +1923,15 @@ e) front() and back(): Access the first and last elements of the vector.
 f) at(index): Access element at specified index with bounds checking.
 g) clear(): Removes all elements from the vector.
 h) erase(): Removes elements from a specified position or range.
+Eg:
+std::vector<int> v = {1, 2, 4, 5};
+// Insertions using insert()
+std::vector<int> v2 = {6, 7, 8};
+// 1. Single element insertion at specified position
+std::vector<int>::iterator position_iterator = v.begin() + 2; // Iterator pointing to index 2
+v.insert(position_iterator, 3);  // Insert 3 at index 2
+// 2. Multiple elements insertion at specified position
+
 i) insert(): Inserts elements at a specified position.
 v.insert(position_iterator, value); // v.insert(v.begin() + 2, 3);  // Insert 3 at index 2
 v.insert(position_iterator, n, value); // v.insert(v.begin(), 2, 0);  // Insert 0 two times at the beginning
@@ -1744,19 +1939,18 @@ v.insert(position_iterator, first_iterator, last_iterator); // v.insert(v.end(),
 
 Time Complexity for std::vector:
 Access: O(1)
-Insertion at end: Amortized O(1)
+Insertion at end: Amortized O(1) Amortized 
 Insertion/Deletion: O(N) (due to shifting elements)
 
 2) std::list:
 A list is a sequential container implemented as a doubly linked list.
 A double linked list consists of nodes where each node contains data and two pointers: one pointing to the next node and another pointing to the previous node.
 It allows efficient insertion and deletion of elements at any position in the list.
-Elements are not stored in contiguous memory locations.
+Elements are not stored in contiguous memory locations they are stored as 
 
 Supports bidirectional iterators means you can traverse the list in both directions (forward and backward).
 
-Ideal for scenarios where frequent insertions and deletions are required.
-
+Ideal for scenarios where frequent insertions and deletions are required at arbitrary(not just at the ends) positions in the container.
 
 Commonly used member functions of std::list:
 a) push_back() and push_front(): Adds an element to the end or beginning of the list.
@@ -1765,9 +1959,15 @@ c) insert(): Inserts an element at a specified position.
 d) erase(): Removes an element from a specified position.
 e) front() and back(): Access the first and last elements of the list.
 f) empty(): Checks if the list is empty.
-Time Complexity for std::list:
-Access: O(N) (no random access)
+    Time Complexity for std::list:
 Insertion/Deletion: O(1) (given an iterator to the position)
+Access: O(N) (no random access)
+Eg:
+std::list<int> lst = {10, 20, 30, 40};
+
+auto it = lst.begin();
+std::advance(it, 2);  // move iterator 2 steps
+std::cout << *it;     // prints 30
 
 3) std::deque:
 
@@ -1789,6 +1989,7 @@ f) front() and back(): Access the first and last elements of the deque.
 Time Complexity for std::deque:
 Access: O(1)
 Insertion/Deletion at both ends: O(1)
+Insertion/Deletion in the middle: O(N) (due to shifting elements)   
 
 Diff between vector and deque:
 | Feature               | std::vector                      | std::deque                                   |
@@ -1855,6 +2056,7 @@ pop(): Removes the element from the top of the stack.
 top(): Returns the top element of the stack.
 empty(): Returns whether the stack is empty.
 size(): Returns the number of elements in the stack.
+swap(): Swaps the contents of two stacks.
 
 2) std::queue:
 A queue allows you to add and remove elements in a "first in, first out" (FIFO) order.
@@ -1865,6 +2067,7 @@ front(): Returns the front element of the queue.
 back(): Returns the last element of the queue.
 empty(): Returns whether the queue is empty.
 size(): Returns the number of elements in the queue.
+swap(): Swaps the contents of two queues.
 
 3) std::priority_queue:
 A priority queue stores elements in a way that the highest (or lowest) priority element is always accessible at the top. By default, it stores elements in descending order (highest first).
@@ -1880,7 +2083,7 @@ size(): Returns the number of elements in the priority queue.
 | --------------------- | ----------------- | --------------------------------------------------------- |
 | `std::stack`          | `std::deque<T>`   | `std::vector<T>`, `std::deque<T>`, `std::list<T>`         |
 | `std::queue`          | `std::deque<T>`   | `std::deque<T>`, `std::list<T>`                           |
-| `std::priority_queue` | `std::vector<T>`  | Any random-access container (usually `vector` or `deque`) |
+| `std::priority_queue` | `std::vector<T>`  | Any random-access container (usually `vector` only) |
 
 std::stack and std::queue do not provide iterators to traverse their elements because they are designed to restrict access to only the top (for stack) or front/back (for queue) elements, adhering to their LIFO and FIFO principles respectively. Allowing iteration would violate these principles by exposing all elements. 
 
@@ -1910,6 +2113,13 @@ struct Descending {
 };
 
 std::set<int, Descending> s = {1, 2, 3};
+Key operations:
+insert(): Adds an element to the set.
+erase(): Removes an element from the set.
+find(): Searches for an element in the set.
+clear(): Removes all elements from the set.
+
+
 
 Time Complexity for std::set:
 Search: O(log N)
@@ -1931,6 +2141,10 @@ Search: O(log N)
 Insertion: O(log N)
 Deletion: O(log N)
 
+Space Complexity for std::set and std::map:
+O(N) where N is the number of elements in the container.
+
+
 3) std::multiset:
 A multiset is similar to a set, but it allows multiple occurrences of the same element.
 
@@ -1938,6 +2152,9 @@ Time Complexity for std::multiset:
 Search: O(log N)    
 Insertion: O(log N)
 Deletion: O(log N)
+
+Real life use case of multiset:
+In a gaming application, you might want to keep track of the scores of players in a game. Since multiple players can have the same score, a multiset would be ideal for storing these scores while maintaining order. This allows you to easily retrieve the highest scores, count occurrences of specific scores, and manage the leaderboard efficiently.
 
 4) std::multimap:
 A multimap is similar to a map, but it allows multiple key-value pairs with the same key.
@@ -1949,9 +2166,14 @@ Search: O(log N)
 Insertion: O(log N)
 Deletion: O(log N)
 
+Space Complexity for std::multiset and std::multimap:
+O(N) where N is the number of elements in the container.
+
 d) Unordered Associative Containers:
 
 Unordered associative containers store elements in an unordered manner using hash tables for fast access. They provide average O(1) time complexity for search, insert, and delete operations.
+
+They dont use any comparator — elements are placed based on their hash values.
 1) std::unordered_set:
 A unordered_set is a collection of unique elements stored in an unordered manner using hash tables.
 
@@ -1981,6 +2203,8 @@ Search: O(1) average
 Insertion: O(1) average
 Deletion: O(1) average
 
+Space Complexity for unordered associative containers:
+O(N) where N is the number of elements in the container.
 2) Algorithms:
 Algorithms in STL are a collection of functions that operate on containers to perform various operations like searching, sorting, and manipulating data.
 Examples: std::sort, std::find, std::accumulate, std::copy, std::transform
@@ -2012,7 +2236,6 @@ std::string out(s.size());
 
 std::transform(s.begin(), s.end(), out.begin(), ::toupper);
 // converts all characters in string s to uppercase and stores in out
-each(v.begin(), v.end(), [](int &x){ x *= 2; }); // doubles each element in vector v
 
 vector<int> v2 = {1, 2, 3, 4};
 vector<int> diff(v.size());
@@ -2097,6 +2320,282 @@ int main() {
     for (int x : v)
         std::cout << x << " ";  // 1 4 9 16
 }
+
+
+Design Patterns:
+Design patterns are reusable solutions to common software design problems. They provide a template for how to solve a problem in a way that has been proven to be effective and efficient.
+
+Design patterns are categorized into Creational (object creation), Structural (object composition), and Behavioral (object interaction) patterns.
+
+Creational Patterns
+Purpose: Deal with object creation mechanisms, trying to create objects in a manner suitable to the situation.
+
+Structural Patterns
+Purpose: Deal with object composition or structure, helping create relationships between objects.
+
+Behavioral Patterns
+Purpose: Deal with object interaction and responsibility delegation.
+
+1) Factory Pattern
+2) Singleton Pattern
+3) Observer Pattern
+4) Strategy Pattern
+
+1)Factory Pattern:
+The Factory Pattern is a creational design pattern that provides an interface for creating objects without exposing the exact class being instantiated, while allowing subclasses or a factory class to decide which concrete object to create
+loose coupling means that components are independent and can be modified or replaced without affecting other parts of the system.
+
+It encapsulates the object creation process, promoting loose coupling and enhancing code maintainability.
+
+Static method are used to create objects without needing to instantiate the factory class itself (no need for factory object). This simplifies the client code and avoids unnecessary object creation and centralizes the creation logic in one place.
+
+Need for Factory Pattern:
+1) Centralize object creation logic
+2) Decouple client code from concrete classes
+3) New object types can be added with minimal changes by introducing new factory subclasses.
+
+Eg: 
+#include <iostream>
+#include<memory>
+using namespace std;
+
+class Vehicle {
+public:
+    virtual void drive() = 0;
+    virtual ~Vehicle() {}
+};
+class Car : public Vehicle {
+public:
+    void drive() override {
+        cout << "Driving a car" << endl;
+    }
+};
+
+class Bike : public Vehicle {
+public:
+    void drive() override {
+        cout << "Riding a bike" << endl;
+    }
+};
+class VehicleFactory {
+public:
+    static unique_ptr<Vehicle> createVehicle(const string& type) {
+        if (type == "Car")
+            return make_unique<Car>();
+        else if (type == "Bike")
+            return make_unique<Bike>();
+        else
+            return nullptr;
+    }
+};
+int main() {
+    auto v1 = VehicleFactory::createVehicle("Car");
+    auto v2 = VehicleFactory::createVehicle("Bike");
+
+    if (v1) v1->drive();
+    if (v2) v2->drive();
+
+    return 0;
+}
+
+Use Abstract Factory Pattern when:
+when creating multiple related objects that must work together without exposing their concrete classes.
+
+2) Singleton Pattern:
+The Singleton Pattern is a creational design pattern that ensures a class has only one instance and provides a global point of access to that instance.
+It is useful when exactly one object is needed to coordinate actions across the system, such as in logging, configuration management.
+
+Private constructor → prevents external instantiation
+Deleted copy & assignment → prevents copying or assigning the singleton instance
+Static getInstance() → provides global access to the singleton instance
+Static local variable → ensures thread-safe lazy initialization in C++11 and later
+If multiple threads call getInstance() at the same time:
+One thread performs the initialization
+Other threads wait until it finishes
+After initialization, every thread uses the same instance
+
+Thread-safe mwans that multiple threads can access the singleton instance without causing data corruption.
+Lazy initialization in Singleton means the single instance is created only when it is first accessed, not at program startup, saving resources and improving efficiency.
+
+Single Instance → ensures only one logger writes to file
+
+Eg:
+#include <iostream>
+using namespace std;
+
+// Singleton class
+class Logger {
+private:
+    // Private constructor: prevents creating objects outside the class
+    Logger() { cout << "Logger created\n"; }
+
+    // --------------------------
+    // Early (Eager) Initialization:
+    // If we wanted eager initialization, we would declare:
+    // static Logger* instance;
+    // And define it outside the class like:
+    // Logger* Logger::instance = new Logger();
+    // The instance would be created at program startup.
+    // --------------------------
+
+public:
+    // Delete copy constructor and assignment operator
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
+
+    // Lazy Initialization: instance created only on first use
+    static Logger& getInstance() {
+        // Local static variable: C++11+ guarantees thread-safe initialization
+        static Logger instance;
+        return instance;
+    }
+
+    // Method to log messages
+    void log(const string& msg) {
+        cout << msg << endl;
+    }
+};
+
+int main() {
+    cout << "Program started\n"; // Logger not yet created
+
+    // Logger is created only when first accessed
+    Logger::getInstance().log("Application started");
+    Logger::getInstance().log("Processing data...");
+    Logger::getInstance().log("Application finished");
+
+    return 0;
+}
+
+3) Observer Pattern:
+The Observer Pattern is a behavioral design pattern that allowing one object (the subject) to notify multiple dependent objects (observers) about state changes.The Subject doesn't need to know the details of the Observers — it just tells them something changed, and the Observers handle it themselves.
+It promotes loose coupling between the subject and observers, enabling dynamic addition and removal of observers at runtime
+
+Eg:
+#include <iostream>
+#include <list>
+#include <string>
+
+using namespace std;
+// Observer interface
+class ISubscriber {
+public:
+    virtual void notify(string msg) = 0;
+    virtual ~ISubscriber() {}
+};
+
+// Concrete Observer
+class User : public ISubscriber {
+private:
+    int userId;
+
+public:
+    User(int userId) {
+        this->userId = userId;
+    }
+
+    void notify(string msg) override {
+        cout << "User " << userId << " received message: " << msg << endl;
+    }
+};
+
+// Subject
+class Group {
+private:
+    list<ISubscriber*> users;
+
+public:
+    void subscribe(ISubscriber* user) {
+        users.push_back(user);
+    }
+
+    void unsubscribe(ISubscriber* user) {
+        users.remove(user);
+    }
+
+    void notify(string msg) {
+        for (auto user : users) {
+            user->notify(msg);
+        }
+    }
+};
+
+int main() {
+    Group* group = new Group();
+
+    User* user1 = new User(1);
+    User* user2 = new User(2);
+    User* user3 = new User(3);
+
+    group->subscribe(user1);
+    group->subscribe(user2);
+    group->subscribe(user3);
+
+    group->notify("Hello Observers!");
+
+    group->unsubscribe(user2);
+
+    cout << "\nAfter unsubscribing User 2:\n";
+    group->notify("New update available!");
+
+    // cleanup
+    delete user1;
+    delete user2;
+    delete user3;
+    delete group;
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
