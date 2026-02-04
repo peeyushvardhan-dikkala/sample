@@ -591,3 +591,213 @@ int main() {
     movie1.PrintInfo(); // Moved-from state
     movie2.PrintInfo(); // Moved-from state
 }
+
+
+    c1(10, 20); // sets new values
+    cout << "After using (): " << c1 << endl;
+
+    // [] operator
+    cout << "Real part: " << c1[0] << ", Imaginary part: " << c1[1] << endl;
+
+    // Conversion operator
+    int magnitude = c2;
+    cout << "Magnitude of c2: " << magnitude << endl;
+
+    return 0;
+}
+
+// 13) Unique Pointer Implementation:
+#include <iostream>
+template <typename T>
+class UniquePtr {
+private:
+    T* ptr;  // the managed pointer
+
+public:
+    // Constructor
+    explicit UniquePtr(T* p = nullptr) : ptr(p) {}
+
+    // Destructor
+    ~UniquePtr() {
+        delete ptr;
+    }
+
+    // Delete copy constructor and copy assignment
+    UniquePtr(const UniquePtr&) = delete;
+    UniquePtr& operator=(const UniquePtr&) = delete;
+
+    // Move constructor
+    UniquePtr(UniquePtr&& other) noexcept : ptr(other.ptr) {
+        other.ptr = nullptr;  // release other's ownership
+    }
+
+    // Move assignment
+    UniquePtr& operator=(UniquePtr&& other) noexcept {
+        if (this != &other) {
+            delete ptr;         // free current resource
+            ptr = other.ptr;    // take ownership
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    // Dereference operators
+    T& operator*() const { return *ptr; }
+    T* operator->() const { return ptr; }
+
+    // Access the raw pointer
+    T* get() const { return ptr; }
+
+    // Release ownership and return the raw pointer
+    T* release() {
+        T* temp = ptr;
+        ptr = nullptr;
+        return temp;
+    }
+
+    // Reset to a new pointer (deletes old one)
+    void reset(T* p = nullptr) {
+        if (ptr != p) {
+            delete ptr;
+            ptr = p;
+        }
+    }
+
+    // Check if pointer is not null
+    // tell the compiler how to convert an object of that class into another type.
+    explicit operator bool() const { return ptr != nullptr; }
+};
+
+| Function     | Ownership               | What it returns     | Deletes object?                   |
+| ------------ | ----------------------- | ------------------- | ----------------------------------|
+| '.get()'     | Keeps ownership         | Returns raw pointer | ❌ No                            |
+| '.release()' | Gives up ownership      | Returns raw pointer | ❌ No (you must delete manually) |
+| '.reset()'   | Replaces or deletes old | Sets new pointer    | ✅ Yes (deletes old)             |
+
+int main() {
+    UniquePtr<int> up1(new int(42));
+    std::cout << "Value: " << *up1 << std::endl;
+
+    UniquePtr<int> up2 = std::move(up1); // Transfer ownership
+    if (!up1) {
+        std::cout << "up1 is now null after move." << std::endl;
+    }
+    std::cout << "Value from up2: " << *up2 << std::endl;
+
+    //.get()
+    int* rawPtrFromGet = up2.get();
+    std::cout << "Raw pointer from get(): " << *rawPtrFromGet << std::endl;
+
+    up2.reset(new int(100)); // Reset to new value
+    std::cout << "New value in up2: " << *up2 << std::endl;
+
+    int* rawPtr = up2.release(); // Release ownership
+    std::cout << "Raw pointer value: " << *rawPtr << std::endl;
+
+    delete rawPtr; // Manually delete since ownership is released
+
+
+    return 0;
+}
+
+// 14. Shared Pointer Implementation:
+#include <iostream>
+template <typename T>
+
+class SharedPtr {
+private:
+    T* ptr;       // pointer to the actual object
+    int* count;   // pointer to the reference count
+public:
+    // Constructor
+    explicit SharedPtr(T* p = nullptr)
+        : ptr(p), count(nullptr) {
+        if (p)
+            count = new int(1);  // new object, count = 1
+    }
+
+    // Copy Constructor
+    SharedPtr(const SharedPtr& other)
+        : ptr(other.ptr), count(other.count) {
+        if (count)
+            ++(*count);  // share ownership
+    }
+
+    // Assignment Operator
+    SharedPtr& operator=(const SharedPtr& other) {
+        if (this != &other) {
+            // decrease current count
+            release();
+
+            // copy from other
+            ptr = other.ptr;
+            count = other.count;
+
+            if (count)
+                ++(*count);
+        }
+        return *this;
+    }
+
+    // Destructor
+    ~SharedPtr() {
+        release();
+    }
+
+    // Helper function to release ownership
+    void release() {
+        if (count) {
+            --(*count);
+            if (*count == 0) {
+                delete ptr;
+                delete count;
+                std::cout << "Deleted managed object and counter\n";
+            }
+        }
+    }
+
+    // Accessors
+    T* get() const { return ptr; }
+    int use_count() const { return count ? *count : 0; }
+    T& operator*() const { return *ptr; }
+    T* operator->() const { return ptr; }
+
+    // Check if not empty
+    bool unique() const { return use_count() == 1; }
+    bool empty() const { return ptr == nullptr; }
+};
+
+// Example class
+struct Foo {
+    int value;
+    Foo(int v) : value(v) {
+        std::cout << "Foo(" << value << ") constructed\n";
+    }
+    ~Foo() {
+        std::cout << "Foo(" << value << ") destroyed\n";
+    }
+    void hello() {
+        std::cout << "Hello from Foo, value = " << value << "\n";
+    }
+};
+
+// Main for demonstration
+int main() {
+    {
+        SharedPtr<Foo> sp1(new Foo(42));
+        std::cout << "sp1 count = " << sp1.use_count() << "\n";
+
+        {
+            SharedPtr<Foo> sp2 = sp1;
+            std::cout << "sp1 count = " << sp1.use_count() << "\n";
+            std::cout << "sp2 count = " << sp2.use_count() << "\n";
+
+            sp2->hello();
+        } // sp2 goes out of scope here
+
+        std::cout << "After sp2 destroyed, sp1 count = " << sp1.use_count() << "\n";
+    } // sp1 goes out of scope here → object deleted
+
+    std::cout << "End of program.\n";
+    return 0;
+}
