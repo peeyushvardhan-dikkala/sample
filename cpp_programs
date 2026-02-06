@@ -702,67 +702,79 @@ int main() {
 
 // 14. Shared Pointer Implementation:
 #include <iostream>
-template <typename T>
 
+template <typename T>
 class SharedPtr {
 private:
-    T* ptr;       // pointer to the actual object
-    int* count;   // pointer to the reference count
+    T* ptr;
+    int* count;
+
 public:
-    // Constructor
     explicit SharedPtr(T* p = nullptr)
         : ptr(p), count(nullptr) {
         if (p)
-            count = new int(1);  // new object, count = 1
+            count = new int(1);
     }
 
     // Copy Constructor
     SharedPtr(const SharedPtr& other)
         : ptr(other.ptr), count(other.count) {
         if (count)
-            ++(*count);  // share ownership
+            ++(*count);
     }
 
-    // Assignment Operator
+    // Copy Assignment
     SharedPtr& operator=(const SharedPtr& other) {
         if (this != &other) {
-            // decrease current count
             release();
-
-            // copy from other
             ptr = other.ptr;
             count = other.count;
-
             if (count)
                 ++(*count);
         }
         return *this;
     }
 
-    // Destructor
+    // Move Constructor
+    SharedPtr(SharedPtr&& other) noexcept
+        : ptr(other.ptr), count(other.count) {
+        other.ptr = nullptr;
+        other.count = nullptr;
+    }
+
+    // Move Assignment
+    SharedPtr& operator=(SharedPtr&& other) noexcept {
+        if (this != &other) {
+            release();
+            ptr = other.ptr;
+            count = other.count;
+            other.ptr = nullptr;
+            other.count = nullptr;
+        }
+        return *this;
+    }
+
     ~SharedPtr() {
         release();
     }
 
-    // Helper function to release ownership
     void release() {
         if (count) {
             --(*count);
             if (*count == 0) {
                 delete ptr;
                 delete count;
-                std::cout << "Deleted managed object and counter\n";
             }
         }
+        ptr = nullptr;
+        count = nullptr;
     }
 
-    // Accessors
     T* get() const { return ptr; }
     int use_count() const { return count ? *count : 0; }
     T& operator*() const { return *ptr; }
     T* operator->() const { return ptr; }
 
-    // Check if not empty
     bool unique() const { return use_count() == 1; }
     bool empty() const { return ptr == nullptr; }
 };
