@@ -625,6 +625,35 @@ int main() {
     return 0;
 }
 
+5) Variadic Templates:
+Variadic templates allow you to create functions or classes that can take an arbitrary number of template parameters(including aero). This is useful for functions like `printf` or for creating flexible data structures.
+
+C++11 - Pre C++ 17 
+We need to use recursion to unpack the parameter pack, which can be less efficient and more complex. We must define a base case to end the recursion, and it can lead to deeper call stacks for large parameter packs. Each function call generates a template instantiation, which can increase compile time and memory usage.
+void print() {
+    std::cout << "End\n";
+}
+
+template<typename T, typename... Args>
+void print(T first, Args... rest) {
+    std::cout << first << " ";
+    print(rest...);  // unpack the parameter pack
+}
+
+typename... Args is a parameter pack that can hold zero or more template parameters. 
+| Syntax             | Meaning                                |
+| ------------------ | -------------------------------------- |
+| `typename... Args` | Declares a **template parameter pack** |
+| `Args... args`     | Declares a **function or class parameter pack** |
+| `args...`          | Unpacks the parameter pack to pass it to another function or constructor |
+| `sizeof...(Args)`  | Counts elements in the pack            |
+
+From C++17 onwards, we can use fold expressions to simplify the code and avoid recursion, making it more efficient and easier to read.
+template<typename... Args>
+void print(Args... args) {
+      ((std::cout << args << " "), ...) << std::endl; // fold expression to unpack and print all arguments
+}
+
 19) std::optional:
 `std::optional` is a feature in C++ that represents an optional value, meaning it can either contain a value or be empty (no value). It is part of the C++17 standard library and is used to handle cases where a value may or may not be present without resorting to pointers or special sentinel values.
 It is useful when you want to indicate that a variable may not have a value, such as when a function might fail to produce a result or when a value is not applicable.
@@ -782,9 +811,15 @@ The Rule of Five in C++ extends the Rule of Three to include move semantics, whi
 1. **Destructor**: Cleans up resources when the object goes out of scope or is deleted.
 2. **Copy Constructor**: Creates a new object as a copy of an existing one, ensuring proper resource management.
 3. **Copy Assignment Operator**: Assigns one object to another, ensuring resources are managed correctly during assignment.
-4. **Move Constructor**: Transfers ownership of resources from a temporary object(rvalue) to a new object, avoiding deep copies and improving performance.
+4. **Move Constructor**: Transfers ownership of resources from a temporary object(rvalue) to a new object, avoiding deep copies and improving performance.G
 5. **Move Assignment Operator**: Transfers ownership of resources from a temporary object to an existing object, allowing efficient resource management during assignment.
 This rule is important for classes that manage dynamic memory or other resources, as it ensures that both copy and move operations are handled correctly to avoid memory leaks, dangling pointers, or undefined behavior.
+
+Move constructors and move assignment operators are marked noexcept because standard containers such as std::vector will only use move operations during reallocation if they are guaranteed not to throw. If a move operation may throw, the container must fall back to copying to preserve the strong exception guarantee
+
+But copy operations are slower and expensive.
+
+Copying is impossible for move-only types like std::unique_ptr or classes owning unique OS resources. If move isn't noexcept, STL containers cannot reallocate safely.”
 
 30) Temporary Objects in C++:
 Temporary objects in C++ are short-lived objects created during expression evaluation, such as when passing arguments to functions or returning values from functions. They are created by the compiler to hold intermediate results and are destroyed at the end of the full expression in which they were created.
@@ -951,30 +986,62 @@ Space complexity = how much memory it uses with input.
 37) Typecasting in C++:
 It is the process of converting a variable from one data type to another. C++ supports implicit (automatic) and explicit (manual) typecasting.
 
-1. **Static Cast (`static_cast<type>(expression)`)**:
+Implicit Conversion:
+Implicit conversion is the automatic type conversion performed by the compiler when it converts one data type to another without explicit instruction from the programmer.
+
+Implicit conversion is safe when converting from smaller to larger data types, but it may cause data loss when converting from larger to smaller types
+
+Need of explicit conversion:
+Prevents Accidental Conversions
+double d = 3.7;
+int x = d;   // implicit → data loss (3)
+int x = static_cast<int>(d); // Now the truncation is intentional and visible.
+
+Works with explicit Constructors
+A obj1 = 5;                    // ❌ error (implicit not allowed)
+A obj2 = static_cast<A>(5);    // ✅ OK
+
+Use {} initialization to prevent accidental narrowing
+
+1. **Static Cast(`static_cast<type>(expression)`)**:
    - Used for compile-time type conversions.
    - Safe for conversions between related types (e.g., int to float, derived to base).
    - Cannot cast away `const` or `volatile` qualifiers.
    - Example: `int i = static_cast<int>(3.14); // Converts double to int`
-2. **Dynamic Cast (`dynamic_cast<type>(expression)`)**:
+2. **Dynamic Cast(`dynamic_cast<type>(expression)`)**:
+   - Converting a base class pointer/reference that actually points to a derived object into a derived class pointer/reference using dynamic_cast, which performs a runtime type check in polymorphic hierarchies.
    - Used for safe downcasting in class hierarchies (from base to derived).
-   - Requires at least one virtual function in the base class because it relies on runtime type information (RTTI).
+   - 
+   - dynamic_cast safely converts a base class pointer or reference to a derived class pointer or reference by checking at runtime whether the base pointer/reference actually refers to an object of the target derived type
+   - "dynamic_cast performs a runtime check to ensure that a base class pointer/reference actually points to the correct derived class before converting it".
+
+   - Requires at least one virtual function in the base class to enable RTTI (Run-Time Type Information). The virtual function ensures that a vtable is created for the class, which stores type information. At runtime, dynamic_cast uses this vtable to safely check the actual type of the object.
+   - dynamic_cast is safe because it uses RTTI to check the actual type of the object at runtime. If the object isn't of the target derived type, it returns nullptr (pointer) or throws std::bad_cast (reference), preventing invalid memory access.
    - Returns `nullptr` if the cast fails (for pointers) or throws `std::bad_cast` (for references).
    - Example: 
-    class Entity {
-        public:
-            virtual ~Entity() {}  // Just destructor is enough  
+    class Base {
+    public:
+        virtual void show() { cout << "Base\n"; } // must be virtual
+        virtual ~Base() {} // always good practice
     };
-    vector<Entity*> entities = getAllEntities();
-    for (auto e : entities) {
-        if (Player* p = dynamic_cast<Player*>(e)) {
-            p->attack();  // Safe call for Player
-        }
-        else if (Enemy* en = dynamic_cast<Enemy*>(e)) {
-            en->flee();   // Safe call for Enemy
-        }
+
+    class Derived : public Base {
+    public:
+        void show() override { cout << "Derived\n"; }
+        void onlyInDerived() { cout << "Derived-only function\n"; }
+    };
+
+    Base* b = new Derived();
+    try {
+        Derived& dr = dynamic_cast<Derived&>(*b); // reference
+        dr.onlyInDerived(); // OK, dr is a Derived reference
+    } catch(const std::bad_cast& e) {
+        cout << e.what();
     }
-3. *    **:
+
+3. **Const Cast (`const_cast<type>(expression)`)**:
+    const_cast is a C++ cast operator used to add or remove const (or volatile) qualifiers from a variable.
+It's safe only if the original object was non-const and need to modify it inside the function. If the original object is truly const, modifying it through a const_cast will lead to undefined behavior.
    - Used to add or remove `const` or `volatile` qualifiers.
    Note: 
    If the original object was const, don't modify it after const_cast. If it was non-const, removing const is safe.
@@ -996,10 +1063,19 @@ It is the process of converting a variable from one data type to another. C++ su
     *q = 20;  // Undefined behavior! y was originally const
 
 4. **Reinterpret Cast (`reinterpret_cast<type>(expression)`)**:
+   - reinterpret_cast in C++ is a type-casting operator used to convert one pointer or reference type to another unrelated pointer or reference type without changing the data in memory.
+
    - Used for low-level reinterpreting of bit patterns.
    - Can cast between unrelated types (e.g., pointer to int, int to pointer).
-   - Should be used sparingly, as it can lead to non-portable and unsafe code.
-   - Example: `int* p = reinterpret_cast<int*>(0x12345678); // Converts int to pointer
+   - No runtime check
+    ✅ No type safety
+    ✅ Does NOT change the actual data
+
+    int x = 65;
+    int* intPtr = &x;
+    // Treat the memory as a char pointer
+    char* charPtr = reinterpret_cast<char*>(intPtr);
+    For example, if I want to inspect the raw bytes of an integer, I can reinterpret its memory as a char*. The data doesn’t change — only the way I access it change
 
 38) OOPS :
 1) Object-Oriented_Programming(OOP):
@@ -1504,9 +1580,7 @@ When you call a virtual function on an object, the compiler uses the vptr to loo
 
 Why constructors cannot be virtual:
 Constructors cannot be virtual in C++ because:
-vptr is not fully set up when a constructor is called. (The vptr is initialized/set inside the constructor.)
-When an object is being constructed, the complier set up the vptr to point to the class's vtable.
-But that happens as part of the constructor — it is not fully established before the constructor begins.
+Constructors cannot be virtual in C++ because the object is not fully constructed during the construction phase. As a result, the virtual table pointer (vptr) cannot yet point to the derived class vtable. Virtual dispatch relies on a fully constructed object, which only becomes available after the constructor has finished.
 
 Why destructors can be virtual:
 Destructors can be virtual in C++ because:
@@ -2322,7 +2396,7 @@ int main() {
 }
 
 
-Design Patterns:
+47) Design Patterns:
 Design patterns are reusable solutions to common software design problems. They provide a template for how to solve a problem in a way that has been proven to be effective and efficient.
 
 Design patterns are categorized into Creational (object creation), Structural (object composition), and Behavioral (object interaction) patterns.
@@ -2405,12 +2479,13 @@ when creating multiple related objects that must work together without exposing 
 The Singleton Pattern is a creational design pattern that ensures a class has only one instance and provides a global point of access to that instance.
 It is useful when exactly one object is needed to coordinate actions across the system, such as in logging, configuration management.
 
-Private constructor → prevents external instantiation
-Deleted copy & assignment → prevents copying or assigning the singleton instance
-Static getInstance() → provides global access to the singleton instance
-Static local variable → ensures thread-safe lazy initialization in C++11 and later
+Private constructor → "prevents external instantiation"
+Deleted copy & assignment → "prevents copying or assigning the singleton instance"
+Static getInstance() → "To access the single shared instance of the class without creating an object"
+Static local variable → "To store single shared instance of a class"
+
 If multiple threads call getInstance() at the same time:
-One thread performs the initialization
+One thread performs the initialization  
 Other threads wait until it finishes
 After initialization, every thread uses the same instance
 
@@ -2546,59 +2621,852 @@ int main() {
 
     return 0;
 }
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <algorithm>
+
+// ======================
+// Observer Interface
+// ======================
+class Subscriber {
+public:
+    virtual ~Subscriber() = default;
+    virtual void update(const std::string& videoTitle) = 0;
+};
+
+// ======================
+// Subject (YouTube Channel)
+// ======================
+class YouTubeChannel {
+private:
+    std::vector<std::weak_ptr<Subscriber>> subscribers;
+    std::string latestVideo;
+
+public:
+    void subscribe(const std::shared_ptr<Subscriber>& sub) {
+        subscribers.push_back(sub);
+    }
+
+    void unsubscribe(const std::shared_ptr<Subscriber>& sub) {
+        subscribers.erase(
+            std::remove_if(subscribers.begin(), subscribers.end(),
+                [&](const std::weak_ptr<Subscriber>& wp) {
+                    return wp.lock() == sub;
+                }),
+            subscribers.end()
+        );
+    }
+
+    void uploadVideo(const std::string& title) {
+        latestVideo = title;
+        std::cout << "\n📢 Channel uploaded: " << latestVideo << "\n";
+        notify();
+    }
+
+private:
+    void notify() {
+        for (auto it = subscribers.begin(); it != subscribers.end();) {
+            if (auto sub = it->lock()) {
+                sub->update(latestVideo);
+                ++it;
+            } else {
+                // Remove expired subscribers
+                it = subscribers.erase(it);
+            }
+        }
+    }
+};
+
+// ======================
+// Concrete Observer
+// ======================
+class User : public Subscriber {
+private:
+    std::string name;
+
+public:
+    User(const std::string& n) : name(n) {}
+
+    void update(const std::string& videoTitle) override {
+        std::cout << name 
+                  << " received notification: New video - " 
+                  << videoTitle << std::endl;
+    }
+};
+
+// ======================
+// Main Function
+// ======================
+int main() {
+    auto channel = std::make_shared<YouTubeChannel>();
+
+    auto alice = std::make_shared<User>("Alice");
+    auto bob   = std::make_shared<User>("Bob");
+    auto charlie = std::make_shared<User>("Charlie");
+
+    // Users subscribe
+    channel->subscribe(alice);
+    channel->subscribe(bob);
+    channel->subscribe(charlie);
+
+    // First upload
+    channel->uploadVideo("Observer Pattern Explained");
+
+    // Bob unsubscribes
+    std::cout << "\n❌ Bob unsubscribed\n";
+    channel->unsubscribe(bob);
+
+    // Second upload
+    channel->uploadVideo("Modern C++ Smart Pointers");
+
+    return 0;
+
+}
+
+48) Forwarding References:
+A forwarding reference is a special type of reference that can refer to both lvalues and rvalues. It is used in template functions to perfectly forward arguments while preserving their original value type(lvalue or rvalue) using reference collapsing rules.
+
+Reference collapsing rules decide the final reference type when combining lvalue (&) and rvalue (&&) references, ensuring forwarding references keep the correct value type.
+
+Forwarding references are declared using the syntax T&& where T is a template parameter. The behavior of T&& depends on how the template parameter T is deduced:
+If an lvalue is passed to the function, T is deduced as an lvalue reference (T&), and T&& becomes T& (an lvalue reference).
+If an rvalue is passed to the function, T is deduced as a non-reference type, and T&& remains T&& (an rvalue reference).
+
+std::forward is a function in C++ used to pass arguments to another function exactly as they were received, keeping lvalues as lvalues and rvalues as rvalues. It works with forwarding references to achieve perfect forwarding.
+
+#include <iostream>
+#include <utility> // for std::forward
+
+void process(int& x) {
+    std::cout << "Lvalue processed: " << x << "\n";
+}
+
+void process(int&& x) {
+    std::cout << "Rvalue processed: " << x << "\n";
+}
+
+template <typename T>
+void forwarder(T&& val) {
+    // Forward val exactly as it was passed (lvalue or rvalue)
+    process(std::forward<T>(val));
+}
+
+int main() {
+    int a = 10;
+    
+    forwarder(a);         // lvalue, calls process(int&)
+    forwarder(20);        // rvalue, calls process(int&&)
+}
 
 
+49) Tuple:
+A tuple is a fixed-size collection of heterogeneous values. It can hold multiple values of different types. Tuples are useful for grouping together related data without needing to define a custom struct or class.
+Tuples can be created using std::tuple and accessed using std::get<index>(tuplename) or structured bindings.
+
+int a;
+std::string b;
+double c;
+
+std::tie(a, b, c) = myTuple;
+std::cout << a << ", " << b << ", " << c << std::endl; // 42, World, 3.14
+
+std::tie(a, std::ignore, c) = myTuple; // a = 42, c = 3.14, b is ignored
+
+std::cout << std::tuple_size<decltype(myTuple)>::value << std::endl; // 3
+
+#include <iostream>
+#include <tuple>  // for std::tuple
+
+// Function returning a tuple
+std::tuple<int, int> sumAndProduct(int x, int y) {
+    int sum = x + y;
+    int product = x * y;
+    return std::make_tuple(sum, product);
+}
+
+int main() {
+    int a = 5, b = 3;
+
+    // Get the tuple from the function
+    std::tuple<int, int> result = sumAndProduct(a, b);
+
+    // Access the values
+    int sum = std::get<0>(result);
+    int product = std::get<1>(result);
+
+    std::cout << "Sum: " << sum << "\n";
+    std::cout << "Product: " << product << "\n";
+
+    // OR unpack directly using std::tie
+    int s, p;
+    std::tie(s, p) = sumAndProduct(a, b);
+    std::cout << "Unpacked -> Sum: " << s << ", Product: " << p << "\n";
+
+    // OR using structured bindings (C++17)
+    auto [s2, p2] = sumAndProduct(a, b);
+    std::cout << "Structured Bindings -> Sum: " << s2 << ", Product: " << p2 << "\n";
+
+    return 0;
+}
+
+Without tuples, you would need to define a custom struct or class to return multiple values from a function, which can be cumbersome and less flexible.
+
+#include <iostream>
+#include <string>
+
+struct StudentInfo {
+    std::string name;
+    int age;
+    double gpa;
+};
+
+StudentInfo getStudent() {
+    StudentInfo s;
+    s.name = "Alice";
+    s.age = 20;
+    s.gpa = 3.8;
+    return s;
+}
+
+int main() {
+    StudentInfo s = getStudent();
+    std::cout << s.name << ", " << s.age << ", " << s.gpa << "\n";
+    return 0;
+}
+
+50) Stack Unwinding:
+
+Stack unwinding is the process where the program automatically destroys all local (stack) objects in the call stack when an exception is thrown, before transferring control to the appropriate catch block. This ensures that resources are properly released and destructors are called for all objects that were created in the scope of the function where the exception occurred.
+
+If an exception is thrown and no matching catch block exists, the program will call std::terminate() which will end the program. If a matching catch block is found, the program will transfer control to that block after unwinding the stack.
+
+main()
+  └── funcA()
+        └── funcB()
+              └── throw exception
+When the exception is thrown in funcB():
+Local objects in funcB() are destroyed
+Then funcB() exits
+Local objects in funcA() are destroyed
+Then funcA() exits
+If main() has a catch, control goes there
+
+**Destructors are noexcept by default to ensures they are safe to run during stack unwinding (after an exception), without triggering std::terminate().**
+
+51) Object Slicing:
+Object slicing occurs when a derived class object is assigned to a base class object (by value), causing the derived part to be “sliced off”, leaving only the base class part happens when passing/assigning by value.
+
+Passing by reference or pointer avoids object slicing because no new base object is created; the function accesses the original object in memory, so all derived class members remain intact.
+
+Base* b= new Derived(); // No slicing, b points to the full Derived object
+Derived d;
+Base b = d; // Slicing occurs, only the Base part of d is copied to b
+
+52) C++11/14/17/20/23 Features:
+C++11:
+1) Auto type deduction
+auto x = 10; // x is deduced as int
+auto y = 3.14; // y is deduced as double
+2) Range-based for loops
+std::vector<int> v = {1, 2, 3, 4, 5};
+for (int x : v) {
+    std::cout << x << " ";
+}
+3) Lambda expressions
+you write anonymous functions inline, right where you need them.
+--> Short, One-Time Functions
+--> Required by STL Algorithms otherwise you would have to define a separate function for simple operations - more code, less readable.
+--> Capture Local Variables by Value or Reference
+auto add = [](int a, int b) { return a + b; };
+std::cout << add(3, 5); // Outputs 8
+4) Move semantics and rvalue references
+Move semantics allow you to transfer ownership of resources from one object to another without copying, which can significantly improve performance, especially for objects that manage dynamic memory or other resources. Rvalue references (T&&) enable move semantics by allowing you to distinguish between lvalues and rvalues.
+5) Smart pointers (std::unique_ptr, std::shared_ptr, std::weak_ptr)
+Smart pointers are template classes that provide automatic memory management. They help prevent memory leaks and dangling pointers by automatically deallocating memory when it is no longer needed. std::unique_ptr represents exclusive ownership, std::shared_ptr allows shared ownership, and std::weak_ptr provides a non-owning reference to an object managed by std::shared_ptr.
+6) Variadic templates
+Variadic templates allow you to create functions and classes that can accept a variable number of template parameters. This is useful for creating flexible and reusable code, such as in the implementation of std::tuple or std::make_tuple.
+
+void print() {
+    std::cout << std::endl; // Base case: no arguments, just print a newline
+}
+
+template<typename T, typename... Args>
+void print(T first, Args... args) {
+    std::cout << first << " ";
+    if constexpr (sizeof...(args) > 0) {
+        print(args...); // Recursive call with remaining arguments
+    }
+}
+
+7) std::tuple
+std::tuple is a fixed-size collection of heterogeneous values. It can hold multiple values of different types. We can create tuples using std::make_tuple and access their elements using std::get or structured bindings(C++17).
+Eg: 
+std::tuple<int, std::string, double> myTuple = std::make_tuple(42, "Hello", 3.14);
+int a = std::get<0>(myTuple); // 42
+
+8) Initializer lists
+Initializer lists allow you to initialize containers and objects using a list of values enclosed in curly braces.
+It blocks narrow conversions (larger to smaller type), ensuring that only compatible types are used for initialization, which helps prevent unintended data loss or errors.
+std::vector<int> v = {1, 2, 3, 4, 5}; // Initializes a vector with 5 integers
+std::vector<double> v2 = {1, 2, 3}; // Error: narrowing conversion from int to double is not allowed 
+
+9) constexpr
+constexpr allows you to declare that a function or variable can be evaluated at compile time. This enables optimizations (like precomputing values) and allows you to use these functions and variables in contexts that require compile-time constants, such as array sizes or template parameters.
+constexpr int square(int x) {
+    return x * x;
+}
+Reduce runtime overhead by performing calculations at compile time.
+
+10) nullptr
+nullptr is a keyword that represents a null pointer constant. It provides a type-safe way to indicate that a pointer does not point to any object or function. Unlike NULL (usually defined as 0), nullptr cannot be confused with integers, avoids ambiguous function calls.
+nullptr has its own type (std::nullptr_t), which allows for better type safety (means you cannot accidentally assign an integer to a pointer variable, which could lead to bugs or undefined behavior).
+
+11) override and final
+The override specifier indicates that a member function is meant to override a virtual function in a base class. If the function does not actually override any base class function (e.g., due to a typo in the function name or incorrect parameters), the compiler will generate an error, helping catch bugs at compile time.
+The final specifier indicates that a virtual function cannot be overridden in any derived class. If a derived class attempts to override a final function, the compiler will generate an error, preventing unintended overrides and ensuring that the behavior of the base class function remains unchanged in derived classes.
+
+12) Threads
+C++11 introduced a way to create and manage threads using the <thread> library. This allows developers to write concurrent code that can take advantage of multiple CPU cores, improving performance for tasks that can be executed in parallel.
+mutex, lock_guard, unique_lock, condition_variable are synchronization primitives that help manage access to shared resources and coordinate between threads, preventing race conditions and ensuring thread safety.
+
+C++14:
+1) Generic lambdas
+Generic lambdas allow you to write lambda expressions that can accept parameters of any type without needing to specify the types explicitly. This is achieved using auto in the lambda parameter list, making the lambda more flexible and reusable.
+auto add = [](auto a, auto b) { return a + b; };
+
+Before it, Use templates with a functor struct or a regular function to achieve similar functionality, but it requires more boilerplate code and is less concise than using generic lambdas.
+struct Add {
+    template<typename T, typename U>
+    auto operator()(T a, U b) const -> decltype(a + b) {
+        return a + b;
+    }
+};
+
+template<typename T, typename U>
+auto add1(T a, U b) -> decltype(a + b) {
+    return a + b;
+}
+
+int main() {
+    Add add;
+    std::cout << add(3, 5) << "\n"; // 8
+    std::cout << add1(3, 4.5) << "\n"; // 7.5
+    return 0;
+}
+The auto before add is just a placeholder — it will be replaced by the type deduced from decltype(a + b).
+auto before the function name cannot automatically deduce the return type when the return depends on template parameters or expressions involving them, so we use -> decltype(a + b) to tell the compiler what the type should be after seeing the parameters.
+
+Step 1: Compiler reads the return type: decltype(a + b)
+Step 2: Sees "a" and "b"? Not yet declared!
+Step 3: ERROR: 'a' and 'b' are unknown at this point
+
+template<typename T, typename U>
+decltype(a + b) add(T a, U b) {  // ❌ ERROR
+    return a + b;
+}
+
+template<typename T, typename U>
+auto add(T a, U b) -> decltype(a + b) { // ✅ OK
+    return a + b;
+}
+
+Step 1: Compiler sees 'auto' → placeholder for return type
+Step 2: Parses parameters T a, U b → a and b now exist
+Step 3: Uses -> decltype(a + b) → computes the actual type
+Step 4: Replaces 'auto' with that type
+
+In C++14, this limitation is gone—auto can deduce the return type automatically even for templates and expressions.
+
+2) std::make_unique
+std::make_unique is a utility function that creates a new object and returns a std::unique_ptr to that object. It provides a safer and more efficient way to create unique pointers as creates the object and transfer ownership in a single step, preventing potential memory leaks and ensuring exception safety.
+std::unique_ptr<int> p1(new int(5)); // Not exception safe
+std::unique_ptr<int> p2 = std::make_unique<int>(5); // Exception safe
+
+3) Return type deduction for normal functions
+In C++14, you can use auto as the return type for normal functions, and the compiler will deduce the return type based on the return statements in the function body. This allows for more concise code and can be particularly useful when the return type is complex or depends on template parameters.
+auto add(int a, int b) {
+    return a + b; // Compiler deduces return type as int
+}
+
+4) shared_timed_mutex
+std::shared_timed_mutex is a synchronization primitive that allows multiple threads to read shared data concurrently while still providing exclusive access for writing. 
+It is an extension of std::shared_mutex that includes support for timed locking operations, allowing threads to attempt to acquire the lock for a specified duration before giving up. 
+shared_timed_mutex mtx;
+mtx.lock_shared(); // Multiple threads can acquire shared lock for reading
+mtx.unlock_shared();
+mtx.lock(); // Only one thread can acquire exclusive lock for writing
+mtx.unlock();
+mtx.try_lock_shared_for(std::chrono::milliseconds(100)); // Try to acquire shared lock for reading with timeout
+mtx.try_lock_for(std::chrono::milliseconds(100)); // Try to acquire exclusive lock for writing with timeout
+This can help improve performance in scenarios where read operations are more frequent than write operations, as it allows multiple readers to access the shared resource simultaneously without blocking each other.
+
+5) Mark functions as [[deprecared]] to indicate that they should not be used and may be removed in future versions. This helps developers identify and avoid using outdated or unsafe functions, improving code quality and maintainability.
+[[deprecated("Use newFunction() instead")]]
+
+6) exchange
+std::exchange is a utility function that replaces the value of an object with a new value and returns the old value. It is useful for implementing move semantics and other operations where you want to replace an object's value while still retaining access to the original value.
+int x = 5;
+int oldValue = std::exchange(x, 10); // x is now 10, oldValue is 5
+
+// Example with move semantics
+class Demo {
+public:
+    int* data;
+
+    Demo(int value) : data(new int(value)) {}
+    ~Demo() { delete data; }
+
+    // Move constructor using std::exchange
+    Demo(Demo&& other) : data(std::exchange(other.data, nullptr)) {}
+};
+
+7) Binary literals and digit separators
+C++14 introduced binary literals, allowing you to write binary numbers directly in your code using the 0b prefix. This can improve readability when working with bit manipulation or low-level programming.
+int x = 0b1010; // x is 10 in decimal
+int y = 0B1101; // y is 13 in decimal
+Digit separators (using the single quote character) allow you to separate digits in numeric literals for improved readability, especially for large numbers.
+int y = 1'000'000; // y is 1000000, easier to read with separators
+
+8) Variable templates
+Variable template is a template for a variablee enabling you create type-specific constant values without needing to define separate variables for each type. 
+
+#include <iostream>
+template<typename T>
+constexpr T pi = T(3.1415926535897932385);
+
+template<typename T>
+constexpr T tolerance = T(0.001);
+
+template<>
+constexpr float tolerance<float> = 0.01f;  // specialization
+
+int main() {
+    cout.precision(numeric_limits<long double>::max_digits10);
+    std::cout << pi<float> << std::endl;
+    std::cout << pi<double> << std::endl;
+
+    std::cout << tolerance<double> << std::endl; // 0.001
+    std::cout << tolerance<float> << std::endl;  // 0.01
+}
+
+C++17:
+================================================================================================================
+1) Structured bindings
+Structured bindings allow you to unpack a tuple, pair, array, or aggregate struct into separate variables in a single statement, improving readability and eliminating the need to access elements individually using std::get or member access.
+
+std::tuple<int, std::string, double> myTuple = std::make_tuple(42, "Hello", 3.14);
+auto [a, b, c] = myTuple; // a = 42, b = "Hello", c = 3.14
+
+struct Point { int x, y; };
+Point p{10, 20};
+auto [a, b] = p;
+
+int arr[3] = {1, 2, 3};
+auto [x, y, z] = arr;
+
+std::tuple<int, int> t = {1, 2};
+std::tuple<int, int>* ptr = &t;
+auto [a, b] = *ptr; // ✅ Correct: dereference the pointer
+auto [x, y] = ptr;  // ❌ Error: cannot unpack a pointer directly
+
+Note:
+--> Structured bindings do not work with pointers. You cannot unpack a pointer to an array or struct directly using structured bindings. You would need to dereference the pointer first before using structured bindings.
+--> It is not applicable to classes with user-defined constructors, as they do not meet the requirements for aggregate initialization. "Structured bindings require the type to be an aggregate, which means it must have no user-declared constructors, no private or protected non-static data members, no virtual functions, and no virtual base classes."
+
+2) std::string_view
+std::string_view is a non-owning, read-only view of a string. It points to an existing string (or character array) without copying it. Ideal for function parameters when you don't need ownership of the string data, where we can use substring or a string literal without copying the data, improving performance by avoiding unnecessary copies. I
+
+It is a lightweight alternative to std::string when you only need to read from a string and do not require modification or ownership of the string data.
+
+Included in <string_view> header.
+
+#include <iostream>
+#include <string_view>
+
+int main() {
+    std::string str = "Hello, world!";
+    
+    // Create a string_view pointing to the string
+    std::string_view sv = str;
+
+    std::cout << sv << "\n";  // prints the whole string
+
+    // Take a substring view without copying
+    std::string_view sub = sv.substr(7, 5);
+    std::cout << sub << "\n"; // prints "world"
+
+    // Works directly with string literals
+    std::string_view literal = "Hello C++!";
+    std::cout << literal << "\n"; // prints "Hello C++!"
+}
+
+3) std::optional
+std::optional is a wrapper that explicitly represents a value that may or may not exist, without using pointers or special sentinel values. It improves safety, readability, and expresses intent clearly.
+
+Why can't pointers ?
+Pointer only shows address existence, but optional expresses semantic meaning — presence or absence of a value — and avoids memory management issues.
+
+Sometimes sentinel values could be a valid value in other contexts, so it becomes ambiguous.
+
+You can use either return {} or return std::nullopt to indicate “no value” for std::optional. Both are equivalent.
+
+std::nullopt is a constant of type std::nullopt_t that represents the absence of a value in an std::optional. It is used to indicate that an optional does not contain a valid value.
+
+#include <iostream>
+#include <optional>
+struct Point { int x, y; };
+
+std::optional<int> getScore(const std::string& name) {
+    if (name == "Alice") return 95;        // returns a value
+    if (name == "Bob") return 82;          // returns a value
+    return std::nullopt;                    // returns nothing
+}
+
+int main() {
+    std::optional<int> opt;
+
+    std::cout << std::boolalpha << opt.has_value() << "\n"; // false
+
+    opt = 42;
+    std::cout << opt.value() << "\n";                       // 42
+    std::cout << opt.value_or(0) << "\n";                  // 42
+
+    opt.reset();
+    std::cout << opt.has_value() << "\n";                  // false
+
+    std::optional<Point> p = Point{1,2};
+    std::cout << p->x << ", " << p->y << "\n";            // 1, 2
+
+    opt.emplace(100);
+    std::cout << *opt << "\n";                             // 100
+
+    auto score1 = getScore("Alice");       // Alice exists
+    auto score2 = getScore("Charlie");     // Charlie does not exist
+
+    if (score2.has_value())
+        std::cout << "Charlie's score: " << *score2 << "\n";
+    else
+        std::cout << "Charlie's score not found\n";          // prints this
+
+}
+
+4) std::any
+std::any is a type-safe container that can hold a single value of any copyable type. It allows you to store values of different types in the same variable or container, and retrieve them safely at runtime using std::any_cast<T>.
+
+Hides the concrete type from the compiler because the type is not known until runtime, so it cannot perform compile-time type checking.  → “type-erased” useful as a heterogeneous container or for storing values of unknown types at compile time.
+
+Templates are compile-time polymorphism. Use them when types are known.(Less Overhead)
+Type-erasure (std::any) is runtime polymorphism. Use it when types are unknown until runtime.
+
+You are building an application that has various user settings, e.g., ThemeColor (string), FontSize (int), SoundVolume (double).
+These settings have different types, but you want to store them in a single container.
+
+Using a fixed type container (like unordered_map<string, string>) forces you to convert all values to a single type, which is error-prone.
+Using void* is unsafe and requires manual casting 
+string value = "sample";
+void* ptr = &value; // storing
+int* intPtr = static_cast<int*>(ptr); // retrieving, but this is unsafe
+
+"any" allows you to store different types of settings in a single container while maintaining type safety when retrieving values.
+any_cast<T> ensures you don't accidentally interpret a double as an int. 
+
+Throws std::bad_any_cast if you try to cast to the wrong type
+
+std::any stores only copyable types because std::any itself supports copy semantics. If the contained object were move-only, copying the std::any would not be possible.
+
+#include <iostream>
+#include <unordered_map>
+#include <any>
+#include <string>
+
+using namespace std;
+
+class SettingsManager {
+public:
+    template<typename T>
+    void setSetting(const string& name, T value) {
+        settings_[name] = value;
+    }
+
+    template<typename T>
+    T getSetting(const string& name) const {
+        auto it = settings_.find(name);
+        if (it != settings_.end()) {
+            try {
+                return any_cast<T>(it->second);  // retrieve with correct type
+            } catch (const bad_any_cast&) {
+                return T{};  // type mismatch → return default
+            }
+        }
+        return T{};  // setting not found → return default
+    }
+
+private:
+    unordered_map<string, any> settings_;
+};
+
+int main() {
+    SettingsManager sm;
+
+    sm.setSetting("ThemeColor", string("Blue"));
+    sm.setSetting("FontSize", 12);
+    sm.setSetting("SoundVolume", 0.8);
+
+    cout << "ThemeColor: " << sm.getSetting<string>("ThemeColor") << endl;
+    cout << "FontSize: " << sm.getSetting<int>("FontSize") << endl;
+    cout << "SoundVolume: " << sm.getSetting<double>("SoundVolume") << endl;
+
+    // Missing setting returns default
+    cout << "InvalidSetting: " << sm.getSetting<int>("InvalidSetting") << endl;
+
+    // Type mismatch returns default
+    cout << "FontSize as string: " << sm.getSetting<string>("FontSize") << endl;
+}
+
+5) std::variant
+"When you want a variable that can hold several types you can go with, std::variant is a type-safe union that can hold one value from a fixed set of types". It allows you to store different types of values in the same variable while maintaining type safety and provides a way to access the stored value using std::get or std::visit.
+
+std::visit applies a function (called a visitor) to the currently active value inside the std::variant. It allows you to perform type-safe operations on the variant's value without needing to manually check its type.
+
+auto&& is used in the lambda parameter of std::visit to perfectly forward the argument, allowing the visitor to handle both lvalues and rvalues without unnecessary copying or moving.
+
+Stored type in variant	auto&& arg receives
+int (lvalue)	int&	reference to original value
+int (rvalue)	int&&	can move the value safely
+
+"T& is not possible as you can't bind an rvalue to a non-const lvalue reference because the rvalue is a temporary and would immediately go out of scope after the end of the expression, leaving the reference dangling."
+
+#include <iostream>
+#include <variant>
+#include <string>
+
+int main() {
+    std::variant<int, std::string> value;
+
+    value = 10;
+
+    std::visit([](auto&& arg) {
+        std::cout << "Value: " << arg << std::endl;
+    }, value);
+
+    value = "Hello";
+    cout<< "Value: " << std::get<std::string>(value) << std::endl;
+
+    if(auto strPtr = std::get_if<std::string>(&value)) {
+        std::cout << "String value: " << *strPtr << std::endl;
+    } else {
+        std::cout << "Value is not a string\n";
+    }
+
+    if (holds_alternative<int>(v))
+        cout << "int: " << get<int>(v) << "\n";
+}
+
+6) clamp
+std::clamp is a C++17 function that restricts a value to lie within a given range.
+If the value is less than the minimum, it returns the minimum.
+If the value is greater than the maximum, it returns the maximum.
+Otherwise, it returns the value itself.
+
+#include <iostream>
+#include <algorithm> // for std::clamp
+
+int main() {
+    int value = 30;
+    int minVal = 10;
+    int maxVal = 20;
+
+    int clamped = std::clamp(value, minVal, maxVal);
+    std::cout << "Clamped value: " << clamped << std::endl; // 20
+
+    value = 5;
+    clamped = std::clamp(value, minVal, maxVal);
+    std::cout << "Clamped value: " << clamped << std::endl; // 10
+
+    value = 15;
+    clamped = std::clamp(value, minVal, maxVal);
+    std::cout << "Clamped value: " << clamped << std::endl; // 15
+}
+
+7) if constexpr
+if constexpr is a compile-time conditional statement that allows the compiler to evaluate a condition at compile time and discard the unused branch completely.
+
+Normal If:
+Both branches must be valid at compile time, even if one branch is never executed. This can lead to compilation errors if the unused branch contains code that is not valid for the given template parameters.
+
+if constexpr:
+The compiler evaluates the condition at compile time and only compiles the branch that is true. The unused branch is discarded and does not need to be valid for the given template parameters, allowing for more flexible and error-free code.
+
+"*if constexpr is particularly useful in template metaprogramming, where you may want to write code that behaves differently based on the properties of the template parameters (e.g., whether a type is integral or not) without causing compilation errors for unsupported types."
+
+Before C++17, you would need to use SFINAE or tag dispatching to achieve similar behavior, which can be more complex and less readable than using if constexpr.
+
+typename enable_if<is_integral<T>::value>::type is a SFINAE trick: it enables the template only if T is an integral type. If T is not integral, the template is removed from overload resolution at compile time.
+
+#include <iostream>
+#include <type_traits> // for std::is_integral
+using namespace std;
+
+// Enabled only if T is integral
+template<typename T>
+typename enable_if<is_integral<T>::value>::type
+print(T value) {
+    cout << "Integral: " << value << endl;
+}
+
+// Enabled only if T is NOT integral
+template<typename T>
+typename enable_if<!is_integral<T>::value>::type
+print(T value) {
+    cout << "Not integral\n";
+}
+
+int main() {
+    print(10);      // Integral
+    print(3.14);    // Not integral
+}
 
 
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+template<typename T>
+void print(T value) {
+    if constexpr (std::is_integral<T>::value) {
+        cout << "Integral: " << value << endl;
+    } else {
+        cout << "Not integral\n";
+    }
+}
+
+int main() {
+    print(10);      // Integral
+    print(3.14);    // Not integral
+}
 
 
+8) Inline Variables
+1) Inline variables allow you to define a variable in a header file without violating the One Definition Rule (ODR). This means you can declare and initialize a variable in a header file, and it will be treated as a single instance across all translation units that include that header.
+
+// header.h
+int counter = 0;  // ❌ This violates ODR
+
+Eg:
+// header.h
+#ifndef HEADER_H
+#define HEADER_H
+inline int counter = 0; // Inline variable
+#endif
+
+// main.cpp 
+#include "header.h"
+#include <iostream>
+int main() {
+    std::cout << counter << std::endl; // Access the inline variable
+    counter++; // Modify the inline variable
+    std::cout << counter << std::endl; // Access the modified value
+    return 0;
+}
+
+2) "Removes the need for separate .cpp definitions for static members"
+Static variable inside class is not possible in C++11/14
+because static members require a single definition across all translation units, and defining them inside the class would lead to multiple definitions if the header is included in multiple source files.
+
+C++17 allows inline static members, which means you can define and initialize static members directly inside the class definition without needing a separate definition in a source file. This simplifies code and reduces boilerplate.
+
+inline ensures:
+Only one copy exists across all translation units
+
+class MyClass {
+public:
+    inline static int counter = 0;   
+};
+
+52) How delete and delete[] works ?
+Base* obj = new Base();
+"delete obj;"
+
+Internally, delete does roughly three things:
+So delete is essentially:
+if (obj != nullptr) {
+    obj->~Base();          // call destructor
+    ::operator delete(obj); // free memory
+}
+
+1) Check for null:
+delete first checks if the pointer is nullptr. If it is, it does nothing.
+
+2) Call the destructor:
+It calls the destructor of the object (obj->~Base()), cleaning up resources the object may hold.
+
+3) Free memory:
+It calls the memory deallocation function associated with operator delete (by default, this is usually ::operator delete(void*)), which releases the memory back to the heap.
+
+2. delete[] (for arrays)
+if (arr != nullptr) {
+    size_t n = *(size_t*)(arr - sizeof(size_t));   // hidden element count
+    for (int i = n-1; i >= 0; --i)
+        arr[i].~Base();                            // destruct each object
+    ::operator delete[](arr);                      // free memory
+}
+
+Track the number of elements:
+When you do new Base[5], the runtime usually stores the number of elements somewhere just before the array’s memory block. This is hidden from the programmer.
+
+Call destructors for each element:
+
+delete[] loops over all elements and calls each destructor in reverse order:
+for (int i = n-1; i >= 0; --i)
+    arr[i].~Base();
+
+Free memory:
+After destructors are done, it calls ::operator delete[] to release the memory.
+
+By destroying in reverse order, C++ ensures that:
+The last-constructed object is destroyed first.
+Dependencies (objects constructed earlier) are still valid when later objects are destroyed.
+
+allocate memory for: sizeof(size_t) + n * sizeof(Base)
+store n in the first sizeof(size_t) bytes
+return pointer to memory AFTER the stored n
+construct n objects 
+
+move pointer backward
+read hidden n
+call n destructors (reverse order)
+free full memory block program
 
 
+// 1️⃣ Allocate memory: sizeof(size_t) + n * sizeof(Base)
+size_t totalSize = sizeof(size_t) + n * sizeof(Base);
+char* rawMemory = (char*) operator new(totalSize);
 
+// 2️⃣ Store n in first sizeof(size_t) bytes
+*(size_t*)rawMemory = n;
 
+// 3️⃣ Return pointer AFTER stored n
+Base* arr = (Base*)(rawMemory + sizeof(size_t));
 
+// 4️⃣ Construct n objects using placement new
+for (size_t i = 0; i < n; ++i) {
+    new (arr + i) Base(); // construct Base object at (arr+i)
+}
 
+cout << "Destroying objects...\n";
 
+// 5️⃣ Move pointer backward to read hidden n
+char* originalMemory = (char*)arr - sizeof(size_t);
+size_t storedN = *(size_t*)originalMemory;
 
+// 6️⃣ Call destructors in reverse order
+for (size_t i = storedN; i > 0; --i) {
+    (arr + (i - 1))->~Base();
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 7️⃣ Free full memory block
+operator delete(originalMemory);
 
 
 C++ makes a special exception for this case:
@@ -2638,5 +3506,4 @@ Consider the following example:
 Ownership transferred:
  a.ptr = nullptr
  b.ptr = resource
-
 
