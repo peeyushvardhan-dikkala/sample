@@ -3468,6 +3468,40 @@ for (size_t i = storedN; i > 0; --i) {
 // 7️⃣ Free full memory block
 operator delete(originalMemory);
 
+new vs operator new vs placement new:
+new is a C++ keyword used to dynamically allocate memory on the heap and automatically call the constructor to initialize the object.
+It returns a typed pointer.
+
+int* p = new int(10);
+
+Internally, new performs roughly:
+Calls operator new to allocate memory.
+Calls the constructor on that memory.
+
+==> operator new:
+operator new is a function that only allocates raw memory and returns a pointer to that memory without calling any constructor.
+Memory is allocated.
+No object is constructed.
+
+It returns *raw memory (void)**.
+It can be overloaded for custom memory allocation.
+
+void* operator new(size_t size) {
+    std::cout << "Custom allocation\n";
+    return malloc(size);
+}
+
+===> placement new
+Placement new is a special form of new that constructs an object at a specific memory location that has already been allocated.
+It does not allocate memory.
+It only calls the constructor at a given address.
+
+char buffer[sizeof(int)];
+int* p = new(buffer) int(5);
+
+which can reduce allocation overhead when using memory pools instead of repeatedly allocating memory from the heap.
+
+
 
 C++ makes a special exception for this case:
 You can bind a "const &" to a temporary (rvalue) which means you cannot modify the temporary through that reference.
