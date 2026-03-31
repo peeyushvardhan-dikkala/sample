@@ -1644,9 +1644,6 @@ std::shared_ptr<MyClass> sptr = std::allocate_shared<MyClass>(myAllocator, const
 myAllocator is a custom allocator that defines how memory for MyClass should be allocated and deallocated.
 
 
-
-
-
 weak_ptr.expired() → checks strong_count inside the control block(i.e strong_count == 0) to see if the managed object has been deleted.
 weak_ptr.lock() → creates a new shared_ptr only if strong_count > 0, safely incrementing it.
 
@@ -1668,10 +1665,26 @@ Each destruction decreases the reference count by 1.
 
 If destruction happened in the same order as creation, later variables that depend on earlier ones could access already-destroyed objects, causing serious runtime bugs.
 
+Multiple components, such as a logging service, a network handler, and a cache updater, can share the same database connection using shared_ptr.
+Each component holds a shared_ptr to the database connection, ensuring that the connection remains alive until the last component is done using it. This prevents issues like dangling pointers or crashes that could happen if the object were deleted too early with raw pointers.
+
+At the same time, the database can hold weak_ptrs to cached objects, allowing it to access them without owning them and without preventing their cleanup when they are no longer needed.
+
+auto dbConn = std::make_shared<DatabaseConnection>("db_url");
+
+auto service1 = ServiceA(dbConn);
+auto service2 = ServiceB(dbConn);
+
+// dbConn is automatically closed when last shared_ptr goes out of scope
+
 3) std::weak_ptr:
-A `std::weak_ptr` is a smart pointer in C++ that provides a non-owning reference to an object managed by a `std::shared_ptr`. It allows you to observe or access the object without affecting its lifetime, preventing circular references that can lead to memory leaks.
+A `std::weak_ptr` is a smart pointer that observes an object managed by std::shared_ptr without affecting its lifetime, preventing circular references that can lead to memory leaks.
+
+When two objects own each other via std::shared_ptr, their reference counts never reach zero, so the memory is never freed.
 
 Breaking circular references: In cases where two or more shared_ptrs refer to each other, using std::weak_ptr for one of the references prevents a memory leak.
+
+reference= a std::shared_ptr that points to another object
 
 Can be converted to shared_ptr: You can convert a std::weak_ptr to a std::shared_ptr by calling the lock() function. This creates a temporary shared_ptr if the object still exists, or returns an empty shared_ptr if the object has already been destroyed.
 
@@ -1712,6 +1725,8 @@ a goes out of scope → shared_ptr<A> destructor runs → A strong count goes fr
 As A strong count is 1 because B.aptr is a weak_ptr — it does not contribute to the strong count.
 when A is destroyed → its member bptr (shared_ptr<B>) is destroyed → bptr destructor executes --> decreases B strong count from 1 → 0.
 since B strong count became 0 → B is destroyed.
+
+This is a resource caching system where shared_ptr manages ownership and weak_ptr is used in the cache to avoid extending the lifetime. When a resource is requested, we try to lock the weak pointer. If it exists, we reuse it; otherwise, we create a new one. This ensures both efficient reuse and automatic memory cleanup
 
 
 40) Static Members:
@@ -2396,8 +2411,8 @@ int main() {
 }
 
 
-47) Design Patterns:
-Design patterns are reusable solutions to common software design problems. They provide a template for how to solve a problem in a way that has been proven to be effective and efficient.
+47) Design Pattern:
+Design patterns are reusable solutions to a commmon software design problems. They provide a template to solve a problem in a way that is proven to be effective and reusable.
 
 Design patterns are categorized into Creational (object creation), Structural (object composition), and Behavioral (object interaction) patterns.
 
@@ -2405,7 +2420,7 @@ Creational Patterns
 Purpose: Deal with object creation mechanisms, trying to create objects in a manner suitable to the situation.
 
 Structural Patterns
-Purpose: Deal with object composition or structure, helping create relationships between objects.
+Purpose: Deal with how classes and objects are composed or organized to form larger structures
 
 Behavioral Patterns
 Purpose: Deal with object interaction and responsibility delegation.
@@ -2415,9 +2430,16 @@ Purpose: Deal with object interaction and responsibility delegation.
 3) Observer Pattern
 4) Strategy Pattern
 
-1)Factory Pattern:
-The Factory Pattern is a creational design pattern that provides an interface for creating objects without exposing the exact class being instantiated, while allowing subclasses or a factory class to decide which concrete object to create
+1) Factory Pattern:
+The Factory Pattern is a creational design pattern that provides an interface for creating objects without exposing the exact class being instantiated, while allowing subclasses or a factory class to decide which concrete object to create.
+It promotes loose coupling.
 loose coupling means that components are independent and can be modified or replaced without affecting other parts of the system.
+
+Loose coupling is a design principle where classes are independent on each other's implementation and depend on abstractions instead of concrete classes. This reduces dependency, making the system more flexible and easier to maintain.
+For example, if a Car depends on an Engine interface instead of a specific engine type, we can switch implementations like PetrolEngine or ElectricEngine without modifying the Car class.
+
+Tight coupling is a design principle where classes are highly dependent on each other's implementation. This makes the system rigid, because any change in one class can affect other classes that depend on it. 
+For example, if a Car class directly uses a specific Engine class, changing the Engine would require changes in the Car class, leading to maintenance issues.
 
 It encapsulates the object creation process, promoting loose coupling and enhancing code maintainability.
 
@@ -2473,26 +2495,116 @@ int main() {
 }
 
 Use Abstract Factory Pattern when:
+The Abstract Factory Pattern is a creational design pattern that provides an interface for creating families of related objects without specifying their concrete classes.
 when creating multiple related objects that must work together without exposing their concrete classes.
 
+#include <iostream>
+using namespace std;
+
+// Abstract Products
+class Button {
+public:
+    virtual void paint() = 0;
+    virtual ~Button() {}
+};
+
+class Checkbox {
+public:
+    virtual void paint() = 0;
+    virtual ~Checkbox() {}
+};
+
+// Concrete Products - Windows
+class WindowsButton : public Button {
+public:
+    void paint() override { cout << "Windows Button rendered\n"; }
+};
+
+class WindowsCheckbox : public Checkbox {
+public:
+    void paint() override { cout << "Windows Checkbox rendered\n"; }
+};
+
+// Concrete Products - Mac
+class MacButton : public Button {
+public:
+    void paint() override { cout << "Mac Button rendered\n"; }
+};
+
+class MacCheckbox : public Checkbox {
+public:
+    void paint() override { cout << "Mac Checkbox rendered\n"; }
+};
+
+// Abstract Factory
+class GUIFactory {
+public:
+    virtual Button* createButton() = 0;
+    virtual Checkbox* createCheckbox() = 0;
+    virtual ~GUIFactory() {}
+};
+
+// Concrete Factories
+class WindowsFactory : public GUIFactory {
+public:
+    Button* createButton() override { return new WindowsButton(); }
+    Checkbox* createCheckbox() override { return new WindowsCheckbox(); }
+};
+
+class MacFactory : public GUIFactory {
+public:
+    Button* createButton() override { return new MacButton(); }
+    Checkbox* createCheckbox() override { return new MacCheckbox(); }
+};
+
+// Client Code
+int main() {
+    GUIFactory* factory;
+    string os;
+
+    cout << "Enter OS (Windows/Mac): ";
+    cin >> os;
+
+    if (os == "Windows")
+        factory = new WindowsFactory();
+    else
+        factory = new MacFactory();
+
+    // Abstract Factory usage
+    Button* btn = factory->createButton();     // Create Button
+    Checkbox* cb = factory->createCheckbox();  // Create Checkbox
+
+    btn->paint();
+    cb->paint();
+
+    // Clean up
+    delete btn;
+    delete cb;
+    delete factory;
+
+    return 0;
+}
+
 2) Singleton Pattern:
-The Singleton Pattern is a creational design pattern that ensures a class has only one instance and provides a global point of access to that instance.
-It is useful when exactly one object is needed to coordinate actions across the system, such as in logging, configuration management.
+The Singleton Pattern is a creational design pattern that ensures a class has only one instance and provides a global access point to that instance.
+It is used when exactly one instance of a class is required to coordinate actions across the system, such as in logging, configuration management.
 
 Private constructor → "prevents external instantiation"
-Deleted copy & assignment → "prevents copying or assigning the singleton instance"
+Deleted copy constructor & copy assignment operator → "prevents copying or assigning the singleton instance"
 Static getInstance() → "To access the single shared instance of the class without creating an object"
-Static local variable → "To store single shared instance of a class"
+Static local variable → "To store single shared instance of a class and ensures it is created only once."
 
 If multiple threads call getInstance() at the same time:
 One thread performs the initialization  
 Other threads wait until it finishes
 After initialization, every thread uses the same instance
 
-Thread-safe mwans that multiple threads can access the singleton instance without causing data corruption.
+Thread-safe means that multiple threads can access the singleton instance without causing data corruption.
 Lazy initialization in Singleton means the single instance is created only when it is first accessed, not at program startup, saving resources and improving efficiency.
 
 Single Instance → ensures only one logger writes to file
+
+The Singleton pattern is a creational design pattern that ensures a class has only one instance and provides a global access point to it. It is useful when a single shared object is needed to coordinate actions across the system, such as in logging, configuration management, or managing shared resources. It is implemented by making the constructor private, which prevents external instantiation; deleting the copy constructor and assignment operator to prevent copying or assigning the singleton instance; and providing a static getInstance() method, which is used for global access to the single shared instance without creating the object. We define a static local variable inside static getInstance() method to store the singleton instance, ensuring it is created only once and shared across all calls. This approach guarantees a single, globally accessible object while maintaining control over its creation and usage.
 
 Eg:
 #include <iostream>
@@ -2543,186 +2655,93 @@ int main() {
 }
 
 3) Observer Pattern:
-The Observer Pattern is a behavioral design pattern that allowing one object (the subject) to notify multiple dependent objects (observers) about state changes.The Subject doesn't need to know the details of the Observers — it just tells them something changed, and the Observers handle it themselves.
-It promotes loose coupling between the subject and observers, enabling dynamic addition and removal of observers at runtime
+The Observer Pattern is a behavioral design pattern that allows an object (subject) to notify multiple dependent objects (observers) about state changes (i.e., state means data) without being tightly coupled to their concrete classes
 
-Eg:
-#include <iostream>
-#include <list>
-#include <string>
-
-using namespace std;
-// Observer interface
-class ISubscriber {
-public:
-    virtual void notify(string msg) = 0;
-    virtual ~ISubscriber() {}
-};
-
-// Concrete Observer
-class User : public ISubscriber {
-private:
-    int userId;
-
-public:
-    User(int userId) {
-        this->userId = userId;
-    }
-
-    void notify(string msg) override {
-        cout << "User " << userId << " received message: " << msg << endl;
-    }
-};
-
-// Subject
-class Group {
-private:
-    list<ISubscriber*> users;
-
-public:
-    void subscribe(ISubscriber* user) {
-        users.push_back(user);
-    }
-
-    void unsubscribe(ISubscriber* user) {
-        users.remove(user);
-    }
-
-    void notify(string msg) {
-        for (auto user : users) {
-            user->notify(msg);
-        }
-    }
-};
-
-int main() {
-    Group* group = new Group();
-
-    User* user1 = new User(1);
-    User* user2 = new User(2);
-    User* user3 = new User(3);
-
-    group->subscribe(user1);
-    group->subscribe(user2);
-    group->subscribe(user3);
-
-    group->notify("Hello Observers!");
-
-    group->unsubscribe(user2);
-
-    cout << "\nAfter unsubscribing User 2:\n";
-    group->notify("New update available!");
-
-    // cleanup
-    delete user1;
-    delete user2;
-    delete user3;
-    delete group;
-
-    return 0;
-}
 #include <iostream>
 #include <vector>
-#include <memory>
+#include <string>
 #include <algorithm>
+using namespace std;
 
-// ======================
 // Observer Interface
-// ======================
-class Subscriber {
+class Observer {
 public:
-    virtual ~Subscriber() = default;
-    virtual void update(const std::string& videoTitle) = 0;
+    virtual void update(const string& str) = 0;
+    virtual ~Observer() {}
 };
 
-// ======================
-// Subject (YouTube Channel)
-// ======================
-class YouTubeChannel {
-private:
-    std::vector<std::weak_ptr<Subscriber>> subscribers;
-    std::string latestVideo;
-
+// Concrete Observer
+class ConcreteObserver : public Observer {
 public:
-    void subscribe(const std::shared_ptr<Subscriber>& sub) {
-        subscribers.push_back(sub);
+    string observerName;
+
+    ConcreteObserver(const string& name) : observerName(name) {}
+
+    void update(const string& str) override {
+        cout << observerName << " received message: " << str << endl;
+    }
+};
+
+// Subject Interface
+class Subject {
+public:
+    virtual void attach(Observer* observer) = 0;
+    virtual void detach(Observer* observer) = 0;
+    virtual void notify() = 0;
+    virtual ~Subject() {}
+};
+
+// Concrete Subject
+class ConcreteSubject : public Subject {
+public:
+    string name;
+    vector<Observer*> observers;
+
+    void attach(Observer* observer) override {
+        observers.push_back(observer);
     }
 
-    void unsubscribe(const std::shared_ptr<Subscriber>& sub) {
-        subscribers.erase(
-            std::remove_if(subscribers.begin(), subscribers.end(),
-                [&](const std::weak_ptr<Subscriber>& wp) {
-                    return wp.lock() == sub;
-                }),
-            subscribers.end()
-        );
+    void detach(Observer* observer) override {
+        observers.erase(remove(observers.begin(), observers.end(), observer), observers.end());
+        cout << "Observer removed" << endl;
     }
 
-    void uploadVideo(const std::string& title) {
-        latestVideo = title;
-        std::cout << "\n📢 Channel uploaded: " << latestVideo << "\n";
-        notify();
-    }
-
-private:
-    void notify() {
-        for (auto it = subscribers.begin(); it != subscribers.end();) {
-            if (auto sub = it->lock()) {
-                sub->update(latestVideo);
-                ++it;
-            } else {
-                // Remove expired subscribers
-                it = subscribers.erase(it);
-            }
+    void notify() override {
+        for (auto* obj : observers) {
+            obj->update(name);
         }
     }
-};
 
-// ======================
-// Concrete Observer
-// ======================
-class User : public Subscriber {
-private:
-    std::string name;
-
-public:
-    User(const std::string& n) : name(n) {}
-
-    void update(const std::string& videoTitle) override {
-        std::cout << name 
-                  << " received notification: New video - " 
-                  << videoTitle << std::endl;
+    void setState(const string& name) {
+        this->name = name;
+        notify(); // notify all observers
     }
 };
 
-// ======================
-// Main Function
-// ======================
+// Client
 int main() {
-    auto channel = std::make_shared<YouTubeChannel>();
+    ConcreteSubject sub;
 
-    auto alice = std::make_shared<User>("Alice");
-    auto bob   = std::make_shared<User>("Bob");
-    auto charlie = std::make_shared<User>("Charlie");
+    ConcreteObserver obs1("Observer1");
+    ConcreteObserver obs2("Observer2");
+    ConcreteObserver obs3("Observer3");
 
-    // Users subscribe
-    channel->subscribe(alice);
-    channel->subscribe(bob);
-    channel->subscribe(charlie);
+    sub.attach(&obs1);
+    sub.attach(&obs2);
+    sub.attach(&obs3);
 
-    // First upload
-    channel->uploadVideo("Observer Pattern Explained");
+    cout << "First update:" << endl;
+    sub.setState("Hello I am Peeyush");
 
-    // Bob unsubscribes
-    std::cout << "\n❌ Bob unsubscribed\n";
-    channel->unsubscribe(bob);
+    cout << "\nDetaching Observer2..." << endl;
+    sub.detach(&obs2);
 
-    // Second upload
-    channel->uploadVideo("Modern C++ Smart Pointers");
+    cout << "\nSecond update:" << endl;
+    sub.setState("Hello I am Peeyush Vardhan");
 
     return 0;
-
 }
+
 
 48) Forwarding References:
 A forwarding reference is a special type of reference that can refer to both lvalues and rvalues. It is used in template functions to perfectly forward arguments while preserving their original value type(lvalue or rvalue) using reference collapsing rules.
@@ -2863,7 +2882,7 @@ Base* b= new Derived(); // No slicing, b points to the full Derived object
 Derived d;
 Base b = d; // Slicing occurs, only the Base part of d is copied to b
 
-52) C++11/14/17/20/23 Features:
+52) C++11/14/17 Features:
 C++11:
 1) Auto type deduction
 auto x = 10; // x is deduced as int
@@ -3384,7 +3403,7 @@ public:
     inline static int counter = 0;   
 };
 
-52) How delete and delete[] works ?
+51) How delete and delete[] works ?
 Base* obj = new Base();
 "delete obj;"
 
@@ -3394,6 +3413,10 @@ if (obj != nullptr) {
     obj->~Base();          // call destructor
     ::operator delete(obj); // free memory
 }
+
+new[] keeps the array size internally, so delete[] can call all destructors and free memory correctly
+
+new[] allocates a contiguous memory block along with array size. The pointer returned points to the first element, not the metadata. When delete[] is called, it uses this array size to determine how many destructors to invoke and then correctly frees the entire allocation.
 
 1) Check for null:
 delete first checks if the pointer is nullptr. If it is, it does nothing.
@@ -3501,7 +3524,124 @@ int* p = new(buffer) int(5);
 
 which can reduce allocation overhead when using memory pools instead of repeatedly allocating memory from the heap.
 
+52) GDB:
+GDB is a debugging tool that helps analyze program execution by allowing breakpoints, step-by-step execution, and runtime variable inspection to identify bugs in C/C++ programs.
 
+g++ -g program.cpp -o program
+
+| Command          | Purpose                                               |
+| ---------------- | ----------------------------------------------------- |
+| `run`            | Start program                                         |
+| `start`          | Start program and stop at `main`                      |
+| `continue` (`c`) | Resume execution after breakpoint                     |
+| `next` (`n`)     | Step **over** to next line (does not enter functions) |
+| `step` (`s`)     | Step **into** functions                               |
+| `finish`         | Run until current function returns                    |
+| `kill`           | Stop the program                                      |
+
+| Command                          | Purpose                             |
+| -------------------------------- | ----------------------------------- |
+| `break <line/function>` (`b`)    | Set breakpoint                      |
+| `delete <num>`                   | Delete specific breakpoint          |
+| `disable <num>` / `enable <num>` | Temporarily turn off/on breakpoints |
+| `info breakpoints`               | List all breakpoints                |
+| `watch <var>`                    | Stop when variable changes          |
+| `save breakpoints <file>`        | Save all breakpoints                |
+| `source <file>`                  | Load commands/breakpoints from file |
+| `clear <line/function>`          | Remove breakpoint at line/function  |
+
+| Command             | Purpose                                   |
+| ------------------- | ----------------------------------------- |
+| `print <var>` (`p`) | Print value of variable                   |
+| `info locals`       | Show all local variables in current scope |
+| `info args`         | Show function arguments                   |
+| `ptype <var>`       | Show type of variable or expression       |
+| `display <var>`     | Automatically show value after each step  |
+| 'undisplay <var>'   | Disable display for var                   |
+| 'undisplay'         | Disable display for all variables         |
+
+| Command                       | Purpose                         |
+| ----------------------------- | ------------------------------- |
+| `set logging on`              | Save output to `gdb.txt`        |
+| `set logging off`             | Stop logging                    |
+| `set logging file <filename>` | Change log file name            |
+| `set logging redirect on`     | Only save to file, not terminal |
+| 'set print pretty on'         | Nicely format output            |
+|  set print object on          | Print C++ objects dynamically (for polymorphism) |
+
+| Command                   | Purpose                        |
+| ------------------        | ------------------------------ |
+| `backtrace` (`bt/bt full`) | Show call stack                |
+| `frame <num>`             | Switch to specific stack frame  |
+| `info frame`              | Show details of current frame  |
+|  info stack               | Shows frames with arguments and line numbers|
+
+Ctrl + X A --> Toggle TUI on/off
+
+tui enable --> This switches GDB into TUI mode.
+
+gdb program --tui --> Terminal (Source + Command window)
+
+Best .gdbinit settings for easier navigation
+
+For Running Process:
+ps -ef | grep program_name
+gdb -p 2345 or attach 2345
+(gdb) continue
+(gdb) bt
+
+When a program crashes with SIGSEGV, GDB stops execution before termination so we can inspect the stack using bt. If the system reboots or the process dies, we enable core dumps and analyze the generated core file using GDB.
+
+52) Valgrind:
+Valgrind is a dynamic analysis tool used to detect memory-related errors in C/C++ programs, such as memory leaks, invalid memory access, and use of uninitialized memory.
+
+What Valgrind Detects:
+Memory leaks
+Invalid read/write
+Use after free
+Uninitialized memory
+Double free
+Heap corruption
+
+valgrind --tool=helgrind ./deadlock_example
+
+valgrind --tool-memcheck --leak-check=full --trace-children-yes --num-callers-50--show-reachable=yes --log-file=VG.log --demangle=yes --error-limit=no -v./a.out
+
+--tool=memcheck
+→ Uses the memory-checking tool.
+
+--leak-check=full
+→ Shows detailed info about each memory leak.
+
+--trace-children=yes
+→ Also checks child processes created by your program.
+
+--num-callers=50
+→ Displays up to 50 stack frames (very detailed debugging).
+
+--show-reachable=yes
+→ Reports memory that is still reachable (not necessarily a leak).
+
+--log-file=VG.log
+→ Saves output to VG.log instead of terminal.
+
+--demangle=yes
+→ Makes C++ function names readable.
+
+--error-limit=no
+→ Shows all errors (no cutoff).
+
+./a.out
+→ Your compiled program.
+
+Massif:
+Profile heap memory usage over time
+
+valgrind --tool=massif \
+--massif-out-file=massif.log \
+--time-unit=B \
+--detailed-freq=10 \
+./massif_example
 
 C++ makes a special exception for this case:
 You can bind a "const &" to a temporary (rvalue) which means you cannot modify the temporary through that reference.
