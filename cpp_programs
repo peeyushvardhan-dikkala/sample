@@ -759,13 +759,15 @@ public:
     }
 
     void release() {
-        if (count) {
-            --(*count);
-            if (*count == 0) {
-                delete ptr;
-                delete count;
-            }
+        if (!count) return; // Early exit
+
+        --(*count);
+    
+        if (*count == 0) {
+            delete ptr;
+            delete count; 
         }
+        // Detach THIS instance from shared state
         ptr = nullptr;
         count = nullptr;
     }
@@ -777,6 +779,21 @@ public:
 
     bool unique() const { return use_count() == 1; }
     bool empty() const { return ptr == nullptr; }
+
+    void reset(T* p = nullptr) {
+        if (ptr != p) {
+            release();
+    
+            if (p) {
+                ptr = p;
+                count = new int(1);
+            }
+        }
+    }
+
+    explicit operator bool() const {
+        return ptr != nullptr;
+    }
 };
 
 // Example class
