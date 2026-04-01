@@ -767,6 +767,9 @@ public:
             delete ptr;
             delete count; 
         }
+        // delete ptr Frees the memory the pointer points to.
+        // The pointer still holds the old memory address, but that memory is now invalid.
+        // This is called a dangling pointer. But assigning ptr = nullptr after deletion makes the pointer safe to check because it clearly indicates that this                 pointer no longer owns any resource
         // Detach THIS instance from shared state
         ptr = nullptr;
         count = nullptr;
