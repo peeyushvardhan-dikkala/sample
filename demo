@@ -164,6 +164,15 @@ int* ip = &x;
 // reinterpret int* as char*
 char* cp = reinterpret_cast<char*>(ip);
 
+int x = 10;
+int* p = &x;
+
+// pointer → integer
+uintptr_t addr = reinterpret_cast<uintptr_t>(p);
+
+// integer → pointer
+int* p2 = reinterpret_cast<int*>(addr);
+
 Rule Of Three:
 If a class manages resources and defines any one of the following: a destructor, a copy constructor, or a copy assignment operator, it should explicitly define all three to ensure proper resource cleanup to avoid issues like memory leaks or double deletion and safe copying.
 
@@ -181,11 +190,33 @@ If a class manages resources (like dynamic memory, file handles, etc.) and defin
 Rule of Zero:
 The Rule of Zero states that a class should avoid defining destructor, copy/move constructors, or assignment operators, and instead rely on standard library types to manage resources automatically like smart pointers or containers.
 
-int x = 10;
-int* p = &x;
 
-// pointer → integer
-uintptr_t addr = reinterpret_cast<uintptr_t>(p);
+Storage Class Specifiers:
+A storage specifier defines the lifetime (duration), scope (visibility) of a variable or function - basically, how long it exists, and where it can be accessed.
 
-// integer → pointer
-int* p2 = reinterpret_cast<int*>(addr);
+Scope: Defines where a variable or function can be accessed in the code.
+Lifetime: Defines how long a variable exists in memory during program execution.
+Linkage: Defines whether a variable or function can be referred to from other files (shared across translation units).
+
+Types of Storage Specifiers:
+1) auto: The auto storage specifier is used to automatically deduce the type of a variable at compile time (modern C++ usage).
+Scope --> Local to Block
+Lifetime --> Automatic (until block ends)
+
+2) register: The register specifier suggests that the variable be stored in a CPU register for faster access (largely deprecated in modern C++).
+Scope --> Local to Block
+Lifetime --> Automatic (until block ends)
+
+3) static: The static specifier makes a variable retain its value between function calls and limits its scope to the file or function where it is declared.
+Scope -->  Local: within block; Global: within file
+Lifetime --> Entire Program
+
+4) extern: The extern specifier is used to declare a variable or function that is defined in another file, enabling linkage across multiple files.
+Scope -->  Local: within block; Global: within file
+Lifetime --> Entire Program
+
+5) mutable: The mutable specifier allows a member of a class to be modified even if it is declared inside a const object.
+Scope --> Class member
+Lifetime -->  Depends on the object
+
+You have a configuration object that should not be modified, but you want to count how many times its settings are viewed.
