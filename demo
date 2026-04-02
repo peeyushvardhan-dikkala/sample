@@ -1,0 +1,174 @@
+Explicit Constructor & Implicit Conversion
+
+An explicit constructor is a constructor declared with the explicit keyword that prevents implicit type conversions. It stops the compiler from automatically converting one type to another when creating objects or passing arguments.
+
+If a constructor takes a single parameter, the compiler can implicitly convert a matching value (like int) into an object of that class by calling the constructor automatically behind the scenes.
+
+Implicit conversions can create temporary objects. These temporary objects may share the same resource (e.g., the same pointer), so both the temporary and original object may try to delete the same resource, causing double deletion and undefined behavior.
+
+Implicit conversion is dangerous because it allows the compiler to automatically convert types without the programmer’s awareness, which can lead to unexpected behavior and hard-to-find bugs.
+
+Initializer List
+
+An initializer list is used to initialize class member variables directly at the time of object creation before the constructor body executes.
+
+Abstract Class
+
+An abstract class is a class that cannot be instantiated and typically contains at least one pure virtual function. It acts as a base class and provides a common interface for derived classes.
+
+Pure Virtual Destructor
+
+A pure virtual destructor is a destructor in a base class that is declared as pure virtual, making the class abstract. It forces the derived classes to implement their own destructors while still providing the base class destructor implementation.
+
+Virtual Function
+
+A virtual function is a member function declared with the virtual keyword in a base class that is meant to be overridden in a derived class and ensures the correct function is called at runtime based on the actual type of the object rather than type of pointer or reference.
+
+Diamond Hierarchy
+
+A diamond hierarchy occurs when two derived classes inherit from the same base class, and another class inherits from both of them, creating a diamond-shaped inheritance structure.
+
+It leads to potential issue like most derived class may end up with multiple copies of the same base-class subobject causing ambiguity and duplication.
+
+Virtual Inheritance
+
+Virtual inheritance ensures that only one shared instance of the base class exists in the final derived class, preventing multiple copies of the base class in a diamond hierarchy.
+
+It is possible because the compiler creates a single shared base class subobject in the most derived class, while the intermediate classes contain a virtual base pointer (vbptr) that points to a virtual base table (vbtable), which stores the offset used to access that shared base class subobject.
+
+Offset is the distance in memory (in bytes) from the start of a derived class object to the shared base object.
+
+Each class that virtually inherits a base class contains a vbptr.
+
+It is a pointer stored inside the object that points to the vbtable.
+
+vbtable is a compiler-generated table that contains offsets to reach virtual base classes.
+
+Polymorphism
+
+Polymorphism is the ability of a function, object, or operator to behave differently based on the type of data or object.
+
+Compile-Time Polymorphism
+
+Compile-time polymorphism is a type of polymorphism where the function call is resolved during compilation based on the function signature. It is achieved using function overloading, operator overloading, and templates.
+
+Function Overloading
+
+Function overloading is a feature where multiple functions can have the same name but different parameter lists (type, number, or order), and the compiler decides which function to call at compile time.
+
+Operator Overloading
+
+Operator overloading is a feature that allows operators to be redefined so they can work with user-defined data types (objects).
+
+Templates
+
+A template is a blueprint that allows you to write generic code that works with different data types without rewriting the same code.
+
+Function Template, Class Template.
+
+Template is only a blueprint, not actual executable code, so templates are usually defined in header files because the compiler needs the full template definition at the point where it is used in order to instantiate it and generate the required object code. If the definition is not visible, the compiler cannot generate the code, which leads to linker errors.
+
+Template Specialization
+
+Full specialization means defining a completely separate implementation of a template for a specific data type.
+
+Partial specialization means customizing a template for a group of types rather than one specific type.
+
+Mostly used with template classes (not function templates).
+
+As function templates rely on function overloading rules for choosing the best match, allowing partial specialization would lead to ambiguity.
+
+Runtime Polymorphism
+
+Runtime polymorphism allows a function to behave differently based on the actual object type at runtime, rather than on the type of pointer or reference at compile time.
+
+It is achieved through inheritance, virtual functions, and base-class pointers or references.
+
+vtable
+
+A vtable is a table created by the compiler for a class with virtual functions. It stores addresses of the virtual functions of that class.
+
+It is created once per class.
+
+vptr
+
+A vptr is a hidden pointer in each object of a class with virtual functions. It points to the vtable of its class.
+
+When a class declares virtual functions, the compiler generates a vtable (virtual table) for that class, which stores pointers to its virtual functions. Each object of such a class contains a hidden vptr (virtual pointer) that points to the class’s vtable.
+
+The vptr is initialized during object construction. For a base class, its constructor sets the vptr to the base class’s vtable. If the object is of a derived class, the derived class constructor updates the vptr to point to the derived class’s vtable.
+
+When a virtual function is invoked through a base class pointer or reference, the call is resolved at runtime by following the vptr to the vtable and selecting the correct function.
+
+Constructors vs Destructors (Virtual Behavior)
+
+Constructors cannot be virtual because virtual dispatch requires a fully constructed object. During construction, the object is still incomplete and the vptr is being initialized. Since the vptr is not yet correctly set, runtime polymorphism cannot take place.
+
+Destructors can be virtual because at destruction time the object is fully constructed and the vptr is valid. It makes sure the right destructor runs when deleting through a base pointer. Hence, virtual destructors ensure proper cleanup.
+
+
+Type Casting:
+It is the process of converting a value from one data type to another data type. C++ supports implicit (automatic) and explicit (manual) typecasting.
+
+Implicit Conversion:
+Implicit conversion is the automatic type conversion performed by the compiler from one data type to another data type.
+
+Implicit conversion is safe when converting from smaller to larger data types, but it may cause data loss when converting from larger to smaller data types.
+
+Need of explicit conversion:
+Prevents Accidental Conversions
+
+Explicit Conversion:
+Explicit type casting is the manual conversion of a value from one data type to another using cast operators by the programmer.
+
+1) static_cast:
+static_cast is used for safe and compile-time type conversions between related types, such as numeric conversions or upcasting in inheritance.
+
+static_cast is safer because it's explicit and checked at compile time. Unlike a C-style cast, which can silently force almost any conversion. So,it cannot accidentally convert unrelated types and cause undefined behavior.
+
+Cannot cast away const or volatile qualifiers.
+
+Example: `int i = static_cast<int>(3.14); // Converts double to int`
+
+2) dynamic_cast:
+dynamic_cast is used for safe downcasting in class hierarchies. It converts a base class pointer or reference to a derived class type while performing a runtime check to ensure the object is actually of the derived type. The base class must have at least one virtual function to enable RTTI. If the cast fails, it returns nullptr for pointers or throws std::bad_cast for references.
+
+dynamic_cast is safe because it uses RTTI to check the actual type of the object at runtime. If the object isn't of the target derived type, it returns nullptr (pointer) or throws std::bad_cast (reference), preventing invalid memory access.
+
+3) const_cast:
+const_cast is a C++ cast operator used to add or remove const (or volatile) qualifiers from a variable. It is safe to use only if the original object is non-const.Modifying a truly const object through const_cast results in undefined behavior.    
+
+Eg:
+int x = 10;
+const int* p = &x;
+
+// Remove constness
+int* q = const_cast<int*>(p);
+*q = 20;  // OK, x is modified safely
+
+2) const int y = 10;
+const int* p = &y;
+
+// Remove constness
+int* q = const_cast<int*>(p);
+*q = 20;  // Undefined behavior! y was originally const
+
+4) reinterpret_cast:
+reinterpret_cast is used for low-level, unsafe conversions  where we need to treat the same memory as a different type without modifying the underlying data. It is used for low-level conversions like pointer-to-pointer of unrelated types and pointer-to-integer conversions. It does not change the underlying data, only how it is interpreted.
+
+For example, if I want to inspect the raw bytes of an integer, I can reinterpret its memory as a char*. The data doesn’t change — only the type of access changes
+
+int x = 65;
+int* ip = &x;
+
+// reinterpret int* as char*
+char* cp = reinterpret_cast<char*>(ip);
+
+int x = 10;
+int* p = &x;
+
+// pointer → integer
+uintptr_t addr = reinterpret_cast<uintptr_t>(p);
+
+// integer → pointer
+int* p2 = reinterpret_cast<int*>(addr);
