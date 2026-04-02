@@ -105,3 +105,70 @@ Constructors vs Destructors (Virtual Behavior)
 Constructors cannot be virtual because virtual dispatch requires a fully constructed object. During construction, the object is still incomplete and the vptr is being initialized. Since the vptr is not yet correctly set, runtime polymorphism cannot take place.
 
 Destructors can be virtual because at destruction time the object is fully constructed and the vptr is valid. It makes sure the right destructor runs when deleting through a base pointer. Hence, virtual destructors ensure proper cleanup.
+
+
+Type Casting:
+It is the process of converting a value from one data type to another data type. C++ supports implicit (automatic) and explicit (manual) typecasting.
+
+Implicit Conversion:
+Implicit conversion is the automatic type conversion performed by the compiler from one data type to another data type.
+
+Implicit conversion is safe when converting from smaller to larger data types, but it may cause data loss when converting from larger to smaller data types.
+
+Need of explicit conversion:
+Prevents Accidental Conversions
+
+Explicit Conversion:
+Explicit type casting is the manual conversion of a value from one data type to another using cast operators by the programmer.
+
+1) static_cast:
+static_cast is used for safe and compile-time type conversions between related types, such as numeric conversions or upcasting in inheritance.
+
+static_cast is safer because it's explicit and checked at compile time. Unlike a C-style cast, which can silently force almost any conversion. So,it cannot accidentally convert unrelated types and cause undefined behavior.
+
+Cannot cast away const or volatile qualifiers.
+
+Example: `int i = static_cast<int>(3.14); // Converts double to int`
+
+2) dynamic_cast:
+dynamic_cast is used for safe downcasting in class hierarchies. It converts a base class pointer or reference to a derived class type while performing a runtime check to ensure the object is actually of the derived type. The base class must have at least one virtual function to enable RTTI. If the cast fails, it returns nullptr for pointers or throws std::bad_cast for references.
+
+dynamic_cast is safe because it uses RTTI to check the actual type of the object at runtime. If the object isn't of the target derived type, it returns nullptr (pointer) or throws std::bad_cast (reference), preventing invalid memory access.
+
+3) const_cast:
+const_cast is a C++ cast operator used to add or remove const (or volatile) qualifiers from a variable. It is safe to use only if the original object is non-const.Modifying a truly const object through const_cast results in undefined behavior.    
+
+Eg:
+int x = 10;
+const int* p = &x;
+
+// Remove constness
+int* q = const_cast<int*>(p);
+*q = 20;  // OK, x is modified safely
+
+2) const int y = 10;
+const int* p = &y;
+
+// Remove constness
+int* q = const_cast<int*>(p);
+*q = 20;  // Undefined behavior! y was originally const
+
+4) reinterpret_cast:
+reinterpret_cast is used for low-level, unsafe conversions  where we need to treat the same memory as a different type without modifying the underlying data. It is used for low-level conversions like pointer-to-pointer of unrelated types and pointer-to-integer conversions. It does not change the underlying data, only how it is interpreted.
+
+For example, if I want to inspect the raw bytes of an integer, I can reinterpret its memory as a char*. The data doesn’t change — only the type of access changes
+
+int x = 65;
+int* ip = &x;
+
+// reinterpret int* as char*
+char* cp = reinterpret_cast<char*>(ip);
+
+int x = 10;
+int* p = &x;
+
+// pointer → integer
+uintptr_t addr = reinterpret_cast<uintptr_t>(p);
+
+// integer → pointer
+int* p2 = reinterpret_cast<int*>(addr);
