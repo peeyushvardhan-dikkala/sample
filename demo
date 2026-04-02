@@ -164,6 +164,23 @@ int* ip = &x;
 // reinterpret int* as char*
 char* cp = reinterpret_cast<char*>(ip);
 
+Rule Of Three:
+If a class manages resources and defines any one of the following: a destructor, a copy constructor, or a copy assignment operator, it should explicitly define all three to ensure proper resource cleanup to avoid issues like memory leaks or double deletion and safe copying.
+
+Rule of Five (C++):
+Rule of Five extends the Rule of Three by adding move semantics to improve performance and avoid unnecessary deep copies
+
+If a class manages resources (like dynamic memory, file handles, etc.) and defines any one of the following—destructor, copy constructor, copy assignment operator, move constructor, or move assignment operator—it should explicitly define all five to ensure correct resource management, safe copying, and efficient resource transfer.
+
+1. Destructor: A destructor is used to release resources when the object goes out of scope or is deleted.
+2. Copy Constructor: A copy constructor creates a new object as a copy of an existing one. If not properly defined, it can result in a shallow copy, causing multiple objects to share the same memory.
+3. Copy Assignment Operator:The copy assignment operator assigns one object to another, without proper handling, itcan result in a shallow copy, which may overwrite pointers and lead to double deletion or memory leaks.
+4. Move Constructor: A move constructor transfers ownership of resources from a temporary (rvalue) object to a new object instead of copying them, avoiding unnecessary deep copies and improving performance.
+5. Move Assignment Operator: The move assignment operator transfers ownership resources from one object to another existing object, ensuring that previous resources are properly released and ownership is safely reassigned.
+
+Rule of Zero:
+The Rule of Zero states that a class should avoid defining destructor, copy/move constructors, or assignment operators, and instead rely on standard library types to manage resources automatically like smart pointers or containers.
+
 int x = 10;
 int* p = &x;
 
