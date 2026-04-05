@@ -190,6 +190,13 @@ If a class manages resources (like dynamic memory, file handles, etc.) and defin
 Rule of Zero:
 The Rule of Zero states that a class should avoid defining destructor, copy/move constructors, or assignment operators, and instead rely on standard library types to manage resources automatically like smart pointers or containers.
 
+Copy-and-swap is a technique used to implement the copy assignment operator in a safe and exception-proof way. In a naive assignment, if new memory allocation fails, the object can be left in a corrupted state. With copy-and-swap, the assignment operator takes its argument by value, creating a copy of the object. The member variables of the current object are then swapped with the copy, and when the temporary copy goes out of scope, it automatically deletes the old resources, ensuring exception safety and preventing memory leaks.
+
+Car& operator=(Car other) { // pass by value (makes a copy)
+    std::swap(data, other.data);
+    std::swap(size, other.size);
+    return *this; // temporary 'other' cleans up old memory
+}
 
 Storage Class Specifiers:
 A storage specifier defines the lifetime (duration), scope (visibility) of a variable or function - basically, how long it exists, and where it can be accessed.
@@ -220,3 +227,56 @@ Scope --> Class member
 Lifetime -->  Depends on the object
 
 You have a configuration object that should not be modified, but you want to count how many times its settings are viewed.
+
+An inline function is a function where the compiler replaces the function call with the actual function code at compile time, reducing the overhead of a function call.
+
+This eliminates the overhead associated with a normal function call, such as stack operations and control transfer, thereby improving performance for small and frequently used functions.
+
+Inline functions are often defined in header files so each source file gets the function definition, and multiple definitions do not cause linker error because the linker treats all copies as a single function across the program.
+
+Too much inlining can cause code bloat, which may hurt performance or increase binary size.
+
+Inline variables are variables (introduced in C++17) that can be defined in a header file and included in multiple .cpp files without causing multiple-definition linker errors.
+
+
+A lambda function is an anonymous (unnamed) function that can be defined and used right where it’s needed.
+inline means defined at the point of use, not separately named and defined elsewhere.
+
+It avoids creating a separate function just for sorting in descending order, especially when passing functions as arguments to algorithms.
+
+Basic syntax:
+[capture list](parameters) -> return_type {
+    // function body
+};
+
+All parts are optional except the capture list and function body.
+
+
+| Capture Type             | Syntax | Meaning                                                 |
+| ------------------------ | ------ | ------------------------------------------------------- |
+| Capture by Value         | `[x]`  | Copies variable `x` inside the lambda                   |
+| Capture by Reference     | `[&x]` | Refers to actual variable `x` (changes affect original) |
+| Capture All by Value     | `[=]`  | Copies all external variables used in the lambda        |
+| Capture All by Reference | `[&]`  | Refers to all external variables used in the lambda     |
+
+Static local variable:
+A static variable inside a function retains its value between calls but is visible only within that function.
+Static global / outside function:
+A static variable or function defined outside all functions is limited to the file it is defined in and cannot be accessed from other files. It has internal linkage.
+Static class member:
+A static member of a class is shared by all objects of the class and exists independently of any instance. It has external linkage.
+A static data member is declared inside a class to indicate that it belongs to the class and is shared by all objects. Normally, it must be defined outside the class to allocate memory. A static const member can be initialized inside the class because it is treated as a compile-time constant.
+In C++17 and later, using inline static allows a non-const static member to be defined and initialized inside the class safely; the compiler ensures only one memory instance exists across all files, even if the class header is included in multiple files.
+
+Stack Unwinding:
+Stack unwinding is the process where, when an exception is thrown, the program automatically destroys all local (stack) objects in the current function’s scope before transferring control to the appropriate catch block, ensuring that destructors are called and resources are properly released for all objects created in that function.
+
+If an exception is thrown and no matching catch block exists, the program calls std::terminate() and ends; otherwise, if a matching catch block is found, the program transfers control to it after unwinding the stack.
+
+A forward reference (or forward declaration)  when we declare a function or class before its actual definition so that it can be used earlier in the code. It informs the compiler to know that a type exists, before its full definition is available.
+
+1) Breaks circular dependencies
+    Useful when two classes refer to each other
+2) Speeds up compilation 
+    Fewer header inclusions
+    Smaller and faster builds
