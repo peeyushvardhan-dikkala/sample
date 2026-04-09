@@ -189,7 +189,8 @@ class Linkedlist {
             return;
         }
         Node* slow = head;
-        Node* fast = head->next->next;
+        Node* fast = head->next->next; // First Middle
+        // Node* fast= head->next; // Second Middle
 
         while(fast!=nullptr && fast->next!=nullptr) {
             slow = slow->next;
@@ -211,6 +212,42 @@ class Linkedlist {
 
     void reverse() {
         head = printReverseLinkedList(head);
+    }
+
+    bool isPalindrome(Node* head) {
+        if (head == NULL || head->next == NULL)
+            return true;
+    
+        Node* slow = head;
+        Node* fast = head;
+    
+        // Find middle
+        while (fast->next != NULL && fast->next->next != NULL) {
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+    
+        // Reverse second half
+        Node* secondHalf = reverseLinkedList(slow->next);
+    
+        Node* first = head;
+        Node* second = secondHalf;
+    
+        // Compare
+        while (second != NULL) {
+            if (first->data != second->data) {
+                // Restore before returning
+                slow->next = reverseLinkedList(secondHalf);
+                return false;
+            }
+            first = first->next;
+            second = second->next;
+        }
+    
+        // Restore list
+        slow->next = reverseLinkedList(secondHalf);
+    
+        return true;
     }
 };
 
