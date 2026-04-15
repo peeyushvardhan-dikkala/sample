@@ -1,31 +1,39 @@
 # .clang-format
-# ==========================
-# C++ Formatting Settings
-# ==========================
-# Based on LLVM style, modified for 4-space indentation,
-# no tabs, and braces on the same line for functions and control statements.
+# VS Code (put in settings.json)
+# Press Ctrl + Shift + P
+# Type: Preferences: Open User Settings (JSON)
+# "C_Cpp.clang_format_style": "file",
+# "C_Cpp.formatting": "clangFormat"
+
 
 BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
 
-# Indentation
-IndentWidth: 4       # number of spaces per indent
-UseTab: Never        # do not use tab characters
+PointerAlignment: Left
 
-# Pointer and reference alignment
-PointerAlignment: Left   # aligns pointer/reference symbol to the left
-# Example: UniquePtr& operator=
+SpacesInParentheses: false
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeBinaryOperators: All
 
-# Brace wrapping
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+
+AllowShortIfStatementsOnASingleLine: false
+
+SortIncludes: true
+
+BreakBeforeBraces: Attach
 BraceWrapping:
-  AfterControlStatement: false   # keeps else/if braces on same line
-  AfterFunction: false           # function opening brace stays on same line
+  AfterControlStatement: false
+  AfterFunction: false
   AfterClass: false
   AfterNamespace: false
   AfterStruct: false
   AfterEnum: false
-  BeforeElse: false              # else stays on same line
+  BeforeElse: false
 
-# Ensure consistent C++11 braced list style
 Cpp11BracedListStyle: true
 
 # ==========================
@@ -49,6 +57,6 @@ Cpp11BracedListStyle: true
 #   "C_Cpp.clang_format_style": "file"
 #
 # Or single-line hardcoded style in settings.json:
-#   "C_Cpp.clang_format_style": "{ \"BasedOnStyle\": \"LLVM\", \"IndentWidth\": 4, \"UseTab\": \"Never\", \"BreakBeforeBraces\": \"Attach\", \"PointerAlignment\": \"Left\" }"
+#   "C_Cpp.clang_format_style": "{ \"BasedOnStyle\": \"LLVM\", \"IndentWidth\": 4, \"UseTab\": \"Never\", \"PointerAlignment\": \"Left\", \"SpacesInParentheses\": false, \"SpaceBeforeParens\": \"ControlStatements\", \"SpaceBeforeAssignmentOperators\": true, \"SpaceBeforeBinaryOperators\": \"All\", \"IndentAccessModifiers\": false, \"AccessModifierOffset\": -4, \"AllowShortIfStatementsOnASingleLine\": false, \"SortIncludes\": true, \"BreakBeforeBraces\": \"Attach\", \"BraceWrapping\": { \"AfterControlStatement\": false, \"AfterFunction\": false, \"AfterClass\": false, \"AfterNamespace\": false, \"AfterStruct\": false, \"AfterEnum\": false, \"BeforeElse\": false }, \"Cpp11BracedListStyle\": true }"
 # VS Code formatting shortcut: Shift + Alt + F
 # Best practice: keep .clang-format in project root for consistent team formatting
