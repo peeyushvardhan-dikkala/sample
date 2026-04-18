@@ -260,3 +260,240 @@ int main() {
     ll.deleteMiddleNode();
     ll.display();
 }
+
+// Circular Linked List
+#include<iostream>
+using namespace std;
+
+struct Node{
+    int data;
+    Node* next;
+
+    Node(int val) {
+        data = val;
+        next = nullptr;
+    }
+};
+
+class CircularLinkedlist {
+    private:
+    Node* head = nullptr;
+    Node* tail = nullptr;
+
+public:
+    CircularLinkedlist() : head(nullptr), tail(nullptr) {}
+
+    ~CircularLinkedlist() {
+        if (head == nullptr)
+            return;
+    
+        Node* curr = head->next;
+    
+        while (curr != head) {
+            Node* temp = curr;
+            curr = curr->next;
+            delete temp;
+        }
+    
+        delete head;
+        head = nullptr;
+    }
+    void insertAtBeginning(int val) {
+        Node* newNode = new Node(val);
+        if (head == nullptr) {
+            newNode->next = newNode;
+            head = tail = newNode;
+            return;
+        }
+        newNode->next = head;
+        tail->next = newNode;
+        head = newNode;
+    }
+
+    void insertAtEnd(int val) {
+        Node* newNode = new Node(val);
+        if (head == nullptr) {
+            newNode->next = newNode;
+            head = tail=newNode;
+            return;
+        }
+
+        tail->next = newNode;
+        newNode->next = head;
+        tail = newNode;
+    }
+
+    int countNodes() {
+        if (head == nullptr)
+            return 0;
+
+        Node* temp = head;
+        int n = 0;
+        do {
+            n++;
+            temp = temp->next;
+        } while (temp != head);
+        return n;
+    }   
+
+    void insertAtPosition(int pos, int val) {
+        int n = countNodes();
+
+        if (pos < 1 || pos > n + 1) {
+            return;
+        }
+
+        if (head == nullptr && pos == 1) {
+            insertAtBeginning(val);
+            return;
+        }
+
+        if (pos == n + 1) {
+            insertAtEnd(val);
+            return;
+        }
+        Node* temp = head;
+        for (int i = 1; i < pos - 1; i++) {
+            temp = temp->next;
+        }
+
+        Node* newNode = new Node(val);
+        newNode->next = temp->next;
+        temp->next = newNode;     
+    }
+
+    void deleteAtBeginning() {
+        if (head == nullptr)
+            return;
+
+        if (tail == head) {
+            delete head;
+            head = nullptr;
+            return;
+        }
+
+        Node* delNode = head;
+        head = head->next;
+        tail->next = head;
+        delete delNode;
+    }
+
+    void deleteAtEnd() {
+        if (head == nullptr)
+            return;
+
+        if (head->next == head) {
+            delete head;
+            head = tail=nullptr;
+            return;
+        }
+
+        Node* temp = head;
+        while (temp->next->next != head) {
+            temp = temp->next;
+        }
+
+        Node* delNode = temp->next;
+        temp->next = delNode->next;
+        delete delNode;
+        tail = temp;
+    }
+
+    void deleteAtPosition(int pos) {
+        int n = countNodes();
+
+        if (pos < 1 || head == nullptr || pos > n) {
+            return;
+        }
+
+        if (pos == 1) {
+            deleteAtBeginning();
+            return;
+        }
+
+        if (pos == n) {
+            deleteAtEnd();
+            return;
+        }
+
+        Node* temp = head;
+        for (int i = 1; i < pos - 1; i++) {
+            temp = temp->next;
+        }
+
+        Node* delNode = temp->next;
+        temp->next = delNode->next;
+        delete delNode;
+    }
+
+    void deleteAtValue(int val) {
+        if(head==nullptr)
+            return;
+
+        if (head->data == val) {
+            deleteAtBeginning();
+            return;
+        }
+
+        Node* temp = head;
+        bool found = false;
+        while (temp->next != head) {
+            if (temp->next->data == val) {
+                Node* delNode = temp->next;
+                temp->next = delNode->next;
+                delete delNode;
+                found = true;
+                return;
+            }
+            temp = temp->next;
+        }
+        
+        if (!found) {
+            cout << "Value not found\n";
+        }
+    }
+
+    void reverseCircularLinkedlist() {
+        if (head == nullptr || head->next == head)
+            return;
+
+        Node* temp = head;
+        Node* front = nullptr;
+        Node* prev = nullptr;
+
+        do {
+            front = temp->next;
+            temp->next = prev;
+            prev = temp;
+            temp = front;
+        } while (temp != head);
+
+        head->next = prev;
+        head = prev;
+        tail = temp;
+    }
+
+    void print() {
+        if (head == nullptr)
+            return;
+
+        Node* temp = head;
+        do {
+            cout << temp->data << " -> ";
+            temp = temp->next;
+        } while (temp != head);
+        cout <<"(head)"<<endl;
+    }
+};
+
+int main() {
+    CircularLinkedlist cll;
+    cll.insertAtEnd(5);
+    cll.insertAtEnd(10);
+    cll.insertAtEnd(15);
+    cll.print();
+    cll.insertAtBeginning(2);
+    cll.print();
+    cll.reverseCircularLinkedlist();
+    cll.print();
+}
