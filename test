@@ -261,6 +261,289 @@ int main() {
     ll.display();
 }
 
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+    Node* prev;
+
+    Node(int val) {
+        data = val;
+        next = prev = nullptr;
+    }
+};
+
+class DoubleLinkedlist {
+private:
+    Node* head = nullptr;
+    Node* tail = nullptr;
+
+    public:
+    DoubleLinkedlist() { head = tail = nullptr; }
+
+    ~DoubleLinkedlist() {
+        Node* temp = head;
+        Node* nextNode = nullptr;
+        while (temp != nullptr) {
+            nextNode = temp->next;
+            delete temp;
+            temp = nextNode;
+        }
+
+        head = tail = nullptr;
+    }
+
+    void insertAtBeginning(int val) {
+        Node* newNode = new Node(val);
+
+        if (head == nullptr) {
+            head = tail = newNode;
+            return;
+        }
+
+        newNode->next = head;
+        head->prev = newNode;
+        head = newNode;
+    }
+
+    void insertAtEnd(int val) {
+        Node* newNode = new Node(val);
+
+        if (head == nullptr) {
+            head = tail = newNode;
+            return;
+        }
+
+        tail->next = newNode;
+        newNode->prev = tail;
+        tail = newNode;
+    }
+
+    void insertAtPosition(int pos, int val) {
+        if (pos < 1)
+            return;
+        
+        if (pos == 1) {
+            insertAtBeginning(val);
+            return;
+        }
+
+        Node* curr = head;
+        for (int i = 1; i < pos-1 && curr; i++) {
+            curr = curr->next;
+        }
+
+        if(!curr)
+            return;
+
+        if (curr == tail) {
+            insertAtEnd(val);
+            return;
+        }
+    
+        Node* newNode = new Node(val);
+        newNode->prev = curr;
+        newNode->next = curr->next;
+
+        curr->next->prev = newNode;
+        curr->next = newNode;
+    }
+
+    void deleteAtBeginning() {
+        if (head == nullptr)
+            return;
+
+        if (head == tail) {
+            delete head;
+            head = tail = nullptr;
+            return;
+        }
+
+        Node* delNode = head;
+        head = head->next;
+        head->prev = nullptr;
+        delete delNode;
+    }
+
+    void deleteAtEnd() {
+        if (head == nullptr)
+            return;
+
+        if (head == tail) {
+            delete head;
+            head = tail = nullptr;
+            return;
+        }
+
+        Node* delNode = tail;
+        tail = tail->prev;
+        tail->next = nullptr;
+        delete delNode;
+    }
+
+    void deleteByPosition(int pos) {
+        if (pos < 1)
+            return;
+
+        if (pos == 1) {
+            deleteAtBeginning();
+            return;
+        }
+
+        Node* curr = head;
+        Node* prevNode = nullptr;
+
+        for (int i = 1; i < pos && curr; i++) {
+            prevNode = curr;
+            curr = curr->next;
+        }
+
+        if(!curr)
+            return;
+
+        if (curr == tail) {
+            deleteAtEnd();
+            return;
+        }
+
+        prevNode->next = curr->next;
+        curr->next->prev = prevNode;
+
+        delete curr;
+    }
+
+    void deleteByValue(int val) {
+        if (!head)
+            return;
+    
+        Node* curr = head;
+    
+        while (curr && curr->data != val) {
+            curr = curr->next;
+        }
+    
+        if (!curr)
+            return;
+    
+        if (curr == head) {
+            deleteAtBeginning();
+            return;
+        }
+    
+        if (curr == tail) {
+            deleteAtEnd();
+            return;
+        }
+    
+        curr->prev->next = curr->next;
+        curr->next->prev = curr->prev;
+    
+        delete curr;
+    }
+
+    void deleteAtMiddleNode() {
+        if (!head) 
+            return;
+    
+        if (head == tail) {
+            delete head;
+            head = tail = nullptr;
+            return;
+        }
+    
+        Node* slow = head;
+        Node* fast = head;
+        // fast = head->next; for first middle
+        Node* prevNode = nullptr;
+    
+        while (fast && fast->next) {
+            prevNode = slow;
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        // prevNode == NULL → deleting head
+        // slow->next == NULL → deleting tail
+        // For 1 -> 2 node
+        if (prevNode)
+            prevNode->next = slow->next;
+        else
+            head = slow->next;
+    
+        if (slow->next)
+            slow->next->prev = prevNode;
+        else
+            tail = prevNode;
+
+        delete slow;
+    }
+
+    void print() {
+        if (!head) {
+            cout << "EMPTY\n";
+            return;
+        }
+
+        Node* temp = head;
+        while(temp!=nullptr) {
+            cout << temp->data << " -> ";
+            temp = temp->next;
+        }
+
+        cout << "NULL\n";
+    }
+
+    void reverse() {
+        Node* curr = head;
+        Node* temp = nullptr;
+    
+        while (curr) {
+            // swap prev and next
+            temp = curr->prev;
+            curr->prev = curr->next;
+            curr->next = temp;
+    
+            // move to "next" node (which is prev now)
+            curr = curr->prev;
+        }
+    
+        // swap head and tail
+        temp = head;
+        head = tail;
+        tail = temp;
+    }
+};
+
+int main() {
+    DoubleLinkedlist dll;
+
+    dll.insertAtEnd(5);
+    dll.insertAtEnd(10);
+    dll.insertAtEnd(15);
+
+    dll.print();
+
+    dll.insertAtBeginning(2);
+    dll.insertAtBeginning(1);
+    dll.print();
+
+    dll.deleteAtBeginning();
+    dll.print();
+
+    dll.deleteAtEnd();
+    dll.print();
+
+    dll.deleteByPosition(1);
+    dll.print();
+
+    dll.deleteByValue(10);
+    dll.print();
+
+    dll.deleteAtMiddleNode();
+    dll.print();
+}
+
 // Circular Linked List
 #include<iostream>
 using namespace std;
