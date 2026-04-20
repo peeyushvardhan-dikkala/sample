@@ -1,266 +1,286 @@
-#include<iostream>
+#include <iostream>
 using namespace std;
 
 struct Node {
     int data;
     Node* next;
 
-    Node(int val):data(val),next(nullptr) {}
+    Node(int val) {
+        data = val;
+        next = nullptr;
+    }
 };
 
 class Linkedlist {
-    public:
-        Node* head = nullptr;
-        Linkedlist(): head(nullptr) {}
-    
+private:
+    Node* head = nullptr;
+    Node* tail = nullptr;
+
+public:
+    Linkedlist():head(nullptr),tail(nullptr){}
+
+    ~Linkedlist() {
+        Node* temp = head;
+        Node* nextNode = nullptr;
+        while (temp != nullptr) {
+            nextNode = temp->next;
+            delete temp;
+            temp = nextNode;
+        }
+
+        head = tail = nullptr;
+    }
+
     void insertAtBeginning(int val) {
         Node* newNode = new Node(val);
+
+        if (head == nullptr) {
+            head = tail = newNode;
+            return;
+        }
+
         newNode->next = head;
         head = newNode;
     }
 
     void insertAtEnd(int val) {
         Node* newNode = new Node(val);
-        if(head==nullptr) {
-            head = newNode;
+
+        if (head == nullptr) {
+            head = tail = newNode;
             return;
         }
-        Node* temp = head;
 
-        while(temp->next!=nullptr) {
-            temp = temp->next;
-        }
-        temp->next = newNode;
+        tail->next = newNode;
+        tail = newNode;
     }
 
-    void insertAtPosition(int val, int pos) {
-        if(pos<=0)
+    void insertAtPosition(int pos, int val) {
+        if (pos < 1)
             return;
 
-        if(pos==1) {
-            Node* newNode = new Node(val);
-            newNode->next = head;
-            head = newNode;
+        if (pos == 1) {
+            insertAtBeginning(val);
             return;
         }
 
         Node* temp = head;
-        for (int i = 1; i < pos - 1 && temp != nullptr;i++) {
+        for (int i = 1; i < pos - 1 && temp; i++) {
             temp = temp->next;
         }
 
-        if(temp==nullptr)
-            return;
+        if(!temp) return;
+
         Node* newNode = new Node(val);
         newNode->next = temp->next;
         temp->next = newNode;
+
+         // update tail if inserted at end
+        if (newNode->next == nullptr)
+            tail = newNode;
     }
 
     void deleteAtBeginning() {
-        if(head==nullptr)
+        if(head==nullptr) {
             return;
+        }
+
+        if (head == tail) {
+            delete head;
+            head = tail = nullptr;
+            return;
+        }
 
         Node* delNode = head;
         head = head->next;
         delete delNode;
     }
 
-    void deleteAtEnding() {
-        if(head==nullptr)
+    void deleteAtEnd() {
+        if(head==nullptr) {
             return;
-        
-        if(head->next==nullptr) {
-            Node* delNode = head;
-            head = head->next;
-            delete delNode;
+        }
+
+        if (head == tail) {
+            delete head;
+            head = tail = nullptr;
             return;
         }
 
         Node* temp = head;
-        while(temp->next->next!=nullptr) {
+        while (temp->next->next){
             temp = temp->next;
         }
 
         delete temp->next;
         temp->next = nullptr;
+        tail = temp;
     }
 
     void deleteAtPosition(int pos) {
-        if(head==nullptr)
-            return;
-        
-        if(pos<=0)
-            return;
-        
-        if(pos==1) {
-            Node* delNode = head;
-            head = head->next;
-            delete delNode;
+        if (head == nullptr || pos < 1) {
             return;
         }
 
-        Node* temp = head;
-        for (int i = 1; i < pos - 1 && temp != nullptr;i++) {
-            temp = temp->next;
+        if (pos == 1) {
+            deleteAtBeginning();
+            return;
         }
 
-        if(temp->next==nullptr || temp == nullptr)
+        Node* curr = head;
+        Node* prev = nullptr;
+        for (int i = 1; i < pos && curr; i++) {
+            prev = curr;
+            curr = curr->next;
+        }
+
+        if(!curr)
             return;
 
-        Node* delNode = temp->next;
-        temp->next = delNode->next;
-        delete delNode;
-        delNode = nullptr;
+        prev->next = curr->next;
+        if(!curr->next)
+            tail = prev;
+        delete curr;
+        curr = nullptr;
     }
 
     void deleteByVal(int val) {
-        if(head==nullptr)
-            return;
-        
-        if(head->data==val) {
-            Node* delNode = head;
-            head = head->next;
-            delete delNode;
+        if (head == nullptr) {
             return;
         }
 
-        Node* temp = head;
-        while(temp->next!=nullptr&&temp->next->data!=val) {
-            temp = temp->next;
-        }
-
-        if(temp->next==nullptr)
+        if (head->data == val) {
+            deleteAtBeginning();
             return;
-
-        Node* delNode = temp->next;
-        temp->next = delNode->next;
-        delete delNode;
-    }
-
-    void display() {
-        Node* temp = head;
-        
-        while(temp!=nullptr) {
-            cout << temp->data<<" -> ";
-            temp = temp->next;
         }
 
-        cout << "NULL\n";
-    }
-
-    void reverseLinkedlist(Node* head) {
-        Node* temp = head;
+        Node* curr = head;
         Node* prev = nullptr;
-        Node* front = nullptr;
 
-        while(temp!=nullptr) {
-            front = temp->next;
-            temp->next = prev;
-
-            prev = temp;
-            temp = front;
+        while (curr && curr->data != val) {
+            prev = curr;
+            curr = curr->next;
         }
-        head=prev;
-    }
 
-    void recursivereverseLinkedlist(Node* node) {
-        // Base case: empty list OR last node
-        if (node == nullptr || node->next == nullptr) {
-            head = node;  // update head to last node
+        if(!curr)
             return;
-        }
-    
-        // Recursive call
-        recursivereverseLinkedlist(node->next);
-    
-        // Reverse the link
-        node->next->next = node;
-    
-        // Break the forward link
-        node->next = nullptr;
+        
+        prev->next = curr->next;
+        if(!curr->next)
+            tail = prev;
+        delete curr;
+        curr = nullptr;
     }
 
     void deleteMiddleNode() {
-        if(head==nullptr)
+        if (head == nullptr) {
             return;
-        if(head->next==nullptr) {
+        }
+
+        if (head == tail) {
             delete head;
-            head = nullptr;
+            head = tail = nullptr;
             return;
         }
-        Node* slow = head;
-        Node* fast = head->next->next; // First Middle
-        // Node* fast= head->next; // Second Middle
 
-        while(fast!=nullptr && fast->next!=nullptr) {
-            slow = slow->next;
-            fast = fast->next->next;
-        }
-
-        Node* delNode = slow->next;
-        slow->next = delNode->next;
-        delete delNode;
-    }
-
-    Node* printReverseLinkedList(Node* head) {
-        if(head==nullptr)
-            return;
-
-        Node* temp = printReverseLinkedList(head->next);
-        cout << temp->data << "->";
-    }
-
-    void reverse() {
-        head = printReverseLinkedList(head);
-    }
-
-    bool isPalindrome(Node* head) {
-        if (head == NULL || head->next == NULL)
-            return true;
-    
-        Node* slow = head;
         Node* fast = head;
-    
-        // Find middle
-        while (fast->next != NULL && fast->next->next != NULL) {
+        Node* slow = head->next;
+        Node* prev = nullptr;
+        while (fast && fast->next) {
+            prev = slow;
             slow = slow->next;
             fast = fast->next->next;
         }
+        if(prev)
+            prev->next = slow->next;
+        else
+            head = slow->next;
+        
+        if(slow==tail)
+            tail = prev;
+        delete slow;
+        slow = nullptr;
+    }
+
+    Node* reverseLinkedlist(Node* headNode) {
+        if (headNode == nullptr || headNode->next == nullptr)
+            return headNode;
+
+        Node* front = nullptr;
+        Node* prevNode = nullptr;
+        Node* temp = headNode;
+        while (temp != nullptr) {
+            front = temp->next;
+            temp->next = prevNode;
+            prevNode = temp;
+            temp = front;
+        }
+        return prevNode;
+
+    }
+
+    Node* recursiveReverse(Node* curr) {
+        if (curr == nullptr || curr->next == nullptr)
+            return curr;
     
-        // Reverse second half
-        Node* secondHalf = reverseLinkedList(slow->next);
+        Node* newHead = recursiveReverse(curr->next);
     
+        curr->next->next = curr;
+        curr->next = nullptr;
+    
+        return newHead;
+    }
+
+    bool isPalindrome() {
+        if (head == nullptr || head == tail)
+            return true;
+
+        Node* fast = head;
+        Node* slow = head->next;
+
+        while(fast && fast->next) {
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+
+        Node* second = reverseLinkedlist(slow);
         Node* first = head;
-        Node* second = secondHalf;
-    
-        // Compare
-        while (second != NULL) {
+
+        while (second != nullptr) {
             if (first->data != second->data) {
-                // Restore before returning
-                slow->next = reverseLinkedList(secondHalf);
+                slow->next = reverseLinkedlist(slow);
                 return false;
             }
-            first = first->next;
             second = second->next;
+            first = first->next;
         }
-    
-        // Restore list
-        slow->next = reverseLinkedList(secondHalf);
-    
+
+        slow->next=reverseLinkedlist(slow);
         return true;
+    }
+
+    void print() {
+        Node* temp = head;
+        while (temp) {
+            cout << temp->data << " -> ";
+            temp = temp->next;
+        }
+        cout << "NULL\n";
     }
 };
 
 int main() {
     Linkedlist ll;
-    ll.insertAtEnd(4);
-    ll.insertAtEnd(8);
-    ll.insertAtEnd(7);
-    ll.display();
-    ll.deleteMiddleNode();
-    ll.display();
+    ll.insertAtEnd(25);
+    ll.insertAtBeginning(5);
+    ll.print();
+    ll.insertAtPosition(2, 10);
+    ll.print();
+
+    cout << (ll.isPalindrome() ? "Palindrome" : "Not Palindrome") << endl;
 }
 
+// DoubleLinkedlist
 #include <iostream>
 using namespace std;
 
