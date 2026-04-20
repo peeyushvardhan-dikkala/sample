@@ -234,28 +234,29 @@ public:
     bool isPalindrome() {
         if (head == nullptr || head == tail)
             return true;
-
+    
         Node* fast = head;
-        Node* slow = head->next;
-
-        while(fast && fast->next) {
+        Node* slow = head;
+    
+        while (fast && fast->next && fast->next->next) {
             slow = slow->next;
             fast = fast->next->next;
         }
-
-        Node* second = reverseLinkedlist(slow);
+    
+        Node* second = reverseLinkedlist(slow->next);
+        Node* copySecond = second;
         Node* first = head;
-
-        while (second != nullptr) {
+    
+        while (second) {
             if (first->data != second->data) {
-                slow->next = reverseLinkedlist(slow);
+                slow->next = reverseLinkedlist(copySecond);
                 return false;
             }
-            second = second->next;
             first = first->next;
+            second = second->next;
         }
-
-        slow->next=reverseLinkedlist(slow);
+    
+        slow->next = reverseLinkedlist(copySecond);
         return true;
     }
 
